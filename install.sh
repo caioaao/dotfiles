@@ -24,4 +24,21 @@ echo "dotfiles_path=$dotfiles_path" > $HOME/.zshrc.setup
 echo "Symlinking zshrc file"
 ln -s $dotfiles_path/zshrc $HOME/.zshrc
 
+echo "Symlinking utils"
+
+read -rp $'Symlink lein profiles.clj? ([y]/n)\n' SYM_LEIN_PROFILES
+if [[ "$SYM_LEIN_PROFILES" == "n" ]]; then
+    echo "skipping lein profiles.clj"
+else
+    mkdir -p $HOME/.lein
+    ln -s ${dotfiles_path}/utils/lein/profiles.clj ${HOME}/.lein/profiles.clj
+fi
+
+read -rp $'Symlink global gitignore? ([y]/n)\n' SYM_GITIGNORE
+if [[ "$SYM_GITIGNORE" == "n" ]]; then
+    echo "skipping gitignore"
+else
+    ln -s ${dotfiles_path}/utils/git/gitignore_global ${HOME}/.gitignore_global
+fi
+
 echo "Done. Please restart the terminal."

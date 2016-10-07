@@ -12,14 +12,24 @@ antigen bundle pip
 antigen bundle lein
 antigen bundle command-not-found
 antigen bundle autojump
+antigen bundle z
+antigen bundle common-aliases
 
 # Syntax highlighting bundle.
 antigen bundle zsh-users/zsh-syntax-highlighting
 
+# autocomplete
+# antigen bundle zsh-users/zsh-completions src
+
 # Load the theme.
-antigen theme robbyrussell
+antigen theme gallois
 
 # Tell antigen that you're done.
 antigen apply
 
+# Other stuff
+export PATH=$HOME/anaconda2/bin:$PATH
+
+# Import local dotfile
 source ~/.localrc
+
