@@ -24,4 +24,7 @@ echo "dotfiles_path=$dotfiles_path" > $HOME/.zshrc.setup
 echo "Symlinking zshrc file"
 ln -s $dotfiles_path/zshrc $HOME/.zshrc
 
+echo "Symlinking xresources"
+ln -s $dotfiles_path/xconf/Xresources $HOME/.Xresources
+
 echo "Done. Please restart the terminal."
