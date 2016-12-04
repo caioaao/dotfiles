@@ -31,6 +31,7 @@ if [[ "$SYM_XRESOURCES" == "n" ]]; then
 else
     echo "Symlinking Xresources"
     ln -s $dotfiles_path/xconf/Xresources $HOME/.Xresources
+    ln -s $dotfiles_path/xconf/xinitrc $HOME/.xinitrc
 fi
 
 
