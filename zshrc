@@ -29,7 +29,10 @@ antigen theme gallois
 antigen apply
 
 # Other stuff
-export PATH=$HOME/anaconda2/bin:$PATH
+export PATH=$PATH:$HOME/anaconda2/bin
+
+# keymaps
+bindkey -A emacs main # set emacs as default
 
 # Import local dotfile
 source ~/.localrc
