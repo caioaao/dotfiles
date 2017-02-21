@@ -24,6 +24,8 @@ echo "dotfiles_path=$dotfiles_path" > $HOME/.zshrc.setup
 echo "Symlinking zshrc file"
 ln -s $dotfiles_path/zshrc $HOME/.zshrc
 
+echo "Symlinking xmodmap"
+ln -s $dotfiles_path/Xmodmap $HOME/.Xmodmap
 
 read -rp $'Symlink Xresources? ([y]/n)\n' SYM_XRESOURCES
 if [[ "$SYM_XRESOURCES" == "n" ]]; then
@@ -33,7 +35,6 @@ else
     ln -s $dotfiles_path/xconf/Xresources $HOME/.Xresources
     ln -s $dotfiles_path/xconf/xinitrc $HOME/.xinitrc
 fi
-
 
 echo "Symlinking utils"
 
