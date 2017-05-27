@@ -38,4 +38,7 @@ autocutsel -fork &
 # notifications
 twmnd &
 
+# ssh-agent
+eval "$(ssh-agent)"
+
 exec stumpwm
