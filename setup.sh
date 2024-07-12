@@ -52,7 +52,7 @@ function setup_tmux {
 }
 
 function setup_nvim {
-	install_pkg neovim
+	install_pkg neovim ripgrep
 	stow nvim -t $HOME
 }
 
