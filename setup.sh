@@ -56,6 +56,46 @@ function setup_nvim {
 	stow nvim -t $HOME
 }
 
+function setup_elixir {
+	erlang_version=27.0
+	elixir_version=17.2-otp-27
+
+	# see https://github.com/asdf-vm/asdf-erlang?tab=readme-ov-file#before-asdf-install
+	case $OSTYPE in
+		linux-gnu*)
+			sudo dnf group install -y 'Development Tools' 'C Development Tools and Libraries'
+			sudo dnf install -y openssl-devel automake autoconf ncurses-devel g++ busybox wxGTK-devel
+			;;
+		darwin*)
+			brew install autoconf openssl wxwidgets libxslt fop wxmac
+			;;
+		*)
+			echo "Unknown OS - can't install Erlang/Elixir dependencies"
+	esac
+
+	. $HOME/.asdf/asdf.sh
+
+	asdf plugin-add erlang https://github.com/asdf-vm/asdf-erlang.git || true
+	asdf install erlang ${erlang_version}
+	asdf global erlang ${erlang_version}
+
+	asdf plugin-add elixir || true
+	asdf install elixir ${elixir_version}
+	asdf global elixir ${elixir_version}
+}
+
+function setup_elixir_ls {
+	elixir_ls_version=0.22.1
+
+	rm -rf ~/.local/elixir-ls || true
+	mkdir -p ~/.local/elixir-ls
+	pushd  ~/.local/elixir-ls
+	curl -fsSL https://github.com/elixir-lsp/elixir-ls/releases/download/v${elixir_ls_version}/elixir-ls-v${elixir_ls_version}.zip > /tmp/elixir-ls.zip
+	unzip /tmp/elixir-ls.zip
+	chmod +x language_server.sh launch.sh
+	popd
+}
+
 case ${1:-basic} in
 	zsh)
 		setup_zsh
@@ -68,6 +108,13 @@ case ${1:-basic} in
 		;;
 	nvim)
 		setup_nvim
+		;;
+	elixir)
+		setup_elixir
+		setup_elixir_ls
+		;;
+	elixir_ls)
+		setup_elixir_ls
 		;;
 	basic)
 		setup_zsh
