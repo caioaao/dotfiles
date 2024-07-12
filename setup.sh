@@ -101,7 +101,19 @@ function setup_elixir_ls {
 	popd
 }
 
+case $OSTYPE in
+	darwin*)
+		command -v brew || {
+			curl -fsSL https://github.com/Homebrew/brew/releases/download/4.3.9/Homebrew-4.3.9.pkg -o /tmp/homebrew.pkg
+			open /tmp/homebrew.pkg
+		}
+		;;
+esac
+
+
 command -v stow || install_pkg stow
+
+
 
 case ${1:-basic} in
 	zsh)
