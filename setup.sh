@@ -40,6 +40,13 @@ function setup_zsh {
 	stow zsh -t $HOME
 }
 
+# TODO setup GPG so I don't have to generate and manage a key on every machine
+function setup_ssh {
+	# make sure dir exists before calling stow so stow doesn't manage it entirely
+	mkdir -p ~/.ssh
+	stow ssh -t $HOME
+}
+
 function setup_docker {
 	case $OSTYPE in
 		darwin*)
@@ -128,10 +135,6 @@ function setup_elixir_ls {
 function setup_git {
 	install_pkg git-lfs
 
-	mkdir -p ~/.ssh
-	touch ~/.ssh/known_hosts
-	ssh-keyscan -t rsa github.com >> ~/.ssh/known_hosts
-
 	stow git -t $HOME
 }
 
@@ -178,8 +181,12 @@ case ${1:-basic} in
 	docker)
 		setup_docker
 		;;
+	ssh)
+		setup_ssh
+		;;
 	basic)
 		setup_zsh
+		setup_ssh
 		setup_asdf
 		setup_tmux
 		setup_nvim
