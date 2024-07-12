@@ -51,6 +51,11 @@ function setup_tmux {
 	stow tmux -t $HOME
 }
 
+function setup_nvim {
+	install_pkg neovim
+	stow nvim -t $HOME
+}
+
 case ${1:-basic} in
 	zsh)
 		setup_zsh
@@ -61,9 +66,13 @@ case ${1:-basic} in
 	tmux)
 		setup_tmux
 		;;
+	nvim)
+		setup_nvim
+		;;
 	basic)
 		setup_zsh
 		setup_asdf
 		setup_tmux
+		setup_nvim
 		;;
 esac
