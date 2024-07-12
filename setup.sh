@@ -30,4 +30,20 @@ function setup_zsh {
 	stow zsh -t $HOME
 }
 
-setup_zsh
+function setup_asdf {
+	rm -rf $HOME/.local/asdf || true
+	git clone https://github.com/asdf-vm/asdf.git $HOME/.local/asdf --branch v0.14.0
+	stow asdf -t $HOME
+}
+
+case ${1:-basic} in
+	zsh)
+		setup_zsh
+		;;
+	asdf)
+		setup_asdf
+		;;
+	basic)
+		setup_zsh
+		setup_asdf
+esac
