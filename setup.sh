@@ -101,6 +101,16 @@ function setup_elixir_ls {
 	popd
 }
 
+function setup_git {
+	install_pkg git-lfs
+
+	mkdir -p ~/.ssh
+	touch ~/.ssh/known_hosts
+	ssh-keyscan -t rsa github.com >> ~/.ssh/known_hosts
+
+	stow git -t $HOME
+}
+
 case $OSTYPE in
 	darwin*)
 		command -v brew || {
@@ -124,6 +134,9 @@ case ${1:-basic} in
 		;;
 	direnv)
 		setup_direnv	
+		;;
+	git)
+		setup_git
 		;;
 	tmux)
 		setup_tmux
