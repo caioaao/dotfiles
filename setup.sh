@@ -40,6 +40,30 @@ function setup_zsh {
 	stow zsh -t $HOME
 }
 
+function setup_docker {
+	case $OSTYPE in
+		darwin*)
+			brew install orbstack
+			;;
+		linux*)
+			if command -v dnf; then
+				sudo dnf -y install dnf-plugins-core
+				sudo dnf config-manager \
+					--add-repo \
+					https://download.docker.com/linux/fedora/docker-ce.repo
+				sudo dnf install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
+			else
+				echo "Don't know how to setup docker in this distro"
+				exit 1
+			fi
+
+			usermod -a -G docker $USER
+			echo 'Docker installed successfully. Re-login or run `sudo su $USER` to start a session with the required groups'
+			;;
+	esac
+	
+}
+
 function setup_asdf {
 	rm -rf $HOME/.local/asdf || true
 	git clone https://github.com/asdf-vm/asdf.git $HOME/.local/asdf --branch v0.14.0
@@ -151,11 +175,15 @@ case ${1:-basic} in
 	elixir_ls)
 		setup_elixir_ls
 		;;
+	docker)
+		setup_docker
+		;;
 	basic)
 		setup_zsh
 		setup_asdf
 		setup_tmux
 		setup_nvim
 		setup_direnv
+		setup_docker
 		;;
 esac
