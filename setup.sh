@@ -56,6 +56,11 @@ function setup_nvim {
 	stow nvim -t $HOME
 }
 
+function setup_direnv {
+	install_pkg direnv
+	stow direnv -t $HOME
+}
+
 function setup_elixir {
 	erlang_version=27.0
 	elixir_version=17.2-otp-27
@@ -105,6 +110,9 @@ case ${1:-basic} in
 	asdf)
 		setup_asdf
 		;;
+	direnv)
+		setup_direnv	
+		;;
 	tmux)
 		setup_tmux
 		;;
@@ -123,5 +131,6 @@ case ${1:-basic} in
 		setup_asdf
 		setup_tmux
 		setup_nvim
+		setup_direnv
 		;;
 esac
