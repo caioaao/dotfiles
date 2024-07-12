@@ -19,4 +19,3 @@ for f in `find $MY_ZSH_CONFIG/ -type f | sort`; do
 	source $f
 done
 
-source "$ZSH/oh-my-zsh.sh"
