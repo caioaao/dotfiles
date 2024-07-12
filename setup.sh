@@ -96,6 +96,8 @@ function setup_elixir_ls {
 	popd
 }
 
+command -v stow || install_pkg stow
+
 case ${1:-basic} in
 	zsh)
 		setup_zsh
