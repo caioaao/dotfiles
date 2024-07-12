@@ -7,11 +7,21 @@ set -euox pipefail
 export DOTFILES_DIR=$(dirname "$0")
 export STOW_DIR="$DOTFILES_DIR"/modules
 
-
 function backup {
 	for f in "$@"; do
 		mv "$f" "$f.`date +%s`" || true
 	done
+}
+
+function install_pkg {
+	if command -v dnf; then
+		sudo dnf install $1
+	elif command -v brew; then
+		brew install $1
+	else
+		echo "could not find package manager to install $1"
+		exit 1
+	fi
 }
 
 function setup_zsh {
@@ -36,6 +46,11 @@ function setup_asdf {
 	stow asdf -t $HOME
 }
 
+function setup_tmux {
+	install_pkg tmux
+	stow tmux -t $HOME
+}
+
 case ${1:-basic} in
 	zsh)
 		setup_zsh
@@ -43,7 +58,12 @@ case ${1:-basic} in
 	asdf)
 		setup_asdf
 		;;
+	tmux)
+		setup_tmux
+		;;
 	basic)
 		setup_zsh
 		setup_asdf
+		setup_tmux
+		;;
 esac
