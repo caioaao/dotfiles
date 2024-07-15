@@ -138,12 +138,15 @@ function setup_git {
 	stow git -t $HOME
 }
 
+function setup_homebrew {
+	curl -fsSL https://github.com/Homebrew/brew/releases/download/4.3.9/Homebrew-4.3.9.pkg -o /tmp/homebrew.pkg
+	open /tmp/homebrew.pkg
+	stow brew -t $HOME
+}
+
 case $OSTYPE in
 	darwin*)
-		command -v brew || {
-			curl -fsSL https://github.com/Homebrew/brew/releases/download/4.3.9/Homebrew-4.3.9.pkg -o /tmp/homebrew.pkg
-			open /tmp/homebrew.pkg
-		}
+		command -v brew || setup_homebrew
 		;;
 esac
 
@@ -164,6 +167,9 @@ case ${1:-basic} in
 		;;
 	git)
 		setup_git
+		;;
+	homebrew)
+		setup_homebrew
 		;;
 	tmux)
 		setup_tmux
