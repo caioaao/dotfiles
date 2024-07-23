@@ -144,6 +144,17 @@ function setup_homebrew {
 	stow brew -t $HOME
 }
 
+function setup_keymapp {
+	local tmp_dir
+	tmp_dir=`mktemp -d`
+
+	curl -fsSL https://oryx.nyc3.cdn.digitaloceanspaces.com/keymapp/keymapp-latest.tar.gz | tar -xz -C $tmp_dir
+	mv $tmp_dir/keymapp $HOME/.local/bin
+	mkdir -p $HOME/.local/share/icons/hicolor/scalable/apps
+	mv $tmp_dir/icon.png $HOME/.local/share/icons/hicolor/scalable/apps/keymapp.png
+	stow keymapp -t $HOME
+}
+
 case $OSTYPE in
 	darwin*)
 		command -v brew || setup_homebrew
@@ -189,6 +200,9 @@ case ${1:-basic} in
 		;;
 	ssh)
 		setup_ssh
+		;;
+	keymapp)
+		setup_keymapp
 		;;
 	basic)
 		setup_zsh
