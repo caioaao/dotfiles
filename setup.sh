@@ -157,6 +157,13 @@ function setup_keymapp {
 	stow keymapp -t $HOME
 }
 
+function setup_rust {
+	rust_version=1.77.2
+	asdf plugin-add rust https://github.com/asdf-community/asdf-rust.git
+	asdf install rust ${rust_version}
+	asdf global rust ${rust_version}
+}
+
 case $OSTYPE in
 	darwin*)
 		command -v brew || setup_homebrew
@@ -199,6 +206,9 @@ case ${1:-basic} in
 		;;
 	docker)
 		setup_docker
+		;;
+	rust)
+		setup_rust
 		;;
 	ssh)
 		setup_ssh
