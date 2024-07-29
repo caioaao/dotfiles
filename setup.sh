@@ -84,6 +84,8 @@ function setup_tmux {
 
 function setup_nvim {
 	install_pkg neovim ripgrep
+	# install vscode langservers for html LSP
+	sudo npm i -g vscode-langservers-extracted
 	stow nvim -t $HOME
 }
 
