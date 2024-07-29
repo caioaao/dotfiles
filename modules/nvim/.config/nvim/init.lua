@@ -592,6 +592,7 @@ require("lazy").setup({
 				tsserver = {},
 				elixirls = {},
 				terraformls = {},
+				html = {},
 				--
 
 				lua_ls = {
