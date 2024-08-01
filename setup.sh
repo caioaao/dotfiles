@@ -86,7 +86,7 @@ function setup_tmux {
 function setup_nvim {
 	install_pkg neovim ripgrep
 	# install vscode langservers for html LSP
-	sudo npm i -g vscode-langservers-extracted
+	npm i -g vscode-langservers-extracted
 	stow nvim -t $HOME
 }
 
@@ -165,6 +165,15 @@ function setup_rust {
 	asdf global rust ${rust_version}
 }
 
+function setup_nodejs {
+	local global_version
+	global_version=20.16.0
+
+	asdf plugin add nodejs https://github.com/asdf-vm/asdf-nodejs.git
+	asdf install nodejs $global_version
+	asdf global nodejs $global_version
+}
+
 case $OSTYPE in
 	darwin*)
 		command -v brew || setup_homebrew
@@ -207,6 +216,9 @@ case ${1:-basic} in
 		;;
 	docker)
 		setup_docker
+		;;
+	nodejs)
+		setup_nodejs
 		;;
 	rust)
 		setup_rust
