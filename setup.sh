@@ -73,6 +73,7 @@ function setup_docker {
 
 function setup_asdf {
 	rm -rf $HOME/.local/asdf || true
+	rm -rf $HOME/.asdf || true
 	git clone https://github.com/asdf-vm/asdf.git $HOME/.local/asdf --branch v0.14.0
 	stow asdf -t $HOME
 }

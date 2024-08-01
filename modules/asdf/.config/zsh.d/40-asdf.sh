@@ -1,2 +1,4 @@
-. $HOME/.local/asdf/asdf.sh
-. $HOME/.local/asdf/completions/asdf.bash
+export ASDF_DIR=$HOME/.local/asdf
+
+. $ASDF_DIR/asdf.sh
+. $ASDF_DIR/completions/asdf.bash
