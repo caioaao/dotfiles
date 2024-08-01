@@ -112,8 +112,6 @@ function setup_elixir {
 			echo "Unknown OS - can't install Erlang/Elixir dependencies"
 	esac
 
-	. $HOME/.asdf/asdf.sh
-
 	asdf plugin-add erlang https://github.com/asdf-vm/asdf-erlang.git || true
 	asdf install erlang ${erlang_version}
 	asdf global erlang ${erlang_version}
