@@ -172,6 +172,11 @@ function setup_nodejs {
 	asdf global nodejs $global_version
 }
 
+function setup_ffmpeg {
+	install_pkg ffmpeg
+	stow ffmpeg -t $HOME
+}
+
 case $OSTYPE in
 	darwin*)
 		command -v brew || setup_homebrew
@@ -217,6 +222,9 @@ case ${1:-basic} in
 		;;
 	nodejs)
 		setup_nodejs
+		;;
+	ffmpeg)
+		setup_ffmpeg
 		;;
 	rust)
 		setup_rust
