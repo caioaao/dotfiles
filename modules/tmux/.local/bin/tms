@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+function fuzzyfind {
+	local path=`find $CAIOAAO_REPS_PATH -mindepth 2 -maxdepth 2 -type d | fzf`
+
+	echo ${path#"$CAIOAAO_REPS_PATH/"}
+}
+
+selected="${1:-`fuzzyfind`}"
+
+tmux has-session -t $selected || {
+	tmux new -d -c $CAIOAAO_REPS_PATH/$selected -s $selected 
+}
+
+if [ -z ${TMUX:-} ]; then
+	tmux attach -t $selected
+else
+	tmux switch-client -t $selected
+fi
+
+exit

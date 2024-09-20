@@ -1,4 +1,4 @@
-REPS_PATH=~/reps
+export CAIOAAO_REPS_PATH=~/reps
 
 export PATH=$PATH:$HOME/.local/bin
 export MY_ZSH_CONFIG=$HOME/.config/zsh.d
