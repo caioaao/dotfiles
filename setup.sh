@@ -15,9 +15,9 @@ function backup {
 
 function install_pkg {
 	if command -v dnf; then
-		sudo dnf install $1
+		sudo dnf install $@
 	elif command -v brew; then
-		brew install $1
+		brew install $@
 	else
 		echo "could not find package manager to install $1"
 		exit 1
