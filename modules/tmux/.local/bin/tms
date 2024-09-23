@@ -2,13 +2,24 @@
 
 set -euo pipefail
 
-function fuzzyfind {
+function fzf_project {
 	local path=`find $CAIOAAO_REPS_PATH -mindepth 2 -maxdepth 2 -type d | fzf`
 
 	echo ${path#"$CAIOAAO_REPS_PATH/"}
 }
 
-selected="${1:-`fuzzyfind`}"
+function fzf_session {
+	tmux list-sessions | fzf | cut -d\: -f 1
+}
+
+case "${1:-}" in
+    --sessions)
+        selected="${2:-`fzf_session`}"
+        ;;
+    --projects|*)
+        selected="${2:-`fzf_project`}"
+        ;;
+esac
 
 tmux has-session -t $selected || {
 	tmux new -d -c $CAIOAAO_REPS_PATH/$selected -s $selected 
