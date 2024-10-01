@@ -84,7 +84,20 @@ function setup_tmux {
 }
 
 function setup_nvim {
-	install_pkg neovim ripgrep wget
+	install_pkg ripgrep wget
+	case $OSTYPE in 
+		linux*)
+			echo 'installing neovim'
+			pushd /tmp
+			curl -LO https://github.com/neovim/neovim/releases/latest/download/nvim-linux64.tar.gz
+			sudo rm -rf /opt/nvim
+			sudo tar -C /opt -xzf nvim-linux64.tar.gz
+			popd
+			;;
+		*) 
+			install_pkg neovim
+			;;
+	esac
 	# install vscode langservers for html LSP
 	npm i -g vscode-langservers-extracted
 	stow nvim -t $HOME
