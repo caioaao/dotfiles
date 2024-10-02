@@ -13,11 +13,11 @@ function fzf_session {
 }
 
 case "${1:-}" in
-    --sessions)
-        selected="${2:-`fzf_session`}"
-        ;;
-    --projects|*)
+    --new)
         selected="${2:-`fzf_project`}"
+        ;;
+    --sessions|*)
+        selected="${2:-`fzf_session`}"
         ;;
 esac
 
