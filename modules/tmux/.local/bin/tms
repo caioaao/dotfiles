@@ -9,7 +9,7 @@ function fzf_project {
 }
 
 function fzf_session {
-	tmux list-sessions -F '#{session_last_attached} #{session_name}' | sort -rn | cut -d' ' -f2- | fzf
+	tmux list-sessions -F '#{session_attached} #{session_last_attached} #{session_name}' | grep '^0 ' | sort -rn | cut -d' ' -f3- | fzf
 }
 
 case "${1:-}" in
