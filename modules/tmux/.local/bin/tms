@@ -22,7 +22,9 @@ case "${1:-}" in
 esac
 
 tmux has-session -t $selected || {
-	tmux new -d -c $CAIOAAO_REPS_PATH/$selected -s $selected 
+	tmux new -d -c $CAIOAAO_REPS_PATH/$selected -s $selected nvim
+	tmux new-window
+	tmux select-window -t 0
 }
 
 if [ -z ${TMUX:-} ]; then
