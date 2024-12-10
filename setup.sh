@@ -71,6 +71,45 @@ function setup_docker {
 	
 }
 
+function setup_zig {
+	case $OSTYPE in
+		linux*)
+			pushd /tmp
+			curl -LO https://ziglang.org/download/0.13.0/zig-linux-x86_64-0.13.0.tar.xz
+			sudo rm -rf /opt/zig
+			sudo tar -C /opt -xf zig-linux-x86_64-0.13.0.tar.xz
+			echo 'PATH=/opt/zig-linux-x86_64-0.13.0:$PATH' > ~/.config/zsh.d/10-zig.sh
+			;;
+		darwin*)
+			echo "TODO"
+			exit 1
+			;;
+	esac
+
+}
+
+function setup_ghostty {
+	which zig || setup_zig
+	case $OSTYPE in
+		linux*)
+			repo_dir=$HOME/reps/mitchellh/ghostty
+			mkdir -p $repo_dir
+			# ghostty is private, so we need to setup github auth before
+			git clone git@github.com:mitchellh/ghostty.git $repo_dir || true
+			pushd $repo_dir
+			zig build -p $HOME/.local -Doptimize=ReleaseFast
+			# remove desktop entry in favor of our own
+			rm -f $HOME/.local/share/applications/com.mitchellh.ghostty.desktop
+			popd
+			stow ghostty_linux -t $HOME
+			;;
+		darwin*)
+			echo "TODO"
+			exit 1
+			;;
+	esac
+}
+
 function setup_asdf {
 	rm -rf $HOME/.local/asdf || true
 	rm -rf $HOME/.asdf || true
@@ -233,6 +272,9 @@ case ${1:-basic} in
 	docker)
 		setup_docker
 		;;
+	ghostty)
+		setup_ghostty
+		;;
 	nodejs)
 		setup_nodejs
 		;;
@@ -247,6 +289,9 @@ case ${1:-basic} in
 		;;
 	keymapp)
 		setup_keymapp
+		;;
+	zig)
+		setup_zig
 		;;
 	basic)
 		setup_zsh
