@@ -21,6 +21,11 @@ case "${1:-}" in
         ;;
 esac
 
+[[ -z $selected  ]] && {
+	echo 'No project selected. Exiting'
+	exit 1
+}
+
 tmux has-session -t $selected || {
 	path=$CAIOAAO_REPS_PATH/$selected
 	tmux new -d -c $path -s $selected nvim
