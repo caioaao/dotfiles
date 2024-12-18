@@ -74,6 +74,9 @@ vim.opt.foldlevelstart = 99
 vim.opt.hlsearch = true
 vim.keymap.set("n", "<Esc>", "<cmd>nohlsearch<CR>")
 
+-- Make jumps behave more intuitively
+vim.opt.jumpoptions = "stack"
+
 -- [[ Basic Keymaps ]]
 --  See `:help vim.keymap.set()`
 
