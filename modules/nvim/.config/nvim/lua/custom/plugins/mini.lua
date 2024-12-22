@@ -16,5 +16,9 @@ return {
 		-- - sd'   - [S]urround [D]elete [']quotes
 		-- - sr)'  - [S]urround [R]eplace [)] [']
 		require("mini.surround").setup()
+
+		-- File navigation
+		require("mini.files").setup()
+		vim.keymap.set("n", "-", MiniFiles.open, { desc = "Open parent directory" })
 	end,
 }
