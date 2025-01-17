@@ -74,17 +74,22 @@ function setup_docker {
 function setup_zig {
 	case $OSTYPE in
 		linux*)
-			pushd /tmp
-			curl -LO https://ziglang.org/download/0.13.0/zig-linux-x86_64-0.13.0.tar.xz
-			sudo rm -rf /opt/zig
-			sudo tar -C /opt -xf zig-linux-x86_64-0.13.0.tar.xz
-			echo 'PATH=/opt/zig-linux-x86_64-0.13.0:$PATH' > ~/.config/zsh.d/10-zig.sh
+			platform=linux-x86_64
 			;;
 		darwin*)
-			echo "TODO"
+			platform=macos-aarch64
+			;;
+		*)
+			echo "TODO ${OSTYPE}"
 			exit 1
 			;;
 	esac
+
+	pushd /tmp
+	curl -LO https://ziglang.org/download/0.13.0/zig-${platform}-0.13.0.tar.xz
+	sudo rm -rf /opt/zig
+	sudo tar -C /opt -xf zig-${platform}-0.13.0.tar.xz
+	echo "PATH=/opt/zig-${platform}-0.13.0:\$PATH" > ~/.config/zsh.d/10-zig.sh
 
 }
 
