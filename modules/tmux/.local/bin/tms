@@ -21,21 +21,23 @@ case "${1:-}" in
         ;;
 esac
 
-[[ -z $selected  ]] && {
+[[ -z "$selected"  ]] && {
 	echo 'No project selected. Exiting'
 	exit 1
 }
 
-tmux has-session -t $selected || {
+session_name=${selected//\./__}
+
+tmux has-session -t "$session_name" || {
 	path=$CAIOAAO_REPS_PATH/$selected
-	tmux new -d -c $path -s $selected nvim
-	tmux new-window -c $path -d
+	tmux new -d -c "$path" -s "$session_name" nvim
+	tmux new-window -c "$path" -d
 }
 
 if [ -z ${TMUX:-} ]; then
-	tmux attach -t $selected
+	tmux attach -t "$session_name"
 else
-	tmux switch-client -t $selected
+	tmux switch-client -t "$session_name"
 fi
 
 exit
