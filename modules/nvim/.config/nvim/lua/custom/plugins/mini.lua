@@ -19,6 +19,8 @@ return {
 
 		-- File navigation
 		require("mini.files").setup()
-		vim.keymap.set("n", "-", MiniFiles.open, { desc = "Open parent directory" })
+		vim.keymap.set("n", "-", function()
+			MiniFiles.open(vim.api.nvim_buf_get_name(0))
+		end, { desc = "Open parent directory" })
 	end,
 }
