@@ -148,8 +148,6 @@ return {
 			elixirls = {},
 			terraformls = {},
 			html = {},
-			--
-
 			lua_ls = {
 				-- cmd = {...},
 				-- filetypes = { ...},
@@ -164,6 +162,7 @@ return {
 					},
 				},
 			},
+			zls = {},
 		}
 
 		-- Ensure the servers and tools above are installed
