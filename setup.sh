@@ -153,8 +153,8 @@ function setup_direnv {
 }
 
 function setup_elixir {
-	erlang_version=27.0
-	elixir_version=17.2-otp-27
+	erlang_version=27.2
+	elixir_version=1.18.2
 
 	# see https://github.com/asdf-vm/asdf-erlang?tab=readme-ov-file#before-asdf-install
 	case $OSTYPE in
