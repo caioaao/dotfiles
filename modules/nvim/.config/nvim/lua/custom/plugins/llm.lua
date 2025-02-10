@@ -1,10 +1,25 @@
+local provider = os.getenv("LLM_PROVIDER") or "claude"
+
 return {
 	"yetone/avante.nvim",
 	event = "VeryLazy",
 	lazy = false,
 	version = false, -- set this if you want to always pull the latest change
 	opts = {
-		-- add any opts here
+		provider = provider,
+		auto_suggestions_provider = provider,
+		openai = {
+			endpoint = "https://api.openai.com/v1",
+			model = "gpt-4o-mini", -- your desired model (or use gpt-4o, etc.)
+			timeout = 30000, -- timeout in milliseconds
+			temperature = 0, -- adjust if needed
+			max_tokens = 4096,
+		},
+		windows = {
+			ask = {
+				floating = true,
+			},
+		},
 	},
 	-- if you want to build from source then do `make BUILD_FROM_SOURCE=true`
 	build = "make",
