@@ -95,6 +95,7 @@ function setup_zig {
 
 function setup_ghostty {
 	which zig || setup_zig
+	stow ghostty -t $HOME
 	case $OSTYPE in
 		linux*)
 			repo_dir=$HOME/reps/mitchellh/ghostty
