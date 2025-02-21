@@ -123,6 +123,11 @@ function setup_asdf {
 	stow asdf -t $HOME
 }
 
+function setup_mise {
+	curl https://mise.run | sh
+	stow mise -t $HOME 
+}
+
 function setup_tmux {
 	install_pkg tmux
 	stow tmux -t $HOME
@@ -299,10 +304,13 @@ case ${1:-basic} in
 	zig)
 		setup_zig
 		;;
+	mise)
+		setup_mise
+		;;
 	basic)
 		setup_zsh
 		setup_ssh
-		setup_asdf
+		setup_mise
 		setup_tmux
 		setup_nvim
 		setup_direnv
