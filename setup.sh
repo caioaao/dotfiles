@@ -316,4 +316,7 @@ case ${1:-basic} in
 		setup_direnv
 		setup_docker
 		;;
+	*)
+		echo "Command not found"
+		exit 1
 esac
