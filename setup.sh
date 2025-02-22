@@ -175,13 +175,8 @@ function setup_elixir {
 			echo "Unknown OS - can't install Erlang/Elixir dependencies"
 	esac
 
-	asdf plugin-add erlang https://github.com/asdf-vm/asdf-erlang.git || true
-	asdf install erlang ${erlang_version}
-	asdf global erlang ${erlang_version}
-
-	asdf plugin-add elixir || true
-	asdf install elixir ${elixir_version}
-	asdf global elixir ${elixir_version}
+	mise use --global erlang@${erlang_version}
+	mise use --global elixir@${elixir_version}
 }
 
 function setup_elixir_ls {
@@ -221,18 +216,14 @@ function setup_keymapp {
 
 function setup_rust {
 	rust_version=1.77.2
-	asdf plugin-add rust https://github.com/asdf-community/asdf-rust.git
-	asdf install rust ${rust_version}
-	asdf global rust ${rust_version}
+	mise use --global rust@${rust_version}
 }
 
 function setup_nodejs {
 	local global_version
-	global_version=20.16.0
+	global_version=23.8.0
 
-	asdf plugin add nodejs https://github.com/asdf-vm/asdf-nodejs.git
-	asdf install nodejs $global_version
-	asdf global nodejs $global_version
+	mise use --global nodejs@$global_version
 }
 
 function setup_ffmpeg {
