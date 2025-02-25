@@ -1,14 +1,50 @@
 [user]
-name="Caio Oliveira"
-email=caioaao@gmail.com
-signingKey=DD90B67479EFA704
+	name="Caio Oliveira"
+	email=caioaao@gmail.com
+	signingKey=DD90B67479EFA704
 
 [core]
-editor=nvim
+	editor=nvim
 
 [commit]
 # gpgsign=true
 
 [init]
-defaultBranch=main
+	defaultBranch=main
 
+# Some stuff I stole from https://blog.gitbutler.com/how-git-core-devs-configure-git/
+
+[column]
+	ui = auto
+
+[branch]
+	sort = -committerdate
+
+[tag]
+	sort = version:refname
+
+[diff]
+	algorithm = histogram
+	colorMoved = plain
+	mnemonicPrefix = true
+	renames = true
+
+[push]
+	default = simple
+	autoSetupRemote = true
+	followTags = true
+
+[fetch]
+	prune = true
+	pruneTags = true
+	all = true
+
+[help]
+        autocorrect = prompt
+
+[commit]
+        verbose = true
+
+[rebase]
+        autoSquash = true
+        autoStash = true
