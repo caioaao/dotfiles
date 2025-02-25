@@ -180,7 +180,7 @@ function setup_elixir {
 }
 
 function setup_elixir_ls {
-	elixir_ls_version=0.22.1
+	elixir_ls_version=0.26.4
 
 	rm -rf ~/.local/elixir-ls || true
 	mkdir -p ~/.local/elixir-ls
