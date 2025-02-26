@@ -177,6 +177,8 @@ function setup_elixir {
 
 	mise use --global erlang@${erlang_version}
 	mise use --global elixir@${elixir_version}
+
+	stow elixir -t $HOME
 }
 
 function setup_elixir_ls {
