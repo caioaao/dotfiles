@@ -2,10 +2,15 @@
 
 set -euo pipefail
 
+function select_path {
+	local path=`realpath $1`
+	echo ${path#"$CAIOAAO_REPS_PATH/"}
+}
+
 function fzf_project {
 	local path=`find $CAIOAAO_REPS_PATH -mindepth 2 -maxdepth 2 -type d | fzf`
 
-	echo ${path#"$CAIOAAO_REPS_PATH/"}
+	select_path $path
 }
 
 function fzf_session {
@@ -17,13 +22,17 @@ function fzf_session {
 	fi
 }
 
+
 case "${1:-}" in
-    --new)
-        selected="${2:-`fzf_project`}"
-        ;;
-    --sessions|*)
-        selected="${2:-`fzf_session`}"
-        ;;
+	--new)
+		selected="${2:-`fzf_project`}"
+		;;
+	--sessions|'')
+		selected="${2:-`fzf_session`}"
+		;;
+	*)
+		selected=`select_path "$1"`
+		;;
 esac
 
 [[ -z "$selected"  ]] && {
