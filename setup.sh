@@ -129,7 +129,18 @@ function setup_mise {
 }
 
 function setup_tmux {
-	install_pkg tmux
+	install_pkg pkg-config
+	install_pkg utf8proc
+
+	rm -rf $HOME/.local/tmux
+	git clone https://github.com/tmux/tmux.git $HOME/.local/tmux
+	pushd $HOME/.local/tmux
+	sh autogen.sh
+	./configure --enable-utf8proc
+	make
+	sudo make install
+	popd
+
 	stow tmux -t $HOME
 }
 
