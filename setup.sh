@@ -169,7 +169,7 @@ function setup_tmux_tpm {
 }
 
 function setup_nvim {
-	install_pkg ripgrep wget
+	install_pkg ripgrep wget fd
 	case $OSTYPE in 
 		linux*)
 			echo 'installing neovim'
