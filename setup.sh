@@ -156,13 +156,16 @@ function setup_tmux {
 	rm -rf /tmp/tmux
 
 	stow tmux -t $HOME
+}
 
-	local plugins_dir=$XDG_DATA_HOME/tmux/plugins
+function setup_tmux_tpm {
+	rm -rf $XDG_DATA_HOME/tmux/plugins || true
+	mkdir -p $XDG_DATA_HOME/tmux/plugins
 
-	rm -rf $plugins_dir || true
-	mkdir -p $plugins_dir 
+	git clone https://github.com/tmux-plugins/tpm $XDG_DATA_HOME/tmux/plugins/tpm
 
-	git clone https://github.com/tmux-plugins/tpm $plugins_dir/tpm && $plugins_dir/tpm/bin/install_plugins
+	$XDG_DATA_HOME/tmux/plugins/tpm/bin/install_plugins
+	stow tmux_tpm -t $HOME
 }
 
 function setup_nvim {
@@ -266,7 +269,7 @@ function setup_ffmpeg {
 }
 
 
-[[ -z $XDG_DATA_HOME ]] && setup_xdg_base_dirs
+[[ -d $XDG_DATA_HOME ]] || setup_xdg_base_dirs
 
 case $OSTYPE in
 	darwin*)
@@ -297,6 +300,10 @@ case ${1:-basic} in
 		;;
 	tmux)
 		setup_tmux
+		setup_tmux_tpm
+		;;
+	tmux_tpm)
+		setup_tmux_tpm
 		;;
 	nvim)
 		setup_nvim
@@ -337,9 +344,10 @@ case ${1:-basic} in
 		;;
 	basic)
 		setup_zsh
-		setup_ssh
+	#	setup_ssh
 		setup_mise
 		setup_tmux
+		setup_tmux_tpm
 		setup_nvim
 		setup_direnv
 		setup_docker

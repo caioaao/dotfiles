@@ -11,8 +11,7 @@ export MY_ZSH_CONFIG=$XDG_CONFIG_HOME/zsh.d
 
 mkdir -p $MY_ZSH_CONFIG
 
-export ZSH=$HOME/.local/oh-my-zsh
-
+export ZSH=$XDG_DATA_HOME/oh-my-zsh
 
 plugins=(
 	common-aliases
