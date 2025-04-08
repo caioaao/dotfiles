@@ -24,18 +24,32 @@ function install_pkg {
 	fi
 }
 
+function setup_xdg_base_dirs {
+	export XDG_DATA_HOME=$HOME/.local/share
+	export XDG_STATE_HOME=$HOME/.local/state
+	export XDG_CONFIG_HOME=$HOME/.config
+	export XDG_CACHE_HOME=$HOME/.cache
+
+	mkdir -p $XDG_DATA_HOME
+	mkdir -p $XDG_STATE_HOME
+	mkdir -p $XDG_CONFIG_HOME
+	mkdir -p $XDG_CACHE_HOME
+
+	mkdir -p $HOME/.local/bin
+}
+
 function setup_zsh {
 	echo 'Installing oh-my-zsh'
-	rm -rf $HOME/.local/oh-my-zsh || true
-	git clone https://github.com/ohmyzsh/ohmyzsh.git $HOME/.local/oh-my-zsh
+	rm -rf $XDG_DATA_HOME/oh-my-zsh || true
+	git clone https://github.com/ohmyzsh/ohmyzsh.git $XDG_DATA_HOME/oh-my-zsh
 
 	echo 'installing zoxide'
 	curl -sSfL https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | sh
 
 	echo 'installing fzf'
-	rm -rf $HOME/.local/fzf || true
-	git clone --depth 1 https://github.com/junegunn/fzf.git $HOME/.local/fzf
-	$HOME/.local/fzf/install --xdg --key-bindings --completion --no-update-rc
+	rm -rf $XDG_DATA_HOME/fzf || true
+	git clone --depth 1 https://github.com/junegunn/fzf.git $XDG_DATA_HOME/fzf
+	$XDG_DATA_HOME/fzf/install --xdg --key-bindings --completion --no-update-rc
 
 	stow zsh -t $HOME
 }
@@ -105,7 +119,7 @@ function setup_ghostty {
 			pushd $repo_dir
 			zig build -p $HOME/.local -Doptimize=ReleaseFast
 			# remove desktop entry in favor of our own
-			rm -f $HOME/.local/share/applications/com.mitchellh.ghostty.desktop
+			rm -f $XDG_DATA_HOME/applications/com.mitchellh.ghostty.desktop
 			popd
 			stow ghostty_linux -t $HOME
 			;;
@@ -117,9 +131,8 @@ function setup_ghostty {
 }
 
 function setup_asdf {
-	rm -rf $HOME/.local/asdf || true
-	rm -rf $HOME/.asdf || true
-	git clone https://github.com/asdf-vm/asdf.git $HOME/.local/asdf --branch v0.14.0
+	rm -rf $XDG_DATA_HOME/.asdf || true
+	git clone https://github.com/asdf-vm/asdf.git $XDG_DATA_HOME/asdf --branch v0.14.0
 	stow asdf -t $HOME
 }
 
@@ -132,16 +145,24 @@ function setup_tmux {
 	install_pkg pkg-config
 	install_pkg utf8proc
 
-	rm -rf $HOME/.local/tmux
-	git clone https://github.com/tmux/tmux.git $HOME/.local/tmux
-	pushd $HOME/.local/tmux
+	git clone https://github.com/tmux/tmux.git /tmp/tmux
+
+	pushd /tmp/tmux
 	sh autogen.sh
 	./configure --enable-utf8proc
 	make
 	sudo make install
 	popd
+	rm -rf /tmp/tmux
 
 	stow tmux -t $HOME
+
+	local plugins_dir=$XDG_DATA_HOME/tmux/plugins
+
+	rm -rf $plugins_dir || true
+	mkdir -p $plugins_dir 
+
+	git clone https://github.com/tmux-plugins/tpm $plugins_dir/tpm && $plugins_dir/tpm/bin/install_plugins
 }
 
 function setup_nvim {
@@ -193,11 +214,11 @@ function setup_elixir {
 }
 
 function setup_elixir_ls {
-	elixir_ls_version=0.26.4
+	elixir_ls_version=0.27.2
 
-	rm -rf ~/.local/elixir-ls || true
-	mkdir -p ~/.local/elixir-ls
-	pushd  ~/.local/elixir-ls
+	rm -rf $XDG_DATA_HOME/elixir-ls || true
+	mkdir -p $XDG_DATA_HOME/elixir-ls
+	pushd  $XDG_DATA_HOME/elixir-ls
 	curl -fsSL https://github.com/elixir-lsp/elixir-ls/releases/download/v${elixir_ls_version}/elixir-ls-v${elixir_ls_version}.zip > /tmp/elixir-ls.zip
 	unzip /tmp/elixir-ls.zip
 	chmod +x language_server.sh launch.sh
@@ -222,8 +243,8 @@ function setup_keymapp {
 
 	curl -fsSL https://oryx.nyc3.cdn.digitaloceanspaces.com/keymapp/keymapp-latest.tar.gz | tar -xz -C $tmp_dir
 	mv $tmp_dir/keymapp $HOME/.local/bin
-	mkdir -p $HOME/.local/share/icons/hicolor/scalable/apps
-	mv $tmp_dir/icon.png $HOME/.local/share/icons/hicolor/scalable/apps/keymapp.png
+	mkdir -p $XDG_DATA_HOME/icons/hicolor/scalable/apps
+	mv $tmp_dir/icon.png $XDG_DATA_HOME/icons/hicolor/scalable/apps/keymapp.png
 	stow keymapp -t $HOME
 }
 
@@ -243,6 +264,9 @@ function setup_ffmpeg {
 	install_pkg ffmpeg
 	stow ffmpeg -t $HOME
 }
+
+
+[[ -z $XDG_DATA_HOME ]] && setup_xdg_base_dirs
 
 case $OSTYPE in
 	darwin*)
