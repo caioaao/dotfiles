@@ -23,6 +23,20 @@ return {
 			end,
 			desc = "Run All Test Files",
 		},
+		{
+			"<leader>to",
+			function()
+				require("neotest").output.open()
+			end,
+			desc = "[O]pen test output",
+		},
+		{
+			"<leader>ti",
+			function()
+				require("neotest").summary.toggle()
+			end,
+			desc = "Toggle summary",
+		},
 	},
 	config = function()
 		require("neotest").setup({
