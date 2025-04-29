@@ -50,13 +50,14 @@ return {
 	-- if you want to build from source then do `make BUILD_FROM_SOURCE=true`
 	build = "make",
 	dependencies = {
+		"nvim-treesitter/nvim-treesitter",
 		"stevearc/dressing.nvim",
 		"nvim-lua/plenary.nvim",
 		"MunifTanjim/nui.nvim",
 		--- The below dependencies are optional,
 		"nvim-telescope/telescope.nvim", -- for file_selector provider telescope
 		"hrsh7th/nvim-cmp", -- autocompletion for avante commands and mentions
-		"nvim-tree/nvim-web-devicons", -- or echasnovski/mini.icons
+		"echasnovski/mini.icons", -- or echasnovski/mini.icons
 		"folke/which-key.nvim",
 		{
 			-- support for image pasting
@@ -88,17 +89,13 @@ return {
 		require("avante.init").setup({
 			provider = provider,
 			auto_suggestions_provider = provider,
+			mode = "agentic",
 			openai = {
 				endpoint = "https://api.openai.com/v1",
 				model = "gpt-4o-mini", -- your desired model (or use gpt-4o, etc.)
 				timeout = 30000, -- timeout in milliseconds
 				temperature = 0, -- adjust if needed
 				max_tokens = 4096,
-			},
-			windows = {
-				ask = {
-					floating = true,
-				},
 			},
 			behaviour = {
 				-- no integration with cmp, which I didn't like and gets in the way
