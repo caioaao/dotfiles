@@ -124,7 +124,7 @@ function setup_ghostty {
 			stow ghostty_linux -t $HOME
 			;;
 		darwin*)
-			echo "TODO"
+			echo "TODO - download the binary instead"
 			exit 1
 			;;
 	esac
