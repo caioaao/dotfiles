@@ -130,6 +130,12 @@ function setup_ghostty {
 	esac
 }
 
+# A fancy shell prompt. starship.rs
+function setup_starship {
+	curl -sS https://starship.rs/install.sh | sh
+	stow starship -t $HOME
+}
+
 function setup_asdf {
 	rm -rf $XDG_DATA_HOME/.asdf || true
 	git clone https://github.com/asdf-vm/asdf.git $XDG_DATA_HOME/asdf --branch v0.14.0
@@ -342,7 +348,10 @@ case ${1:-basic} in
 	mise)
 		setup_mise
 		;;
-	basic)
+	starship)
+		setup_starship
+		;;
+	basic
 		setup_zsh
 	#	setup_ssh
 		setup_mise
