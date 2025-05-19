@@ -1,2 +1,9 @@
 theme = catppuccin-latte
 macos-option-as-alt = true
+
+cursor-style = block
+cursor-style-blink = false
+shell-integration-features = no-cursor
+
+# not enough contrast on the cursor, and I can't figure out how to make it work, so let's just flip the fg and bg
+cursor-invert-fg-bg = true
