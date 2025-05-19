@@ -18,8 +18,6 @@ plugins=(
 	git
 )
 
-# ZSH_THEME="gallois"
-
 for f in `find -L $MY_ZSH_CONFIG/ -type f | sort`; do
 	source $f
 done
