@@ -351,7 +351,7 @@ case ${1:-basic} in
 	starship)
 		setup_starship
 		;;
-	basic
+	basic)
 		setup_zsh
 	#	setup_ssh
 		setup_mise
