@@ -240,24 +240,11 @@ function setup_git {
 	stow git -t $HOME
 }
 
-function setup_git_stack {
-	local download_url
-	local tmp_dir
+# https://abhinav.github.io/git-spice
+function setup_git_spice {
+	mise use --global 'ubi:abhinav/git-spice[exe=gs]'
+	stow git_spice -t $HOME
 
-	case $OSTYPE in
-		darwin*)
-			download_url=https://github.com/gitext-rs/git-stack/releases/download/v0.10.18/git-stack-v0.10.18-x86_64-apple-darwin.tar.gz
-			;;
-		linux*)
-			download_url=https://github.com/gitext-rs/git-stack/releases/download/v0.10.18/git-stack-v0.10.18-x86_64-unknown-linux-musl.tar.gz
-	esac
-
-	tmp_dir=`mktemp -d` 
-	curl -fsSL $download_url | tar -xz -C $tmp_dir
-
-	sudo rm -rf /opt/git-stack
-	sudo mv $tmp_dir /opt/git-stack
-	sudo ln -sf /opt/git-stack/git-stack  /usr/local/bin/git-stack
 }
 
 function setup_homebrew {
@@ -321,8 +308,8 @@ case ${1:-basic} in
 	git)
 		setup_git
 		;;
-	git_stack)
-		setup_git_stack
+	git_spice)
+		setup_git_spice
 		;;
 	homebrew)
 		setup_homebrew
