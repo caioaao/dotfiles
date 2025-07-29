@@ -12,6 +12,15 @@
 [init]
 	defaultBranch=main
 
+[spice "branchCreate"]
+        commit = false
+
+[spice "submit"]
+	draft = true
+	navigationComment = multiple
+	publish = true
+	web = true
+
 # Some stuff I stole from https://blog.gitbutler.com/how-git-core-devs-configure-git/
 
 [column]
@@ -48,3 +57,4 @@
 [rebase]
         autoSquash = true
         autoStash = true
+
