@@ -222,18 +222,6 @@ function setup_elixir {
 	stow elixir -t $HOME
 }
 
-function setup_elixir_ls {
-	elixir_ls_version=0.27.2
-
-	rm -rf $XDG_DATA_HOME/elixir-ls || true
-	mkdir -p $XDG_DATA_HOME/elixir-ls
-	pushd  $XDG_DATA_HOME/elixir-ls
-	curl -fsSL https://github.com/elixir-lsp/elixir-ls/releases/download/v${elixir_ls_version}/elixir-ls-v${elixir_ls_version}.zip > /tmp/elixir-ls.zip
-	unzip /tmp/elixir-ls.zip
-	chmod +x language_server.sh launch.sh
-	popd
-}
-
 function setup_git {
 	install_pkg git-lfs
 
@@ -326,10 +314,6 @@ case ${1:-basic} in
 		;;
 	elixir)
 		setup_elixir
-		setup_elixir_ls
-		;;
-	elixir_ls)
-		setup_elixir_ls
 		;;
 	docker)
 		setup_docker
