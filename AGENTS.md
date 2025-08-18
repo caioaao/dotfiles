@@ -1,0 +1,7 @@
+- **Important** This is my personal configuration. It doesn't have to be reusable, just clear and concise so I can set up an environment as quickly as possible
+- To manage configuration, I use [GNU Stow](https://www.gnu.org/software/stow/). 
+- Stow modules use `$HOME` as target, meaning files under a module must be arranged in a way that aligns with `$HOME`
+- Files under `modules/` are installed by running `gnu stow <module> -t $HOME`
+- Follow [XDG Base Directory](https://wiki.archlinux.org/title/XDG_Base_Directory) conventions
+- **Important:** Prefer simplicity and convenience
+- The main entrypoint is the `setup.sh` script
