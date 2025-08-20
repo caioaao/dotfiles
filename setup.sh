@@ -124,8 +124,9 @@ function setup_ghostty {
 			stow ghostty_linux -t $HOME
 			;;
 		darwin*)
-			echo "TODO - download the binary instead"
-			exit 1
+			pushd /tmp
+			curl -fsSLO https://github.com/ghostty-org/ghostty/releases/download/tip/Ghostty.dmg
+			open /tmp/Ghostty.dmg
 			;;
 	esac
 }
