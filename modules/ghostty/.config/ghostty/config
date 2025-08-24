@@ -4,6 +4,8 @@ macos-option-as-alt = true
 cursor-style = block
 cursor-style-blink = false
 shell-integration-features = no-cursor
+macos-titlebar-style = transparent
+maximize = true
 
 # Modified catppuccin latte
 # I couldn't figure out how to override some colors, so I had to copy the theme here and change the values in-line
