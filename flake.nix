@@ -19,7 +19,12 @@
       sharedModule = { pkgs, ... }: {
         nixpkgs.config.allowUnfree = true;
 
-        programs.zsh.enable = true;
+        programs.zsh = {
+          enable = true;
+          enableCompletion = true;
+          autosuggestions.enable = true;
+          syntaxHighlighting.enable = true;
+        };
 
         programs.tmux = {
           enable = true;
