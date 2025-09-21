@@ -93,17 +93,20 @@
           '';
         };
 
+        programs.neovim = {
+          enable = true;
+          defaultEditor = true;
+        };
+
         environment.systemPackages = with pkgs; [
           pkgs.git
           pkgs.wget
           pkgs.ripgrep
           pkgs.fd
           pkgs.fzf
-          pkgs.neovim
           pkgs.direnv
           pkgs.stow
           pkgs.just
-          pkgs.zoxide
           pkgs.oh-my-zsh
           pkgs._1password-cli
           pkgs.stdenv
