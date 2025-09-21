@@ -83,7 +83,31 @@
   environment.systemPackages = with pkgs; [
     vim
     ghostty
+    keyd
   ];
+
+  # Set up keyboard options by device
+  hardware.uinput.enable = true;        # needed by keyd
+  services.keyd = {
+    enable = true;
+
+    # Declarative keyd config (no manual file editing)
+    keyboards = {
+      default = {
+        # [ids] section — match all keyboards, but exclude the Moonlander by id
+        ids = [ "*" "-3297:1969" ];
+
+        # [main] section — swap caps and left control
+        settings.main = {
+          capslock    = "layer(control)";
+          leftcontrol = "capslock";
+        };
+
+        # If you ever need raw blocks beyond settings:
+        # extraConfig = ''' … ''';
+      };
+    };
+  };
 
   # List services that you want to enable:
 
