@@ -1,5 +1,3 @@
-[ -f "$HOME/.config/fzf/fzf.zsh" ] && source "$HOME/.config/fzf/fzf.zsh"
-
 # from https://raw.githubusercontent.com/catppuccin/fzf/refs/heads/main/themes/catppuccin-fzf-latte.sh
 export FZF_DEFAULT_OPTS=" \
 --color=bg+:#CCD0DA,bg:#EFF1F5,spinner:#DC8A78,hl:#D20F39 \
@@ -7,3 +5,9 @@ export FZF_DEFAULT_OPTS=" \
 --color=marker:#7287FD,fg+:#4C4F69,prompt:#8839EF,hl+:#D20F39 \
 --color=selected-bg:#BCC0CC \
 --color=border:#CCD0DA,label:#4C4F69"
+
+if [ -n "${commands[fzf-share]}" ]; then
+  source "$(fzf-share)/key-bindings.zsh"
+  source "$(fzf-share)/completion.zsh"
+fi
+
