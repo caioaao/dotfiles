@@ -16,6 +16,11 @@
     defaultEditor = true;
   };
 
+  programs.direnv = {
+    enable = true;
+    enableZshIntegration = true;
+  };
+
   environment.systemPackages = with pkgs; [
     pkgs.git
     pkgs.wget
