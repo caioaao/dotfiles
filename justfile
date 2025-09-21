@@ -13,6 +13,7 @@ bootstrap:
 	just stow direnv adopt=true
 	just stow nvim adopt=true
 	just stow ghostty adopt=true
+	just stow mise adopt=true
 
 stow module adopt="false": xdg-base-dirs
 	#!/usr/bin/env bash

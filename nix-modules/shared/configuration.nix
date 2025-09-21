@@ -34,5 +34,6 @@
     pkgs._1password-cli
     pkgs.stdenv
     pkgs.unzip
+    pkgs.mise
   ];
 }
