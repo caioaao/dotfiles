@@ -4,7 +4,7 @@ export XDG_CONFIG_HOME := x'${HOME}/.config'
 export XDG_CACHE_HOME := x'${HOME}/.cache'
 export USER_BIN_DIR := x'${HOME}/.local/bin'
 
-bootstrap: xdg-base-dirs
+bootstrap:
 	# make sure dir exists before calling stow so stow doesn't manage it entirely
 	mkdir -p $HOME/.ssh
 

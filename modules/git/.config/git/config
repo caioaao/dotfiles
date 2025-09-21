@@ -1,13 +1,13 @@
 [user]
 	name="Caio Oliveira"
 	email=caioaao@gmail.com
-	signingKey=DD90B67479EFA704
+	# signingKey=DD90B67479EFA704
 
 [core]
 	editor=nvim
 
 [commit]
-# gpgsign=true
+	# gpgsign=true
 
 [init]
 	defaultBranch=main
