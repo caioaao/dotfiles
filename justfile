@@ -8,6 +8,7 @@ bootstrap:
 	# make sure dir exists before calling stow so stow doesn't manage it entirely
 	mkdir -p $HOME/.ssh
 
+	just stow git adopt=true
 	just stow zsh adopt=true
 	just stow ssh adopt=true
 	just stow direnv adopt=true
