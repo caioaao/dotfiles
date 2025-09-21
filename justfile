@@ -9,6 +9,7 @@ bootstrap:
 	mkdir -p $HOME/.ssh
 
 	just stow git adopt=true
+	just stow git_spice adopt=true
 	just stow zsh adopt=true
 	just stow ssh adopt=true
 	just stow direnv adopt=true

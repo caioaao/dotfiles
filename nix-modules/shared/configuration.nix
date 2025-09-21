@@ -1,4 +1,19 @@
-{ pkgs, ... }: {
+{ pkgs, lib, ... }: 
+let 
+  # git-spice package has a test error
+  git-spice = pkgs.buildGoModule rec {
+    pname = "git-spice";
+    version = "0.16.1";
+    src = pkgs.fetchFromGitHub {
+      owner = "abhinav";
+      repo  = "git-spice";
+      rev   = "v${version}";
+      hash  = "sha256-SILcEXyUo73c8gPDDESCkm/eQIh8elM850qwJqTyO6E=";
+    };
+    vendorHash = "sha256-T6zSwQdDWYQqe8trIlhpU8dUQXtz8OGmnW5L5AVjGn8=";
+    subPackages = [ "." ];
+  };
+in {
   imports = [
     ./tmux/configuration.nix
   ];
@@ -35,5 +50,6 @@
     pkgs.stdenv
     pkgs.unzip
     pkgs.mise
+    git-spice
   ];
 }

@@ -2,4 +2,3 @@
 autoload -U +X compinit && compinit
 
 eval "$(gs shell completion zsh)"
-
