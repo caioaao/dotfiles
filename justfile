@@ -23,7 +23,7 @@ stow module adopt="false": xdg-base-dirs
 	else
 		extra=""
 	fi
-	stow ${extra} -t $HOME -d {{ justfile_directory() }}/modules {{ module }}
+	stow ${extra} -t $HOME -d {{ justfile_directory() }}/stow-modules {{ module }}
 
 xdg-base-dirs:
 	mkdir -p $XDG_DATA_HOME
