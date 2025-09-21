@@ -6,9 +6,9 @@
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
 
   # Set your user and shell
-  users.users.caio = {
-    name = "caio";
-    home = "/Users/caio";
+  users.users.caiooliveira = {
+    name = "caiooliveira";
+    home = "/Users/caiooliveira";
     shell = pkgs.zsh;
   };
 
