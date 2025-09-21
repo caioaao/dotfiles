@@ -65,4 +65,16 @@
             bind-key -T copy-mode-vi y send -X copy-pipe-and-cancel 'xclip -in -selection clipboard'
     '';
   };
+  environment.systemPackages = [
+    (pkgs.writeShellApplication {
+      name = "tms";
+      runtimeInputs = [
+        pkgs.coreutils
+        pkgs.fzf
+        pkgs.tmux
+      ];
+      text = builtins.readFile ./tms.sh; # keep your script in a file
+    })
+
+  ];
 }

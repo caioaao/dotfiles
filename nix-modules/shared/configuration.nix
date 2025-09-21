@@ -1,6 +1,6 @@
 { pkgs, ... }: {
   imports = [
-    ./tmux.nix
+    ./tmux/configuration.nix
   ];
   nixpkgs.config.allowUnfree = true;
 

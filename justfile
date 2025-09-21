@@ -12,7 +12,6 @@ bootstrap:
 	just stow ssh adopt=true
 	just stow direnv adopt=true
 	just stow nvim adopt=true
-	just stow tmux adopt=true
 	just stow ghostty adopt=true
 
 stow module adopt="false": xdg-base-dirs

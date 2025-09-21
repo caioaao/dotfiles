@@ -2,19 +2,21 @@
 
 set -euo pipefail
 
+export PROJECTS_DIR="${PROJECTS_DIR:-$HOME/reps}"
+
 function select_path {
-	local path=`realpath $1`
-	echo ${path#"$CAIOAAO_REPS_PATH/"}
+	local path
+	path="$(realpath "$1")"
+	echo "${path#"$PROJECTS_DIR/"}"
 }
 
 function fzf_project {
-	local path=`find $CAIOAAO_REPS_PATH -mindepth 2 -maxdepth 2 -type d | fzf`
-
-	select_path $path
+	select_path "$(find "${PROJECTS_DIR}" -iname .git -type d -print0 | xargs -0 dirname | fzf)"
 }
 
 function fzf_session {
-	local candidates=$(tmux list-sessions -F '#{session_attached} #{session_last_attached} #{session_name}' | grep '^0 ' | sort -rn | cut -d' ' -f3-)
+	local candidates
+	candidates=$(tmux list-sessions -F '#{session_attached} #{session_last_attached} #{session_name}' | grep '^0 ' | sort -rn | cut -d' ' -f3-)
 	if [[ -z "$candidates" ]]; then
 		fzf_project
 	else
@@ -25,13 +27,13 @@ function fzf_session {
 
 case "${1:-}" in
 	--new)
-		selected="${2:-`fzf_project`}"
+		selected="${2:-$(fzf_project)}"
 		;;
 	--sessions|'')
-		selected="${2:-`fzf_session`}"
+		selected="${2:-$(fzf_session)}"
 		;;
 	*)
-		selected=`select_path "$1"`
+		selected=$(select_path "$1")
 		;;
 esac
 
@@ -43,15 +45,13 @@ esac
 session_name=${selected//\./__}
 
 tmux has-session -t "$session_name" || {
-	path=$CAIOAAO_REPS_PATH/$selected
+	path=$PROJECTS_DIR/$selected
 	tmux new -d -c "$path" -s "$session_name" nvim
 	tmux new-window -c "$path" -d
 }
 
-if [ -z ${TMUX:-} ]; then
+if [ -z "${TMUX:-}" ]; then
 	tmux attach -t "$session_name"
 else
 	tmux switch-client -t "$session_name"
 fi
-
-exit
