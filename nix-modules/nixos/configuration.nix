@@ -114,6 +114,20 @@
   # Enable the OpenSSH daemon.
   # services.openssh.enable = true;
 
+  ### fingerprint sensor
+  services.fprintd = {
+    enable = true;
+
+    # Don't use TOD for Synaptics 06cb:00fc
+    tod.enable = false;
+  };
+
+  # Enable fingerprint in PAM where you want it:
+  security.pam.services.sudo.fprintAuth     = true;  # sudo
+  security.pam.services.polkit-1.fprintAuth = true;  # GUI auth dialogs
+
+  # (Optional) firmware updates via LVFS
+  services.fwupd.enable = true;
 
   # This option defines the first version of NixOS you have installed on this particular machine,
   # and is used to maintain compatibility with application data (e.g. databases) created on older NixOS versions.
