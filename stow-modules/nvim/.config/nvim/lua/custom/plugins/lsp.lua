@@ -195,5 +195,8 @@ return {
 				end,
 			},
 		})
+
+		-- some servers can't be managed by mason, due to not having prebuilt binaries or exotic build dependencies
+		vim.lsp.enable('nixd')
 	end,
 }
