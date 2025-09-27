@@ -37,19 +37,19 @@ in {
   };
 
   environment.systemPackages = with pkgs; [
-    pkgs.git
-    pkgs.wget
-    pkgs.ripgrep
-    pkgs.fd
-    pkgs.fzf
-    pkgs.direnv
-    pkgs.stow
-    pkgs.just
-    pkgs.oh-my-zsh
-    pkgs._1password-cli
-    pkgs.stdenv
-    pkgs.unzip
-    pkgs.mise
+    git
+    wget
+    ripgrep
+    fd
+    fzf
+    direnv
+    stow
+    just
+    oh-my-zsh
+    _1password-cli
+    stdenv
+    unzip
+    mise
     git-spice
   ];
 }
