@@ -51,5 +51,6 @@ in {
     unzip
     mise
     git-spice
+    claude-code
   ];
 }
