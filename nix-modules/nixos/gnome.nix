@@ -35,4 +35,15 @@
       }
     ];
   };
+
+  ### Autostart apps
+  environment.etc."xdg/autostart/1password.desktop".source =
+    "${pkgs._1password-gui}/share/applications/1password.desktop";
+
+  environment.etc."xdg/autostart/firefox.desktop".source =
+    "${pkgs.firefox}/share/applications/firefox.desktop";
+
+  environment.etc."xdg/autostart/ghostty.desktop".source =
+    "${pkgs.ghostty}/share/applications/com.mitchellh.ghostty.desktop";
+
 }
