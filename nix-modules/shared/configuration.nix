@@ -52,5 +52,6 @@ in {
     mise
     git-spice
     claude-code
+    nixd
   ];
 }
