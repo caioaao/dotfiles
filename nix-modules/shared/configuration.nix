@@ -16,6 +16,7 @@ let
 in {
   imports = [
     ./tmux/default.nix
+    ./zsh/default.nix
   ];
 
   nixpkgs.config.allowUnfree = true;

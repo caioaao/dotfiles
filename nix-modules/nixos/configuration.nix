@@ -60,17 +60,6 @@
   programs.vim.enable = true;
   programs.firefox.enable = true;
   programs.chromium.enable = true;
-  programs.zsh = {
-    enable = true;
-    enableCompletion = true;
-    autosuggestions.enable = true;
-    syntaxHighlighting.enable = true;
-    promptInit = ''
-      eval "$(${pkgs.oh-my-posh}/bin/oh-my-posh init zsh --config ${pkgs.oh-my-posh}/share/oh-my-posh/themes/catppuccin_latte.omp.json)"
-    '';
-  };
-
-
   programs._1password.enable = true;
   programs._1password-gui = {
     enable = true;
