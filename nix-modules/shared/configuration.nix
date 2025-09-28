@@ -1,4 +1,4 @@
-{ pkgs, lib, ... }: 
+{ pkgs, ... }: 
 let 
   # git-spice package has a test error
   git-spice = pkgs.buildGoModule rec {
@@ -21,7 +21,6 @@ in {
   nixpkgs.config.allowUnfree = true;
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
 
-
   programs.direnv.enable = true;
 
   environment.systemPackages = with pkgs; [
@@ -33,7 +32,6 @@ in {
     direnv
     stow
     just
-    oh-my-zsh
     _1password-cli
     stdenv
     unzip
@@ -42,5 +40,6 @@ in {
     claude-code
     nixd
     neovim
+    oh-my-posh
   ];
 }
