@@ -32,7 +32,7 @@ function setup_darwin {
 
 function setup_nixos {
 	log_info "NixOS detected. Installing config..."
-	sudo nixos-rebuild switch --flake github:caioaao/nix-config#nixos
+	sudo nixos-rebuild switch --flake github:caioaao/dotfiles#nixos
 }
 
 [[ $OSTYPE == 'darwin'* ]] && setup_darwin
