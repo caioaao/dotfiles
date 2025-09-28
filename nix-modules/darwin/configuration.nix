@@ -1,10 +1,6 @@
 { config, lib, pkgs, ... }:
 
 {
-  # nix-daemon + flakes on macOS:
-  services.nix-daemon.enable = true;
-  nix.settings.experimental-features = [ "nix-command" "flakes" ];
-
   # Set your user and shell
   users.users.caiooliveira = {
     name = "caiooliveira";
