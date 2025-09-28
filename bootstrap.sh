@@ -10,7 +10,7 @@ function log_info {
 function setup_darwin {
 	log_info "darwin OS detected..."
 
-	if !command -v nix; then
+	if ! command -v nix; then
 		log_info "Installing Nix..."
 		sh <(curl --proto '=https' --tlsv1.2 -L https://nixos.org/nix/install) --no-daemon
 		. $HOME/.nix-profile/etc/profile.d/nix.sh
