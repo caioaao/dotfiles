@@ -17,15 +17,10 @@ in {
   imports = [
     ./tmux/configuration.nix
   ];
+
   nixpkgs.config.allowUnfree = true;
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
 
-  programs.zsh = {
-    enable = true;
-    enableCompletion = true;
-    autosuggestions.enable = true;
-    syntaxHighlighting.enable = true;
-  };
 
   programs.direnv.enable = true;
 

@@ -60,6 +60,13 @@
   programs.vim.enable = true;
   programs.firefox.enable = true;
   programs.chromium.enable = true;
+  programs.zsh = {
+    enable = true;
+    enableCompletion = true;
+    autosuggestions.enable = true;
+    syntaxHighlighting.enable = true;
+  };
+
 
   programs._1password.enable = true;
   programs._1password-gui = {
