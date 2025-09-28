@@ -9,4 +9,5 @@
   };
 
   # Nice macOS niceties can go here later (dock, defaults, fonts, etc.)
+  system.stateVersion = 6;  # 25.05"
 }
