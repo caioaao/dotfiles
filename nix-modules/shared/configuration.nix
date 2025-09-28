@@ -27,11 +27,6 @@ in {
     syntaxHighlighting.enable = true;
   };
 
-  programs.neovim = {
-    enable = true;
-    defaultEditor = true;
-  };
-
   programs.direnv = {
     enable = true;
     enableZshIntegration = true;
@@ -54,5 +49,6 @@ in {
     git-spice
     claude-code
     nixd
+    neovim
   ];
 }
