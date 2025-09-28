@@ -12,7 +12,6 @@ bootstrap:
 	just stow git_spice adopt=true
 	just stow zsh adopt=true
 	just stow ssh adopt=true
-	just stow direnv adopt=true
 	just stow nvim adopt=true
 	just stow ghostty adopt=true
 	just stow mise adopt=true
