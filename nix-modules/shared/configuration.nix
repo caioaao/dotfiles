@@ -15,7 +15,7 @@ let
   };
 in {
   imports = [
-    ./tmux/configuration.nix
+    ./tmux/default.nix
   ];
 
   nixpkgs.config.allowUnfree = true;
