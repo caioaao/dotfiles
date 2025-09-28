@@ -26,12 +26,8 @@ function setup_darwin {
 
 	log_info "Nix installed successfully"
 
-	log_info "Installing nix-darwin..."
-	sudo nix run nix-darwin/master#darwin-rebuild -- switch
-	log_info "nix-darwin set up"
-
-	log_info "Installing config"
-	sudo darwin-rebuild switch --flake github:caioaao/nix-config#darwin
+	log_info "Setting up nix-darwin and installing config..."
+	sudo nix --extra-experimental-features "nix-command flakes" run nix-darwin/nix-darwin-25.05#darwin-rebuild -- switch --flake github:caioaao/dotfiles#darwin
 }
 
 function setup_nixos {
