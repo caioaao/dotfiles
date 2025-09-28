@@ -81,9 +81,9 @@
             set -g @catppuccin_window_text "#W"
             set -g @catppuccin_window_current_text " #W"
 
-            run-shell ${pkgs.tmuxPlugins.catppuccin}/share/tmux/plugins/catppuccin/catppuccin.tmux
-            run-shell ${pkgs.tmuxPlugins.fzf-tmux-url}/share/tmux/plugins/fzf-tmux-url/fzf-tmux-url.tmux
-            run-shell ${pkgs.tmuxPlugins.resurrect}/share/tmux/plugins/resurrect/resurrect.tmux
+            run-shell ${pkgs.tmuxPlugins.catppuccin}/share/tmux-plugins/catppuccin/catppuccin.tmux
+            run-shell ${pkgs.tmuxPlugins.fzf-tmux-url}/share/tmux-plugins/fzf-tmux-url/fzf-url.tmux
+            run-shell ${pkgs.tmuxPlugins.resurrect}/share/tmux-plugins/resurrect/resurrect.tmux
     '';
   };
 }
