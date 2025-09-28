@@ -1,28 +1,28 @@
 { pkgs, ... }: {
-  programs.tmux = {
-    enable = true;
-    escapeTime = 10;
-    shortcut = "q";
-    keyMode = "vi";
-    aggressiveResize = true;
-    historyLimit = 5000;
-
-    plugins = with pkgs.tmuxPlugins; [
+  
+  environment.systemPackages = with pkgs.tmuxPlugins; [
       catppuccin
       fzf-tmux-url
       resurrect
-    ]; 
-
-    extraConfigBeforePlugins = ''
-            set -g @catppuccin_window_status_style "rounded"
-            set -g @catppuccin_flavor "latte"
-
-            # Make sure the window names are properly rendered (https://github.com/catppuccin/tmux/issues/431)
-            set -g @catppuccin_window_text "#W"
-            set -g @catppuccin_window_current_text " #W"
-    '';
-
+     (pkgs.writeShellApplication {
+       name = "tms";
+       runtimeInputs = [
+         pkgs.coreutils
+         pkgs.fzf
+         pkgs.tmux
+       ];
+       text = builtins.readFile ./tms.sh; # keep your script in a file
+     })
+  ];
+  
+  programs.tmux = {
+    enable = true;
     extraConfig = ''
+            # Change prefix to C-q
+            unbind-key C-b
+            set -g prefix 'C-q'
+            bind-key 'C-q' send-prefix
+
             # reload config
             bind r source-file /etc/tmux.conf
 
@@ -33,6 +33,11 @@
             # Enable mouse support
             set -g mouse on
 
+            # don't really remember
+            set-option -gw aggressive-resize on
+
+            # Remove delay when pressing esc
+            set-option -s escape-time 50
 
             # Enable focus events for Neovim
             set -g focus-events on
@@ -63,18 +68,22 @@
             bind-key -T copy-mode-vi v send -X begin-selection
             bind-key -T copy-mode-vi V send -X select-line
             bind-key -T copy-mode-vi y send -X copy-pipe-and-cancel 'xclip -in -selection clipboard'
+
+            # Other stuff
+            set-option -g history-limit 5000
+            set -g mode-keys vi
+
+            # Plugins
+            set -g @catppuccin_window_status_style "rounded"
+            set -g @catppuccin_flavor "latte"
+
+            # Make sure the window names are properly rendered (https://github.com/catppuccin/tmux/issues/431)
+            set -g @catppuccin_window_text "#W"
+            set -g @catppuccin_window_current_text " #W"
+
+            run-shell ${pkgs.tmuxPlugins.catppuccin}/share/tmux/plugins/catppuccin/catppuccin.tmux
+            run-shell ${pkgs.tmuxPlugins.fzf-tmux-url}/share/tmux/plugins/fzf-tmux-url/fzf-tmux-url.tmux
+            run-shell ${pkgs.tmuxPlugins.resurrect}/share/tmux/plugins/resurrect/resurrect.tmux
     '';
   };
-  environment.systemPackages = [
-    (pkgs.writeShellApplication {
-      name = "tms";
-      runtimeInputs = [
-        pkgs.coreutils
-        pkgs.fzf
-        pkgs.tmux
-      ];
-      text = builtins.readFile ./tms.sh; # keep your script in a file
-    })
-
-  ];
 }
