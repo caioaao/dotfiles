@@ -12,14 +12,16 @@ function setup_darwin {
 
 	if ! command -v nix; then
 		log_info "Installing Nix..."
-		. $HOME/.nix-profile/etc/profile.d/nix.sh
 		sh <(curl --proto '=https' --tlsv1.2 -L https://nixos.org/nix/install)
 
-		log_info "Configuring Nix..."
-
-		nix_config_dir=$HOME/.config/nix
-		mkdir -p $nix_config_dir
-		echo 'experimental-features = nix-command flakes' > $nix_config_dir/nix.conf
+		log_info "Enabling Nix..."
+		if [ -f "$HOME/.nix-profile/etc/profile.d/nix.sh" ]; then
+			. "$HOME/.nix-profile/etc/profile.d/nix.sh"
+		elif [ -f "/nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh" ]; then
+			. "/nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh"
+		elif [ -f "/etc/profile.d/nix.sh" ]; then
+			. "/etc/profile.d/nix.sh"
+		fi
 	fi
 
 	log_info "Nix installed successfully"
