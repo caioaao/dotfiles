@@ -2,9 +2,9 @@
 
 {
   # Set your user and shell
-  users.users.caiooliveira = {
-    name = "caiooliveira";
-    home = "/Users/caiooliveira";
+  users.users.caio = {
+    name = "caio";
+    home = "/Users/caio";
     shell = pkgs.zsh;
   };
 
