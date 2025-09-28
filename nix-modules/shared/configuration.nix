@@ -27,10 +27,7 @@ in {
     syntaxHighlighting.enable = true;
   };
 
-  programs.direnv = {
-    enable = true;
-    enableZshIntegration = true;
-  };
+  programs.direnv.enable = true;
 
   environment.systemPackages = with pkgs; [
     git
