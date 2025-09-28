@@ -12,8 +12,8 @@ function setup_darwin {
 
 	if ! command -v nix; then
 		log_info "Installing Nix..."
-		sh <(curl --proto '=https' --tlsv1.2 -L https://nixos.org/nix/install) --no-daemon
 		. $HOME/.nix-profile/etc/profile.d/nix.sh
+		sh <(curl --proto '=https' --tlsv1.2 -L https://nixos.org/nix/install)
 
 		log_info "Configuring Nix..."
 
