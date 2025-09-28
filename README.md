@@ -5,7 +5,7 @@ Flake-based NixOS config
 ## Quick start
 
 ```sh
-sh <(curl --proto '=https' --tlsv1.2 -L https://raw.githubusercontent.com/caioaao/dotfiles/main/bootstrap.sh)
+bash <(curl --proto '=https' --tlsv1.2 -L https://raw.githubusercontent.com/caioaao/dotfiles/main/bootstrap.sh)
 ```
 
 ## Key concepts
