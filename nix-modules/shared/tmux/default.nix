@@ -87,7 +87,7 @@
       # ===============================
       # Theme Configuration (Catppuccin)
       # ===============================
-      set -g @catppuccin_flavor "latte"
+      set -g @catppuccin_flavor "mocha"
       set -g @catppuccin_window_status_style "rounded"
 
       # Window name rendering fix
