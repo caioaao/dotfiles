@@ -42,5 +42,6 @@ in {
     nixd
     neovim
     oh-my-posh
+    github-cli
   ];
 }
