@@ -8,5 +8,11 @@
     shell = pkgs.zsh;
   };
 
+  nix-homebrew = {
+    enable = true;
+    user = "caio";
+    autoMigrate = true;
+  };
+
   system.stateVersion = 6;  # 25.05"
 }
