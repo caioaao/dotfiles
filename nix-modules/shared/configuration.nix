@@ -38,6 +38,7 @@ in {
     unzip
     mise
     git-spice
+    git-revise
     claude-code
     nixd
     neovim
