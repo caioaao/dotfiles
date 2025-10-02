@@ -10,6 +10,10 @@ in
     promptInit = ''
       eval "$(${pkgs.oh-my-posh}/bin/oh-my-posh init zsh --config ${ompZenTheme})"
     '';
+
+    interactiveShellInit = ''
+      WORDCHARS=
+    '';
   }
   // lib.optionalAttrs (options.programs.zsh ? enableSyntaxHighlighting) {
     # Darwin syntax highlighting option
