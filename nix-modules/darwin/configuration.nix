@@ -14,5 +14,17 @@
     autoMigrate = true;
   };
 
+  system.primaryUser = "caio";
+
+  homebrew = {
+    enable = true;
+    brews = [
+      "nss"
+    ];
+    casks = [
+      "ghostty"
+    ];
+  };
+
   system.stateVersion = 6;  # 25.05"
 }
