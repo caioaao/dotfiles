@@ -7,3 +7,5 @@ macos-titlebar-style = transparent
 maximize = true
 
 theme = Catppuccin Mocha
+
+auto-update = off
