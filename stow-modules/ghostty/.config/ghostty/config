@@ -9,3 +9,4 @@ maximize = true
 theme = Catppuccin Mocha
 
 auto-update = off
+keybind = shift+enter=text:\x1b\r
