@@ -13,5 +13,6 @@ return {
 		vim.api.nvim_create_user_command("Gri", "G rebase --interactive origin/main", {})
 		vim.api.nvim_create_user_command("Gra", "G rebase --abort", {})
 		vim.api.nvim_create_user_command("Grc", "G rebase --continue", {})
+		vim.api.nvim_create_user_command("Gcwip", "G commit --no-verify -m 'WIP'", {})
 	end,
 }
