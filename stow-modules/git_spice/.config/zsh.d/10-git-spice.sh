@@ -27,6 +27,7 @@ alias gsmv='gs b rename'
 # Stack operations
 alias gssr='gs s restack'
 alias gsse='gs s edit'
+alias gssub='gs s submit'
 
 # Rebase operations
 alias gsrc='gs rebase continue'
