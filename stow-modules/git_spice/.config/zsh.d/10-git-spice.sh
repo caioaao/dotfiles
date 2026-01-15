@@ -3,36 +3,51 @@ autoload -U +X compinit && compinit
 
 eval "$(gs shell completion zsh)"
 
-# Git-spice aliases for common commands
+# Format: "Category|alias_name" -> "command"
+typeset -A _gs_aliases=(
+  "Repository|gss" "gs repo sync"
+  "Navigation|gsu" "gs up"
+  "Navigation|gsd" "gs down"
+  "Navigation|gst" "gs top"
+  "Navigation|gsb" "gs bottom"
+  "Navigation|gstrunk" "gs trunk"
+  "Branch|gsco" "gs b checkout"
+  "Branch|gsc" "gs b create"
+  "Branch|gscm" "gs b create --target main"
+  "Branch|gsub" "gs b submit"
+  "Branch|gsr" "gs b restack"
+  "Branch|gsrm" "gs b delete"
+  "Branch|gsmv" "gs b rename"
+  "Stack|gssr" "gs s restack"
+  "Stack|gsse" "gs s edit"
+  "Stack|gssub" "gs s submit"
+  "Rebase|gsrc" "gs rebase continue"
+  "Rebase|gsra" "gs rebase abort"
+  "Log|gsl" "gs log short"
+  "Log|gsll" "gs log long"
+)
 
-# Repository operations
-alias gss='gs repo sync'
+# Generate aliases
+for key cmd in ${(kv)_gs_aliases}; do
+  local alias_name=${key#*|}
+  alias $alias_name="$cmd"
+done
 
-# Branch navigation
-alias gsu='gs up'
-alias gsd='gs down'
-alias gst='gs top'
-alias gsb='gs bottom'
-alias gstrunk='gs trunk'
+# Quick reference function
+gs-aliases() {
+  echo "Git-spice aliases:\n"
 
-# Branch operations
-alias gsco='gs b checkout'
-alias gsc='gs b create'
-gscm() { gs b create --target main "$@"; }
-alias gsub='gs b submit'
-alias gsr='gs b restack'
-alias gsrm='gs b delete'
-alias gsmv='gs b rename'
+  # Extract unique categories from keys
+  local categories=($(print -l ${(k)_gs_aliases} | cut -d'|' -f1 | sort -u))
 
-# Stack operations
-alias gssr='gs s restack'
-alias gsse='gs s edit'
-alias gssub='gs s submit'
-
-# Rebase operations
-alias gsrc='gs rebase continue'
-alias gsra='gs rebase abort'
-
-# Log operations
-alias gsl='gs log short'
-alias gsll='gs log long'
+  for category in $categories; do
+    echo "$category:"
+    for key in ${(k)_gs_aliases}; do
+      if [[ $key == $category\|* ]]; then
+        local alias_name=${key#*|}
+        printf "  %-12s  %s\n" "$alias_name" "${_gs_aliases[$key]}"
+      fi
+    done
+    echo
+  done
+}
