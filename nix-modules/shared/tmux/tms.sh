@@ -11,7 +11,7 @@ function select_path {
 }
 
 function fzf_project {
-	select_path "$(find "${PROJECTS_DIR}" -iname .git -type d -maxdepth 3 -print0 | xargs -0 dirname | fzf)"
+	select_path "$(find "${PROJECTS_DIR}" -maxdepth 3 -iname .git -type d -print0 | xargs -0 dirname | fzf)"
 }
 
 function fzf_session {
