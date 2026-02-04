@@ -25,24 +25,26 @@ in {
   programs.direnv.enable = true;
 
   environment.systemPackages = with pkgs; [
-    git
-    wget
-    ripgrep
+    _1password-cli
+    claude-code
+    direnv
     fd
     fzf
-    direnv
-    stow
-    just
-    _1password-cli
-    stdenv
-    unzip
-    mise
-    git-spice
+    git
     git-revise
-    claude-code
-    nixd
-    neovim
-    oh-my-posh
+    git-spice
     github-cli
+    just
+    mise
+    neovim
+    nixd
+    obsidian
+    oh-my-posh
+    ripgrep
+    stdenv
+    stow
+    unzip
+    wget
+    yubioath-flutter
   ];
 }
