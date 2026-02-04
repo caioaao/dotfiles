@@ -15,6 +15,7 @@ bootstrap:
 	just stow nvim adopt=true
 	just stow ghostty adopt=true
 	just stow mise adopt=true
+	just stow claude-code adopt=true
 
 stow module adopt="false": xdg-base-dirs
 	#!/usr/bin/env bash

@@ -1,1 +1,9 @@
 .aider*
+
+# Claude Code runtime data (not configuration)
+stow-modules/claude-code/.claude/cache/
+stow-modules/claude-code/.claude/history.jsonl
+stow-modules/claude-code/.claude/plugins/
+stow-modules/claude-code/.claude/projects/
+
+.claude/settings.local.json
