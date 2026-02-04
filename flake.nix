@@ -3,6 +3,7 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.11";
+    nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
 
     # nix-darwin for macOS system configuration
     nix-darwin.url = "github:nix-darwin/nix-darwin/nix-darwin-25.11";
@@ -11,16 +12,28 @@
     nix-homebrew.url = "github:zhaofengli/nix-homebrew";
   };
 
-  outputs = { nixpkgs, nix-darwin, nix-homebrew, ... }:
+  outputs = { nixpkgs, nixpkgs-unstable, nix-darwin, nix-homebrew, ... }:
     let
       # Pick the CPU/OS for each machine
-      linuxSystem = "x86_64-linux"; 
-      macSystem   = "aarch64-darwin"; 
+      linuxSystem = "x86_64-linux";
+      macSystem   = "aarch64-darwin";
+
+      # Overlay to bring in specific unstable packages
+      unstableOverlay = final: prev:
+        let
+          unstable = import nixpkgs-unstable {
+            system = final.system;
+            config.allowUnfree = true;
+          };
+        in {
+          claude-code = unstable.claude-code;
+        };
     in {
       # ---------- NixOS ----------
       nixosConfigurations."nixos" = nixpkgs.lib.nixosSystem {
         system = linuxSystem;
         modules = [
+          { nixpkgs.overlays = [ unstableOverlay ]; }
           ./nix-modules/nixos/configuration.nix
           ./nix-modules/shared/configuration.nix
         ];
@@ -30,6 +43,7 @@
       darwinConfigurations."darwin" = nix-darwin.lib.darwinSystem {
         system = macSystem;
         modules = [
+          { nixpkgs.overlays = [ unstableOverlay ]; }
           nix-homebrew.darwinModules.nix-homebrew
           ./nix-modules/darwin/configuration.nix
           ./nix-modules/shared/configuration.nix
