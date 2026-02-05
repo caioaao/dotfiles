@@ -18,8 +18,12 @@
 
   homebrew = {
     enable = true;
+    taps = [
+      "withgraphite/tap"
+    ];
     brews = [
       "nss"
+      "withgraphite/tap/graphite"
     ];
     casks = [
       "ghostty"
