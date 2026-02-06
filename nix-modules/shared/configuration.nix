@@ -44,6 +44,5 @@ in {
     stow
     unzip
     wget
-    yubioath-flutter
   ];
 }

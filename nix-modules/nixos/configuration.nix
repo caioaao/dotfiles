@@ -76,6 +76,7 @@
     vim
     ghostty
     keyd
+    yubioath-flutter
   ];
 
   # Set up keyboard options by device
