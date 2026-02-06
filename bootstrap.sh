@@ -12,7 +12,7 @@ function setup_darwin {
 
 	if ! command -v nix; then
 		log_info "Installing Nix..."
-		sh <(curl --proto '=https' --tlsv1.2 -L https://nixos.org/nix/install)
+		curl -fsSL https://install.determinate.systems/nix | sh -s -- install
 
 		log_info "Enabling Nix..."
 		if [ -f "$HOME/.nix-profile/etc/profile.d/nix.sh" ]; then
@@ -27,7 +27,7 @@ function setup_darwin {
 	log_info "Nix installed successfully"
 
 	log_info "Setting up nix-darwin and installing config..."
-	sudo nix --extra-experimental-features "nix-command flakes" run nix-darwin/nix-darwin-25.05#darwin-rebuild -- switch --flake github:caioaao/dotfiles#darwin
+	sudo nix --extra-experimental-features "nix-command flakes" run nix-darwin/nix-darwin-25.11#darwin-rebuild -- switch --flake github:caioaao/dotfiles#darwin
 }
 
 function setup_nixos {

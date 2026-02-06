@@ -10,9 +10,12 @@
     nix-darwin.inputs.nixpkgs.follows = "nixpkgs";
 
     nix-homebrew.url = "github:zhaofengli/nix-homebrew";
+
+    # determinate is used in macOS
+    determinate.url = "https://flakehub.com/f/DeterminateSystems/determinate/3";
   };
 
-  outputs = { nixpkgs, nixpkgs-unstable, nix-darwin, nix-homebrew, ... }:
+  outputs = { nixpkgs, nixpkgs-unstable, nix-darwin, nix-homebrew, determinate, ... }:
     let
       # Pick the CPU/OS for each machine
       linuxSystem = "x86_64-linux";
@@ -43,6 +46,9 @@
       darwinConfigurations."darwin" = nix-darwin.lib.darwinSystem {
         system = macSystem;
         modules = [
+	  determinate.darwinModules.default
+        ({ ... }: { determinateNix.enable = true; })
+
           { nixpkgs.overlays = [ unstableOverlay ]; }
           nix-homebrew.darwinModules.nix-homebrew
           ./nix-modules/darwin/configuration.nix

@@ -24,7 +24,7 @@ sudo nixos-rebuild switch --flake .#nixos
 ## MacOS
 
 ```sh
-sudo darwin-rebuild switch --flake .#nixos
+sudo darwin-rebuild switch --flake .#darwin
 ```
 
 ## References
