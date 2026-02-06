@@ -15,6 +15,10 @@
   };
 
   system.primaryUser = "caio";
+  system.keyboard = {
+    enableKeyMapping = true;
+    remapCapsLockToControl = true;
+  };
 
   homebrew = {
     enable = true;
