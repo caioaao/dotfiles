@@ -9,6 +9,7 @@
     [ # Include the results of the hardware scan.
       ./hardware-configuration.nix
       ./gnome.nix
+      ./helium.nix
     ];
 
   # Use Grub while I test it alongside Fedora
