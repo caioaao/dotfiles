@@ -13,32 +13,54 @@ You have 6 personality agents. **IMPORTANT: Engage them often—intuition alone 
 | **QA** | Test coverage, realistic scenarios | sonnet | Feature work, bug fixes |
 | **Hacker** | Fast solutions, algorithms | sonnet | Tight deadlines, performance issues |
 
-## IMPORTANT: When to Engage
+## CRITICAL: Planning Protocol
 
-**YOU MUST engage personalities when:**
-- Planning implementation
-- Reviewing code or plans
-- Making architecture decisions
-- Unsure about trade-offs
+**YOU MUST call personality agents BEFORE and AFTER every non-trivial planning phase.**
 
-### By Task Type
+Skip only for truly trivial tasks (typo fixes, obvious one-liners).
 
-| Task | Personalities |
-|------|---------------|
-| New feature | Product Engineer → Architect → QA |
-| Bug fix | Hacker → QA |
-| Code review | Team Player + Pedantic + QA |
-| Architecture decision | Architect + Product Engineer |
-| Performance issue | Hacker |
-| Naming/clarity review | Pedantic |
+### Before Planning
+- Consult agents to explore the problem from different angles
+- Seek opposing perspectives—don't just confirm your initial intuition
+- Scale agent count to task complexity (1-3 agents)
 
-### Engagement Signals
+### After Planning
+- Validate the plan with agents that might challenge your approach
+- Revise based on feedback before implementation
 
-- Complexity smell → Pedantic + Architect
-- Consistency question → Team Player
-- "Is this worth it?" → Product Engineer
-- Testing gap → QA
-- Need it fast → Hacker
+### The Principle
+Good decisions emerge from tension between perspectives. If all your consulted agents agree, you probably picked agents that think like you already do. Seek the uncomfortable perspective.
+
+## Examples: Seeking Opposing Perspectives
+
+**Example 1: New Feature**
+- Before: Product Engineer ("What's the user problem?") + Architect ("What's hard to change later?")
+- Tension: PE wants MVP simplicity, Architect wants extensible design
+- After: QA ("How do we test this?") challenges both with edge cases
+
+**Example 2: Performance Fix**
+- Before: Hacker ("What's the fastest path?") + Architect ("Will this create tech debt?")
+- Tension: Speed vs long-term maintainability
+- After: Team Player ("Does this match our patterns?") keeps it consistent
+
+**Example 3: Bug Fix**
+- Before: Hacker ("Quick fix?") + QA ("What's the real root cause?")
+- Tension: Ship fast vs fix properly
+- After: Pedantic ("Is the naming clear?") catches confusing code
+
+**Example 4: Code Review**
+- Team Player + Pedantic + QA in parallel
+- Each catches different issues: consistency, precision, test gaps
+
+## Intuition Aids
+
+When unsure which agents to consult, these signals can help:
+
+- Complexity smell → consider Pedantic, Architect
+- Consistency question → consider Team Player
+- "Is this worth building?" → consider Product Engineer
+- Testing gap → consider QA
+- Need it fast → consider Hacker
 
 ## Invocation
 
@@ -89,7 +111,8 @@ All personalities return this structure:
 
 ## Rules
 
-- **ALWAYS** engage at least one personality when planning
-- **ALWAYS** engage personalities after completing significant work (for review)
-- Personalities may conflict—that's intentional
-- Synthesize recommendations and make final calls
+- **CRITICAL**: For non-trivial tasks, NEVER plan without consulting agents first
+- **CRITICAL**: Seek opposing perspectives, not just validation
+- If all agents agree easily, you haven't challenged your thinking enough
+- Synthesize conflicts—that's where good decisions emerge
+- If you catch yourself planning without agents, STOP and invoke them
