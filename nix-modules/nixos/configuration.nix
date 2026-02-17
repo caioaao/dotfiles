@@ -69,6 +69,11 @@
     polkitPolicyOwners = [ "caio" ];
   }; 
 
+  programs.gnupg.agent = {
+    enable = true;
+    pinentryPackage = pkgs.pinentry-gnome3;
+  };
+
   security.sudo.enable = true;
 
   # List packages installed in system profile.
