@@ -37,7 +37,7 @@
   # };
 
   # Configure keymap in X11
-  services.xserver.xkb.layout = "us,br";
+  services.xserver.xkb.layout = "us";
 
   # Enable sound.
   # services.pulseaudio.enable = true;
