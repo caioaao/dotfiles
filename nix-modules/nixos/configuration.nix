@@ -10,6 +10,7 @@
       ./hardware-configuration.nix
       ./gnome.nix
       ./helium.nix
+      ./anytype.nix
     ];
 
   # Use Grub while I test it alongside Fedora
