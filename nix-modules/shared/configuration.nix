@@ -35,6 +35,7 @@ in {
     git-spice
     github-cli
     just
+    jq
     mise
     neovim
     nixd

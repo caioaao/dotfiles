@@ -30,6 +30,7 @@
           };
         in {
           claude-code = unstable.claude-code;
+          neovim = unstable.neovim;
         };
     in {
       # ---------- NixOS ----------
