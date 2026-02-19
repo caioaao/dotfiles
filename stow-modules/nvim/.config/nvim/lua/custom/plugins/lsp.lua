@@ -96,6 +96,7 @@ return {
 		--  See `:help lsp-config` for information about keys and how to configure
 		local servers = {
 			elixirls = {},
+			rust_analyzer = {},
 		}
 
 		-- Ensure the servers and tools above are installed
