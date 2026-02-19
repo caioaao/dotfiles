@@ -77,6 +77,10 @@ vim.keymap.set("n", "<Esc>", "<cmd>nohlsearch<CR>")
 -- Make jumps behave more intuitively
 vim.opt.jumpoptions = "stack"
 
+-- Enable executing project local configs
+vim.opt.exrc = true
+vim.opt.secure = true
+
 -- [[ Basic Keymaps ]]
 --  See `:help vim.keymap.set()`
 
