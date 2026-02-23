@@ -33,6 +33,7 @@ in {
     git
     git-revise
     git-spice
+    git-lfs
     github-cli
     just
     jq
