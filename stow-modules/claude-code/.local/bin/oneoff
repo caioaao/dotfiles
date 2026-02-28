@@ -1,0 +1,94 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+# Script for one-off shell scripts using claude code
+# Enriches user prompts with environment context before passing to claude -p
+
+# Show help
+if [ "${1:-}" = "--help" ] || [ "${1:-}" = "-h" ]; then
+    cat <<EOF
+oneoff - Generate shell scripts for one-off tasks using Claude CLI
+
+USAGE:
+    oneoff <prompt>
+
+DESCRIPTION:
+    Generates a shell script using 'claude -p' with automatic environment context.
+    The output is a ready-to-run script that accomplishes your request.
+
+    Environment context automatically included:
+    - Current OS and shell
+    - Working directory
+    - Git repository status (if in a git repo)
+    - Current user
+
+EXAMPLES:
+    oneoff 'List all .sh files in this directory'
+    oneoff 'Find all TODO comments in this project'
+    oneoff 'Rename all .txt files to .md'
+
+    # Review and run the output:
+    oneoff 'backup all .conf files' > backup.sh
+    chmod +x backup.sh && ./backup.sh
+
+OPTIONS:
+    -h, --help    Show this help message
+
+REQUIREMENTS:
+    - claude CLI must be installed and available in PATH
+EOF
+    exit 0
+fi
+
+# 1. Check for user input
+if [ $# -eq 0 ]; then
+    echo "Usage: oneoff <prompt>"
+    echo "Example: oneoff 'List all .sh files in this directory'"
+    echo "Run 'oneoff --help' for more information"
+    exit 1
+fi
+
+# 2. Check claude CLI availability
+if ! command -v claude &> /dev/null; then
+    echo "Error: claude CLI not found. Please install claude-code first."
+    exit 1
+fi
+
+# 3. Collect environment info
+os_info="$(uname -s) $(uname -r)"
+shell_info="$SHELL"
+current_dir="$(pwd)"
+user_info="$USER"
+
+# 4. Collect git context (if available)
+git_info="No"
+if git rev-parse --git-dir &> /dev/null; then
+    git_root="$(git rev-parse --show-toplevel 2>/dev/null || echo '')"
+    git_branch="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo '')"
+    if [ -n "$git_branch" ]; then
+        git_info="Yes (branch: $git_branch, root: $git_root)"
+    fi
+fi
+
+# 5. Construct enriched prompt using heredoc
+enriched_prompt=$(cat <<EOF
+ENVIRONMENT CONTEXT:
+- OS: $os_info
+- Shell: $shell_info
+- Working Directory: $current_dir
+- User: $user_info
+- Git Repository: $git_info
+
+USER REQUEST:
+$@
+
+Generate a shell script to accomplish the request above in the given environment context.
+Output ONLY the shell script with no markdown formatting or explanations.
+The script should be safe, idempotent where possible, and appropriate for the environment.
+**CRITICAL** Do not return it as a markdown code block. Return **only** the code.
+EOF
+)
+
+# 6. Execute claude with enriched prompt
+claude -p "$enriched_prompt"
