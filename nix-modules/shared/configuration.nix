@@ -35,6 +35,7 @@ in {
     git-spice
     git-lfs
     github-cli
+    gum
     just
     jq
     mise
