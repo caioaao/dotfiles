@@ -26,6 +26,7 @@ in {
 
   environment.systemPackages = with pkgs; [
     _1password-cli
+    bc
     claude-code
     direnv
     fd
