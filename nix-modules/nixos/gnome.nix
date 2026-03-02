@@ -16,6 +16,14 @@
       {
         lockAll = true;
         settings = {
+          "org/gnome/mutter" = {
+            experimental-features = [ "scale-monitor-framebuffer" ];
+          };
+
+          "org/gnome/desktop/interface" = {
+            enable-hot-corners = false;
+          };
+
           "org/gnome/desktop/wm/keybindings" = {
             # Move window to half screen (tiling)
             move-to-side-w = [ "<Super>Left" ];
