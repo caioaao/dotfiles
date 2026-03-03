@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+usage() {
+  echo "Usage: $(basename "$0") <branch-name>"
+  echo "Creates a new git worktree with the given branch name."
+  exit 1
+}
+
+BRANCH_NAME="${1:-}"
+[[ -z "$BRANCH_NAME" ]] && usage
+
+ROOT_DIR="$(git rev-parse --show-toplevel)"
+WORKTREE_DIR="$ROOT_DIR/../$BRANCH_NAME"
+
+if [[ -d "$WORKTREE_DIR" ]]; then
+  echo "Error: Directory already exists: $WORKTREE_DIR" >&2
+  exit 1
+fi
+
+git worktree add "$WORKTREE_DIR" -b "$BRANCH_NAME"
+
+echo "Worktree created at $(cd "$WORKTREE_DIR" && pwd)"
+
+
