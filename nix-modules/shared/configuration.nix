@@ -31,6 +31,7 @@ in {
     direnv
     fd
     fzf
+    gemini-cli
     git
     git-revise
     git-spice
