@@ -42,6 +42,7 @@ in {
     jq
     mise
     neovim
+    nodejs
     nixd
     obsidian
     oh-my-posh
