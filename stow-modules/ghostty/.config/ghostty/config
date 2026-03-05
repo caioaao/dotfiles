@@ -1,13 +1,15 @@
 macos-option-as-alt = true
 
-window-decoration = false
 cursor-style = block
 cursor-style-blink = false
 shell-integration-features = no-cursor
-macos-titlebar-style = transparent
 maximize = true
 
 theme = Catppuccin Mocha
+
+# Title bar
+gtk-titlebar = false
+macos-titlebar-style = transparent
 
 auto-update = off
 keybind = shift+enter=text:\x1b\r
