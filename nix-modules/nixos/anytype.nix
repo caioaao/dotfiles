@@ -20,7 +20,7 @@
         mkdir -p "$out/share/applications"
         cp -r ${contents}/usr/share/* "$out/share"
         cp "${contents}/${pname}.desktop" "$out/share/applications/" || true
-        substituteInPlace $out/share/applications/${pname}.desktop --replace-fail 'Exec=AppRun' 'Exec=${pname}'
+        substituteInPlace $out/share/applications/${pname}.desktop --replace-fail 'Exec=AppRun' "Exec=$out/bin/${pname}"
       '';
 
       meta = with lib; {
