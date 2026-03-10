@@ -25,7 +25,7 @@ let
         };
         aarch64-darwin = pkgs.fetchurl {
           url = "https://github.com/rtk-ai/rtk/releases/download/v${version}/rtk-aarch64-apple-darwin.tar.gz";
-          hash = "sha256-A1zQBRJgsEUuRXbletRV+LFsLgtaZ8AFifPcB5f0ti4=";
+          hash = "sha256-XOvNnVd/bYSvHZWWEMGPPAtGuAlXwmkmFLhwj6ykLUw=";
         };
       };
     in sources.${pkgs.stdenv.hostPlatform.system}
