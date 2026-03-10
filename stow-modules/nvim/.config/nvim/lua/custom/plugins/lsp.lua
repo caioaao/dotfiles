@@ -99,6 +99,7 @@ return {
 		local servers = {
 			elixirls = {},
 			rust_analyzer = {},
+			ts_ls = {},
 		}
 
 		-- Ensure the servers and tools above are installed
