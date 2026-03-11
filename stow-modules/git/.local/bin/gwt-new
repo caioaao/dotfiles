@@ -19,7 +19,11 @@ if [[ -d "$WORKTREE_DIR" ]]; then
   exit 1
 fi
 
-git worktree add "$WORKTREE_DIR" -b "$BRANCH_NAME"
+if git show-ref --verify --quiet "refs/heads/$BRANCH_NAME"; then
+  git worktree add "$WORKTREE_DIR" "$BRANCH_NAME"
+else
+  git worktree add "$WORKTREE_DIR" -b "$BRANCH_NAME"
+fi
 
 echo "Worktree created at $(cd "$WORKTREE_DIR" && pwd)"
 
