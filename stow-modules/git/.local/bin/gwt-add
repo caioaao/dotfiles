@@ -27,4 +27,16 @@ fi
 
 echo "Worktree created at $(cd "$WORKTREE_DIR" && pwd)"
 
+# Run post-create hook if present
+# Hook path configurable via GWT_POST_CREATE_HOOK
+# Can be a file path or an inline command string
+if [[ -n "${GWT_POST_CREATE_HOOK:-}" ]]; then
+  echo "Running post-create hook..."
+  export GWT_WORKTREE_DIR="$WORKTREE_DIR"
+  export GWT_BRANCH_NAME="$BRANCH_NAME"
+  export GWT_ROOT_DIR="$ROOT_DIR"
 
+  (cd "$WORKTREE_DIR" && bash -c "$GWT_POST_CREATE_HOOK") || {
+    echo "Warning: hook failed (exit $?)" >&2
+  }
+fi
