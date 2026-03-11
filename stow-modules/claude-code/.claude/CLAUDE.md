@@ -116,5 +116,3 @@ All personalities return this structure:
 - If all agents agree easily, you haven't challenged your thinking enough
 - Synthesize conflicts—that's where good decisions emerge
 - If you catch yourself planning without agents, STOP and invoke them
-
-@RTK.md
