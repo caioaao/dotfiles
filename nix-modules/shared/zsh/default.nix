@@ -13,6 +13,28 @@ in
 
     interactiveShellInit = ''
       WORDCHARS=
+      bindkey -v
+
+      # Vi mode indicator for oh-my-posh
+      # https://github.com/JanDeDobbeleer/oh-my-posh/issues/5438
+      _omp_redraw-prompt() {
+        local precmd
+        for precmd in "''${precmd_functions[@]}"; do
+          "$precmd"
+        done
+        zle .reset-prompt
+      }
+
+      function _omp_zle-keymap-select() {
+        if [ "''${KEYMAP}" = 'vicmd' ]; then
+          export POSH_VI_MODE="normal"
+        else
+          export POSH_VI_MODE="insert"
+        fi
+        _omp_redraw-prompt
+      }
+
+      zle -N zle-keymap-select _omp_zle-keymap-select
     '';
   }
   // lib.optionalAttrs (options.programs.zsh ? enableSyntaxHighlighting) {
