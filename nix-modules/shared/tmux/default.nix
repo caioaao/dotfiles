@@ -20,6 +20,7 @@
   programs.tmux = {
     enable = true;
     extraConfig = ''
+      set -g default-terminal "tmux-256color"
       # ===============================
       # Prefix Key Configuration
       # ===============================
