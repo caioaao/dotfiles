@@ -1,13 +1,8 @@
 [user]
 	name="Caio Oliveira"
-	email=caioaao@gmail.com
-	# signingKey=DD90B67479EFA704
 
 [core]
 	editor=nvim
-
-[commit]
-	# gpgsign=true
 
 [init]
 	defaultBranch=main
@@ -63,9 +58,13 @@
 	required = true
 	clean = git-lfs clean -- %f
 	smudge = git-lfs smudge -- %f
-[credential "https://github.com"]
-	helper = 
-	helper = !/run/current-system/sw/bin/gh auth git-credential
-[credential "https://gist.github.com"]
-	helper = 
-	helper = !/run/current-system/sw/bin/gh auth git-credential
+
+[gpg]
+	format = ssh
+
+[commit]
+	gpgsign = true
+
+# Machine-specific config (signing keys, 1password paths, etc.)
+[include]
+	path = config.local

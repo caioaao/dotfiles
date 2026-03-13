@@ -1,0 +1,11 @@
+# Machine-specific git configuration
+# Copy this file to ~/.config/git/config.local and customize for your machine
+
+[user]
+	signingkey = ssh-ed25519 YOUR_SSH_PUBLIC_KEY_HERE
+
+[gpg "ssh"]
+	# macOS (1Password)
+	program = "/Applications/1Password.app/Contents/MacOS/op-ssh-sign"
+	# Linux (1Password) - uncomment and adjust path as needed
+	# program = "/opt/1Password/op-ssh-sign"

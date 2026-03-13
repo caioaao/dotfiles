@@ -7,3 +7,6 @@ stow-modules/claude-code/.claude/plugins/
 stow-modules/claude-code/.claude/projects/
 
 .claude/settings.local.json
+
+# Machine-specific git config (not tracked)
+stow-modules/git/.config/git/config.local
