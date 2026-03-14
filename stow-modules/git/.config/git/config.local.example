@@ -7,5 +7,5 @@
 [gpg "ssh"]
 	# macOS (1Password)
 	program = "/Applications/1Password.app/Contents/MacOS/op-ssh-sign"
-	# Linux (1Password) - uncomment and adjust path as needed
-	# program = "/opt/1Password/op-ssh-sign"
+	# Linux/NixOS (1Password)
+	program = "/run/current-system/sw/share/1password/op-ssh-sign"
