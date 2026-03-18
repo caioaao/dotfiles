@@ -11,6 +11,7 @@
       ./gnome.nix
       ./helium.nix
       ./anytype.nix
+      ./paper.nix
     ];
 
   # Use Grub while I test it alongside Fedora
