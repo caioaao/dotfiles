@@ -3,34 +3,44 @@
 
 { pkgs, lib, ... }:
 
+let
+  pname = "helium";
+  version = "0.8.5.1";
+
+  heliumSrc = let
+    sourceMap = {
+      x86_64-linux = pkgs.fetchurl {
+        url = "https://github.com/imputnet/helium-linux/releases/download/${version}/helium-${version}-x86_64.AppImage";
+        hash = "sha256-jFSLLDsHB/NiJqFmn8S+JpdM8iCy3Zgyq+8l4RkBecM=";
+      };
+      aarch64-linux = pkgs.fetchurl {
+        url = "https://github.com/imputnet/helium-linux/releases/download/${version}/helium-${version}-arm64.AppImage";
+        hash = "sha256-UUyC19Np3IqVX3NJVLBRg7YXpw0Qzou4pxJURYFLzZ4=";
+      };
+    };
+  in sourceMap.${pkgs.stdenv.hostPlatform.system}
+    or (throw "Unsupported system: ${pkgs.stdenv.hostPlatform.system}");
+
+  # Extract AppImage and bundle WidevineCdm next to the binary
+  extracted = pkgs.appimageTools.extractType2 { inherit pname version; src = heliumSrc; };
+  extractedWithWidevine = pkgs.runCommand "${pname}-${version}-extracted" {} ''
+    cp -a ${extracted} $out
+    chmod -R u+w $out/opt/helium
+    cp -a ${pkgs.widevine-cdm}/share/google/chrome/WidevineCdm $out/opt/helium/
+  '';
+in
 {
   environment.systemPackages = [
-    (pkgs.appimageTools.wrapType2 rec {
-      pname = "helium";
-      version = "0.8.5.1";
+    (pkgs.appimageTools.wrapAppImage {
+      inherit pname version;
+      src = extractedWithWidevine;
 
-      src = let
-        sourceMap = {
-          x86_64-linux = pkgs.fetchurl {
-            url = "https://github.com/imputnet/helium-linux/releases/download/${version}/helium-${version}-x86_64.AppImage";
-            hash = "sha256-jFSLLDsHB/NiJqFmn8S+JpdM8iCy3Zgyq+8l4RkBecM=";
-          };
-          aarch64-linux = pkgs.fetchurl {
-            url = "https://github.com/imputnet/helium-linux/releases/download/${version}/helium-${version}-arm64.AppImage";
-            hash = "sha256-UUyC19Np3IqVX3NJVLBRg7YXpw0Qzou4pxJURYFLzZ4=";
-          };
-        };
-      in sourceMap.${pkgs.stdenv.hostPlatform.system}
-        or (throw "Unsupported system: ${pkgs.stdenv.hostPlatform.system}");
-
-      extraInstallCommands = let
-        contents = pkgs.appimageTools.extractType2 { inherit pname version src; };
-      in ''
+      extraInstallCommands = ''
         mkdir -p "$out/share/applications"
         mkdir -p "$out/share/lib/helium"
-        cp -r ${contents}/opt/helium/locales "$out/share/lib/helium"
-        cp -r ${contents}/usr/share/* "$out/share"
-        cp "${contents}/${pname}.desktop" "$out/share/applications/"
+        cp -r ${extractedWithWidevine}/opt/helium/locales "$out/share/lib/helium"
+        cp -r ${extractedWithWidevine}/usr/share/* "$out/share"
+        cp "${extractedWithWidevine}/${pname}.desktop" "$out/share/applications/"
         substituteInPlace $out/share/applications/${pname}.desktop --replace-fail 'Exec=AppRun' 'Exec=${pname}'
       '';
 

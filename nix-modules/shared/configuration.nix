@@ -24,6 +24,8 @@ in {
 
   programs.direnv.enable = true;
 
+  programs.chromium.enable = true; # needed to pull Widevine binaries
+
   environment.systemPackages = with pkgs; [
     _1password-cli
     bc
