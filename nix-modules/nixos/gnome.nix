@@ -18,6 +18,11 @@
         settings = {
           "org/gnome/mutter" = {
             experimental-features = [ "scale-monitor-framebuffer" ];
+            overlay-key = "";
+          };
+
+          "org/gnome/shell/keybindings" = {
+            toggle-overview = [ "<Super>space" ];
           };
 
           "org/gnome/desktop/interface" = {
@@ -26,15 +31,15 @@
 
           "org/gnome/desktop/wm/keybindings" = {
             # Move window to half screen (tiling)
-            move-to-side-w = [ "<Super>Left" ];
-            move-to-side-e = [ "<Super>Right" ];
+            move-to-side-w = [ "<Super><Alt>Left" ];
+            move-to-side-e = [ "<Super><Alt>Right" ];
 
             # Move window across monitors
-            move-to-monitor-left = [ "<Super><Alt>Left" ];
-            move-to-monitor-right = [ "<Super><Alt>Right" ];
+            move-to-monitor-left = [ "<Super><Alt><Shift>Left" ];
+            move-to-monitor-right = [ "<Super><Alt><Shift>Right" ];
 
             # Toggle maximize
-            toggle-maximized = [ "<Super>Up" ];
+            toggle-maximized = [ "<Super><Alt>Up" ];
 
             # Close current window
             close = [ "<Super>Q" ];
