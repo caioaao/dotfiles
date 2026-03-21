@@ -20,7 +20,7 @@
     waybar
     fuzzel
     mako
-    hyprlock
+    swaylock
     hypridle
     hyprpaper
     wl-clipboard
