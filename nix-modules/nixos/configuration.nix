@@ -8,7 +8,7 @@
   imports =
     [ # Include the results of the hardware scan.
       ./hardware-configuration.nix
-      ./gnome.nix
+      ./hyprland.nix
       ./helium.nix
       ./anytype.nix
       ./paper.nix
@@ -73,7 +73,7 @@
 
   programs.gnupg.agent = {
     enable = true;
-    pinentryPackage = pkgs.pinentry-gnome3;
+    pinentryPackage = pkgs.pinentry-qt;
   };
 
   security.sudo.enable = true;
