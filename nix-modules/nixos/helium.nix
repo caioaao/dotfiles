@@ -42,6 +42,22 @@ in
         cp -r ${extractedWithWidevine}/usr/share/* "$out/share"
         cp "${extractedWithWidevine}/${pname}.desktop" "$out/share/applications/"
         substituteInPlace $out/share/applications/${pname}.desktop --replace-fail 'Exec=AppRun' 'Exec=${pname}'
+
+        # Write Widevine component hint file to the correct user data dir
+        mv "$out/bin/${pname}" "$out/bin/.${pname}-wrapped"
+        cat > "$out/bin/${pname}" <<'WRAPPER'
+#!/bin/sh
+CDM_DIR="$HOME/.config/net.imput.helium/WidevineCdm"
+mkdir -p "$CDM_DIR"
+cat > "$CDM_DIR/latest-component-updated-widevine-cdm" <<HINT
+{"Path":"@widevineCdmPath@","LastBundledVersion":"4.10.2891.0"}
+HINT
+SELF="$(readlink -f "$0")"
+exec "$(dirname "$SELF")/.helium-wrapped" "$@"
+WRAPPER
+        substituteInPlace "$out/bin/${pname}" \
+          --replace-fail '@widevineCdmPath@' '${extractedWithWidevine}/opt/helium/WidevineCdm'
+        chmod +x "$out/bin/${pname}"
       '';
 
       meta = with lib; {
