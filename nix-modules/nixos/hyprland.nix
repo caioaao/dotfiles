@@ -19,13 +19,13 @@
   services.gnome.gnome-keyring.enable = true;
 
   security.polkit.enable = true;
-  security.pam.services.swaylock = {};
+  security.pam.services.hyprlock.fprintAuth = true;
 
   environment.systemPackages = with pkgs; [
     waybar
     fuzzel
     mako
-    swaylock
+    hyprlock
     hypridle
     hyprpaper
     wl-clipboard
