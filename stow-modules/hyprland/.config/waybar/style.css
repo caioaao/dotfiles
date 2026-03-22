@@ -21,6 +21,6 @@ window#waybar {
     border-bottom: 2px solid #88888a;
 }
 
-#clock, #network, #pulseaudio, #battery, #tray {
+#clock, #network, #pulseaudio, #battery, #tray, #language {
     padding: 0 12px;
 }

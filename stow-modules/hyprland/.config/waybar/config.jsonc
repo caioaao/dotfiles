@@ -4,7 +4,7 @@
     "height": 32,
     "modules-left": ["hyprland/workspaces"],
     "modules-center": ["clock"],
-    "modules-right": ["network", "pulseaudio", "battery", "tray"],
+    "modules-right": ["network", "pulseaudio", "hyprland/language", "battery", "tray"],
 
     "hyprland/workspaces": {
         "on-click": "activate"
@@ -32,6 +32,10 @@
         "format": "{icon} {capacity}%",
         "format-icons": ["", "", "", "", ""],
         "format-charging": "{capacity}%"
+    },
+
+    "hyprland/language": {
+        "format": "{short}"
     },
 
     "tray": {
