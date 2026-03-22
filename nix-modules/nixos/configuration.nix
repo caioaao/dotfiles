@@ -29,13 +29,13 @@
   # Set your time zone.
   time.timeZone = "America/Sao_Paulo";
 
-  # Select internationalisation properties.
-  # i18n.defaultLocale = "en_US.UTF-8";
-  # console = {
-  #   font = "Lat2-Terminus16";
-  #   keyMap = "us";
-  #   useXkbConfig = true; # use xkb.options in tty.
-  # };
+  # Internationalisation: UI in English, compose/ctype in PT-BR
+  # so that dead_acute + c = ç (not ć)
+  i18n.defaultLocale = "en_US.UTF-8";
+  i18n.supportedLocales = [
+    "en_US.UTF-8/UTF-8"
+    "pt_BR.UTF-8/UTF-8"
+  ];
 
   # Configure keymap in X11
   services.xserver.xkb.layout = "us";
