@@ -13,5 +13,6 @@
   },
   "enabledPlugins": {
     "typescript-lsp@claude-plugins-official": true
-  }
+  },
+  "model": "opus[1m]"
 }
