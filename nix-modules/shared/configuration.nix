@@ -46,7 +46,7 @@ in {
     nixd
     oh-my-posh
     ripgrep
-    stdenv
+    gcc
     stow
     unzip
     wget
