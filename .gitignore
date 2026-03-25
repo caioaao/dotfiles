@@ -10,3 +10,4 @@ stow-modules/claude-code/.claude/projects/
 
 # Machine-specific git config (not tracked)
 stow-modules/git/.config/git/config.local
+.dmux/
