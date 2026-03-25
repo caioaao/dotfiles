@@ -8,6 +8,12 @@ Flake-based NixOS config
 bash <(curl --proto '=https' --tlsv1.2 -L https://raw.githubusercontent.com/caioaao/dotfiles/main/bootstrap.sh)
 ```
 
+For the cloud dev instance:
+
+```sh
+NIXOS_FLAKE_CONFIG=nixos-cloud bash <(curl --proto '=https' --tlsv1.2 -L https://raw.githubusercontent.com/caioaao/dotfiles/main/bootstrap.sh)
+```
+
 ## Key concepts
 
 - Nix/NixOS for global configuration, dependency management
@@ -15,13 +21,19 @@ bash <(curl --proto '=https' --tlsv1.2 -L https://raw.githubusercontent.com/caio
 
 ## Update config
 
-## NixOS
+### NixOS (laptop)
 
 ```sh
 sudo nixos-rebuild switch --flake .#nixos
 ```
 
-## MacOS
+### NixOS (cloud dev)
+
+```sh
+sudo nixos-rebuild switch --flake .#nixos-cloud
+```
+
+### MacOS
 
 ```sh
 sudo darwin-rebuild switch --flake .#darwin

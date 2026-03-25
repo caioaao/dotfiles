@@ -43,6 +43,16 @@
         ];
       };
 
+      # ---------- NixOS (cloud dev) ----------
+      nixosConfigurations."nixos-cloud" = nixpkgs.lib.nixosSystem {
+        system = linuxSystem;
+        modules = [
+          { nixpkgs.overlays = [ unstableOverlay ]; }
+          ./nix-modules/nixos-cloud/configuration.nix
+          ./nix-modules/shared/configuration.nix
+        ];
+      };
+
       # ---------- darwin ----------
       darwinConfigurations."darwin" = nix-darwin.lib.darwinSystem {
         system = macSystem;

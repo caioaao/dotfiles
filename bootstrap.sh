@@ -31,12 +31,16 @@ function setup_darwin {
 }
 
 function setup_nixos {
-	log_info "NixOS detected. Installing config..."
-	sudo nixos-rebuild switch --flake github:caioaao/dotfiles#nixos
+	local flake_config="${1:-nixos}"
+	log_info "NixOS detected. Installing config '${flake_config}'..."
+	sudo nixos-rebuild switch --flake "github:caioaao/dotfiles#${flake_config}"
 }
 
-[[ $OSTYPE == 'darwin'* ]] && setup_darwin
-[[ command -v nixos-rebuild ]] && setup_nixos
+if [[ $OSTYPE == 'darwin'* ]]; then
+	setup_darwin
+elif command -v nixos-rebuild &>/dev/null; then
+	setup_nixos "${NIXOS_FLAKE_CONFIG:-nixos}"
+fi
 
 ### Clone repo
 
