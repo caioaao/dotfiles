@@ -1,5 +1,18 @@
-.credentials.json
-backups/
-file-history/
-mcp-needs-auth-cache.json
-sessions/
+# Ignore everything
+*
+
+# Allow config files
+!.gitignore
+!CLAUDE.md
+!settings.json
+!statusline-command.sh
+
+# Allow managed directories (recursively)
+!agents/
+!agents/**
+!commands/
+!commands/**
+!hooks/
+!hooks/**
+!skills/
+!skills/**
