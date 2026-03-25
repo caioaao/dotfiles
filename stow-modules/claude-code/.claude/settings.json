@@ -7,6 +7,7 @@
     ],
     "defaultMode": "acceptEdits"
   },
+  "model": "opus[1m]",
   "statusLine": {
     "type": "command",
     "command": "${HOME}/.claude/statusline-command.sh"
@@ -14,5 +15,5 @@
   "enabledPlugins": {
     "typescript-lsp@claude-plugins-official": true
   },
-  "model": "opus[1m]"
+  "skipDangerousModePermissionPrompt": true
 }

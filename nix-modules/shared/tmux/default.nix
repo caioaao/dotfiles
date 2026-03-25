@@ -3,7 +3,6 @@
     # Tmux plugins
     catppuccin
     fzf-tmux-url
-    resurrect
 
     # Custom tmux session manager script
     (pkgs.writeShellApplication {
@@ -14,6 +13,17 @@
         pkgs.tmux
       ];
       text = builtins.readFile ./tms.sh;
+    })
+
+    # Review dmux worktrees in nvim
+    (pkgs.writeShellApplication {
+      name = "dmux-review";
+      runtimeInputs = [
+        pkgs.fd
+        pkgs.fzf
+        pkgs.tmux
+      ];
+      text = builtins.readFile ./dmux-review.sh;
     })
   ];
 
@@ -49,7 +59,7 @@
       set -g focus-events on
 
       # History and input settings
-      set-option -g history-limit 5000
+      set-option -g history-limit 50000
       set -g mode-keys vi
 
       # ===============================
@@ -79,6 +89,11 @@
       bind w display-popup -E "tms --sessions"
 
       # ===============================
+      # dmux Integration
+      # ===============================
+      bind R display-popup -E "dmux-review"
+
+      # ===============================
       # Copy Mode Configuration
       # ===============================
       bind-key -T copy-mode-vi v send -X begin-selection
@@ -101,7 +116,6 @@
       # ===============================
       run-shell ${pkgs.tmuxPlugins.catppuccin}/share/tmux-plugins/catppuccin/catppuccin.tmux
       run-shell ${pkgs.tmuxPlugins.fzf-tmux-url}/share/tmux-plugins/fzf-tmux-url/fzf-url.tmux
-      run-shell ${pkgs.tmuxPlugins.resurrect}/share/tmux-plugins/resurrect/resurrect.tmux
     '';
   };
 }
