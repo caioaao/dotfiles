@@ -46,7 +46,6 @@ in {
     neovim
     nodejs
     nixd
-    obsidian
     oh-my-posh
     ripgrep
     stdenv
