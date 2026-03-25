@@ -26,7 +26,17 @@
 
   services.openssh = {
     enable = true;
+    openFirewall = false;
     settings.PasswordAuthentication = false;
+  };
+
+  # Only allow SSH through Tailscale
+  networking.firewall = {
+    enable = true;
+    allowedTCPPorts = [];
+    interfaces."tailscale0" = {
+      allowedTCPPorts = [ 22 ];
+    };
   };
 
   environment.systemPackages = [
