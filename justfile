@@ -37,3 +37,7 @@ xdg-base-dirs:
 	mkdir -p $XDG_CONFIG_HOME
 	mkdir -p $XDG_CACHE_HOME
 	mkdir -p $HOME/.local/bin
+
+[linux]
+claude-sandbox workspace prompt:
+	claude-sandbox run --workspace {{workspace}} --prompt {{quote(prompt)}}
