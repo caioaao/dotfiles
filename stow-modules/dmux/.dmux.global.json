@@ -1,0 +1,5 @@
+{
+  "defaultAgent": "claude",
+  "permissionMode": "acceptEdits",
+  "useTmuxHooks": true
+}
