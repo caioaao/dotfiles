@@ -10,11 +10,23 @@
     };
   };
 
-  outputs = { self, nixpkgs, microvm, ... }: {
-    nixosModules.default = import ./modules/host/bridge.nix;
+  outputs = { self, nixpkgs, microvm, ... }:
+    let
+      system = "x86_64-linux";
+    in {
+      nixosModules.default = import ./modules/host/bridge.nix;
 
-    packages.x86_64-linux.claude-sandbox =
-      let pkgs = nixpkgs.legacyPackages.x86_64-linux;
-      in pkgs.callPackage ./pkgs/claude-sandbox.nix { };
-  };
+      packages.${system}.claude-sandbox =
+        let pkgs = nixpkgs.legacyPackages.${system};
+        in pkgs.callPackage ./pkgs/claude-sandbox.nix { };
+
+      # Validate that the VM guest modules compose and evaluate correctly.
+      checks.${system}.vm-base = (nixpkgs.lib.nixosSystem {
+        inherit system;
+        modules = [
+          microvm.nixosModules.microvm
+          ./modules/vm/base.nix
+        ];
+      }).config.system.build.toplevel;
+    };
 }
