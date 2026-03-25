@@ -12,6 +12,7 @@
       ./helium.nix
       ./anytype.nix
       ./paper.nix
+      ../nixos-shared/tailscale.nix
     ];
 
   # Use Grub while I test it alongside Fedora

@@ -3,6 +3,7 @@
 {
   imports = [
     ./hardware-configuration.nix
+    ../nixos-shared/tailscale.nix
   ];
 
   boot.loader.grub.enable = true;
