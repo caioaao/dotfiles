@@ -33,6 +33,7 @@
           ./modules/vm/base.nix
           ./modules/vm/claude-config.nix
           ./modules/vm/network.nix
+          ./modules/vm/agent.nix
         ];
       }).config.system.build.toplevel;
     };
