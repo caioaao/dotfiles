@@ -25,12 +25,7 @@
 
   services.openssh = {
     enable = true;
-    # settings.PasswordAuthentication = false;
-    # TODO: disable and rely on public key
-    settings =  {
-      PasswordAuthentication = true;
-      PermitRootLogin = "yes";
-    };
+    settings.PasswordAuthentication = false;
   };
 
   security.sudo.enable = true;
