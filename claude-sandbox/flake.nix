@@ -14,7 +14,12 @@
     let
       system = "x86_64-linux";
     in {
-      nixosModules.default = import ./modules/host/bridge.nix;
+      nixosModules.default = {
+        imports = [
+          ./modules/host/bridge.nix
+          ./modules/host/squid.nix
+        ];
+      };
 
       packages.${system}.claude-sandbox =
         let pkgs = nixpkgs.legacyPackages.${system};
