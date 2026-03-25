@@ -28,6 +28,10 @@
     settings.PasswordAuthentication = false;
   };
 
+  environment.systemPackages = [
+    pkgs.ghostty.terminfo
+  ];
+
   security.sudo.enable = true;
   programs.nix-ld.enable = true;
 
