@@ -13,9 +13,13 @@
 
     # determinate is used in macOS
     determinate.url = "https://flakehub.com/f/DeterminateSystems/determinate/3";
+
+    # Claude Code sandbox (NixOS microVM)
+    claude-sandbox.url = "path:./claude-sandbox";
+    claude-sandbox.inputs.nixpkgs.follows = "nixpkgs";
   };
 
-  outputs = { nixpkgs, nixpkgs-unstable, nix-darwin, nix-homebrew, determinate, ... }:
+  outputs = { nixpkgs, nixpkgs-unstable, nix-darwin, nix-homebrew, determinate, claude-sandbox, ... }:
     let
       # Pick the CPU/OS for each machine
       linuxSystem = "x86_64-linux";
@@ -38,6 +42,7 @@
         system = linuxSystem;
         modules = [
           { nixpkgs.overlays = [ unstableOverlay ]; }
+          claude-sandbox.nixosModules.default
           ./nix-modules/nixos/configuration.nix
           ./nix-modules/shared/configuration.nix
         ];
