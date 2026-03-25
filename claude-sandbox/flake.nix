@@ -13,17 +13,27 @@
   outputs = { self, nixpkgs, microvm, ... }:
     let
       system = "x86_64-linux";
+      pkgs = nixpkgs.legacyPackages.${system};
+
+      # Default VM runner (used by standalone `nix build`)
+      defaultRunner = import ./lib/make-sandbox.nix {
+        inherit nixpkgs microvm system;
+      };
     in {
-      nixosModules.default = {
-        imports = [
-          ./modules/host/bridge.nix
-          ./modules/host/squid.nix
-        ];
+      # NixOS module for host integration.
+      # Provides services.claude-sandbox options, host infrastructure
+      # (bridge + squid), and adds the CLI to systemPackages.
+      nixosModules.default = import ./modules/default.nix {
+        inherit microvm nixpkgs;
       };
 
-      packages.${system}.claude-sandbox =
-        let pkgs = nixpkgs.legacyPackages.${system};
-        in pkgs.callPackage ./pkgs/claude-sandbox.nix { };
+      # Standalone CLI package (uses default VM config).
+      packages.${system} = {
+        claude-sandbox = pkgs.callPackage ./pkgs/claude-sandbox.nix {
+          vmRunner = defaultRunner;
+        };
+        default = self.packages.${system}.claude-sandbox;
+      };
 
       # Validate that the VM guest modules compose and evaluate correctly.
       checks.${system}.vm-base = (nixpkgs.lib.nixosSystem {

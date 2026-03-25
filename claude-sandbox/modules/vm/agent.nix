@@ -1,5 +1,8 @@
 # Claude Code agent service: boots into the workspace dev environment,
 # sources direnv if present, runs claude, then shuts down the VM.
+#
+# The prompt is delivered via a file at /run/claude-sandbox-params/prompt
+# (a read-only virtiofs share written by the host CLI).
 
 { config, lib, pkgs, ... }:
 
@@ -10,9 +13,16 @@ let
     text = ''
       set -euo pipefail
 
-      # Validate prompt is provided
-      if [ -z "''${CLAUDE_PROMPT:-}" ]; then
-        echo "ERROR: CLAUDE_PROMPT is not set" >&2
+      PROMPT_FILE="/run/claude-sandbox-params/prompt"
+
+      if [ ! -f "$PROMPT_FILE" ]; then
+        echo "ERROR: prompt file not found at $PROMPT_FILE" >&2
+        exit 1
+      fi
+
+      CLAUDE_PROMPT="$(cat "$PROMPT_FILE")"
+      if [ -z "$CLAUDE_PROMPT" ]; then
+        echo "ERROR: prompt file is empty" >&2
         exit 1
       fi
 
@@ -47,7 +57,7 @@ in
       ExecStart = lib.getExe agent-runner;
 
       # Ensure all required filesystems are mounted before we start.
-      RequiresMountsFor = "/home/agent/.claude /workspace /nix/store";
+      RequiresMountsFor = "/home/agent/.claude /workspace /nix/store /run/claude-sandbox-params";
 
       # VM lifecycle: shut down the VM when the agent exits (success or failure).
       SuccessAction = "poweroff";

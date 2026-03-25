@@ -43,6 +43,13 @@
         readOnly = true;
       }
       {
+        tag = "params";
+        source = lib.mkDefault "/tmp/claude-sandbox/params";
+        mountPoint = "/run/claude-sandbox-params";
+        proto = "virtiofs";
+        readOnly = true;
+      }
+      {
         tag = "nix-store";
         source = "/nix/store";
         mountPoint = "/nix/.ro-store";
