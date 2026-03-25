@@ -26,6 +26,8 @@
         modules = [
           microvm.nixosModules.microvm
           ./modules/vm/base.nix
+          ./modules/vm/claude-config.nix
+          ./modules/vm/network.nix
         ];
       }).config.system.build.toplevel;
     };
