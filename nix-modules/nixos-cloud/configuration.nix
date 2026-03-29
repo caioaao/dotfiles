@@ -4,6 +4,7 @@
   imports = [
     ./hardware-configuration.nix
     ../nixos-shared/tailscale.nix
+    ./llama-cpp.nix
   ];
 
   boot.loader.grub.enable = true;
