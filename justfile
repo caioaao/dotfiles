@@ -8,14 +8,15 @@ bootstrap:
 	# make sure dir exists before calling stow so stow doesn't manage it entirely
 	mkdir -p $HOME/.ssh
 
-	just stow git adopt=true
-	just stow git_spice adopt=true
-	just stow zsh adopt=true
-	just stow ssh adopt=true
-	just stow nvim adopt=true
-	just stow ghostty adopt=true
-	just stow mise adopt=true
-	just stow claude-code adopt=true
+	just stow git true
+	just stow git_spice true
+	just stow zsh true
+	just stow ssh true
+	just stow nvim true
+	just stow ghostty true
+	just stow direnv true
+	just stow mise true
+	just stow claude-code true
 
 stow module adopt="false": xdg-base-dirs
 	#!/usr/bin/env bash
