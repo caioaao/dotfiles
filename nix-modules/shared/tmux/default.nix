@@ -107,6 +107,7 @@
       set -g @catppuccin_window_status_style "rounded"
 
       set -g extended-keys on
+      set -g extended-keys-format csi-u
 
       # Window name rendering fix
       # See: https://github.com/catppuccin/tmux/issues/431
