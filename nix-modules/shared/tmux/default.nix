@@ -106,6 +106,8 @@
       set -g @catppuccin_flavor "mocha"
       set -g @catppuccin_window_status_style "rounded"
 
+      set -g extended-keys on
+
       # Window name rendering fix
       # See: https://github.com/catppuccin/tmux/issues/431
       set -g @catppuccin_window_text "#W"
