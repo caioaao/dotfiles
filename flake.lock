@@ -289,13 +289,30 @@
         "type": "github"
       }
     },
+    "pi-coding-agent": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "path": "./nix-modules/shared/pi-coding-agent",
+        "type": "path"
+      },
+      "original": {
+        "path": "./nix-modules/shared/pi-coding-agent",
+        "type": "path"
+      },
+      "parent": []
+    },
     "root": {
       "inputs": {
         "determinate": "determinate",
         "nix-darwin": "nix-darwin",
         "nix-homebrew": "nix-homebrew",
         "nixpkgs": "nixpkgs_3",
-        "nixpkgs-unstable": "nixpkgs-unstable"
+        "nixpkgs-unstable": "nixpkgs-unstable",
+        "pi-coding-agent": "pi-coding-agent"
       }
     }
   },

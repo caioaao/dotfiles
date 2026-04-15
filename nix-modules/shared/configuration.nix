@@ -36,6 +36,7 @@ in {
     git-revise
     git-spice
     git-lfs
+    pi-coding-agent
     github-cli
     gum
     just
