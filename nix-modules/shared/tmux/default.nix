@@ -106,6 +106,8 @@
       set -g @catppuccin_flavor "mocha"
       set -g @catppuccin_window_status_style "rounded"
 
+      # Forward modifier keys (Shift/Ctrl/Alt+Enter etc) in CSI-u format so
+      # pi (and other TUI apps) can distinguish them from plain Enter.
       set -g extended-keys on
       set -g extended-keys-format csi-u
 
