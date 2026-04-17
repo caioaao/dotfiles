@@ -8,6 +8,11 @@ stow-modules/claude-code/.claude/projects/
 
 .claude/settings.local.json
 
+# Pi runtime data
+stow-modules/pi/.pi/agent/sessions/
+stow-modules/pi/.pi/agent/auth.json
+stow-modules/pi/.pi/agent/git/
+stow-modules/pi/.pi/agent/extensions/
+
 # Machine-specific git config (not tracked)
 stow-modules/git/.config/git/config.local
-.dmux/

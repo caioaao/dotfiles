@@ -15,16 +15,6 @@
       text = builtins.readFile ./tms.sh;
     })
 
-    # Review dmux worktrees in nvim
-    (pkgs.writeShellApplication {
-      name = "dmux-review";
-      runtimeInputs = [
-        pkgs.fd
-        pkgs.fzf
-        pkgs.tmux
-      ];
-      text = builtins.readFile ./dmux-review.sh;
-    })
   ];
 
   programs.tmux = {
@@ -87,11 +77,6 @@
       # ===============================
       bind W display-popup -E "tms --new"
       bind w display-popup -E "tms --sessions"
-
-      # ===============================
-      # dmux Integration
-      # ===============================
-      bind R display-popup -E "dmux-review"
 
       # ===============================
       # Copy Mode Configuration
