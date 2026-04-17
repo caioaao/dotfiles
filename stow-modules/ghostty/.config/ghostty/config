@@ -12,4 +12,3 @@ gtk-titlebar = false
 macos-titlebar-style = transparent
 
 auto-update = off
-keybind = shift+enter=text:\x1b\r
