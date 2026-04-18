@@ -12,7 +12,7 @@ stow-modules/claude-code/.claude/projects/
 stow-modules/pi/.pi/agent/sessions/
 stow-modules/pi/.pi/agent/auth.json
 stow-modules/pi/.pi/agent/git/
-stow-modules/pi/.pi/agent/extensions/
+stow-modules/pi/.pi/agent/extensions/*/node_modules/
 
 # Machine-specific git config (not tracked)
 stow-modules/git/.config/git/config.local

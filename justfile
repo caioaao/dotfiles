@@ -20,7 +20,7 @@ bootstrap:
 	just bootstrap-pi
 
 bootstrap-pi:
-	mkdir -p $HOME/.pi/agent/skills
+	mkdir -p $HOME/.pi/agent/{skills,extensions/subagent,agents,prompts}
 	just stow pi true 
 
 stow module adopt="false": xdg-base-dirs
