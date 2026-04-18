@@ -43,6 +43,9 @@
 	pruneTags = true
 	all = true
 
+[submodule]
+	recurse = true
+
 [help]
         autocorrect = prompt
 

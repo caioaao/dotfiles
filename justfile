@@ -17,6 +17,10 @@ bootstrap:
 	just stow direnv true
 	just stow mise true
 	just stow claude-code true
+	just bootstrap-pi
+
+bootstrap-pi:
+	mkdir -p $HOME/.pi/agent/skills
 	just stow pi true 
 
 stow module adopt="false": xdg-base-dirs
