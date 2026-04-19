@@ -44,6 +44,7 @@ in {
     mise
     neovim
     nodejs
+    tree-sitter
     nixd
     oh-my-posh
     ripgrep
