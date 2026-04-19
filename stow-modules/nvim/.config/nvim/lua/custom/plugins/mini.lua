@@ -14,6 +14,11 @@ return {
 		--  - yinq - [Y]ank [I]nside [N]ext [']quote
 		--  - ci'  - [C]hange [I]nside [']quote
 		require("mini.ai").setup({
+			-- NOTE: Avoid conflicts with built-in incremental selection on Neovim>=0.12
+			mappings = {
+				around_next = "aa",
+				inside_next = "ii",
+			},
 			n_lines = 500,
 			custom_textobjects = {
 				F = spec_treesitter({ a = "@function.outer", i = "@function.inner" }),

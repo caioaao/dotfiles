@@ -24,9 +24,12 @@ vim.opt.mouse = "a"
 vim.opt.showmode = false
 
 -- Sync clipboard between OS and Neovim.
+--  Schedule the setting after `UiEnter` because it can increase startup-time.
 --  Remove this option if you want your OS clipboard to remain independent.
 --  See `:help 'clipboard'`
-vim.opt.clipboard = "unnamedplus"
+vim.schedule(function()
+	vim.opt.clipboard = "unnamedplus"
+end)
 
 -- Enable break indent
 vim.opt.breakindent = true
@@ -82,6 +85,21 @@ vim.opt.jumpoptions = "stack"
 
 -- Enable executing project local configs
 vim.opt.exrc = true
+
+-- Raise a dialog instead of erroring when quitting with unsaved changes
+vim.opt.confirm = true
+
+-- [[ Diagnostic Config ]]
+vim.diagnostic.config({
+	update_in_insert = false,
+	severity_sort = true,
+	float = { border = "rounded", source = "if_many" },
+	underline = { severity = { min = vim.diagnostic.severity.WARN } },
+	virtual_text = true,
+	virtual_lines = false,
+	-- Auto open the float when jumping with `[d` and `]d`
+	jump = { float = true },
+})
 
 -- [[ Basic Keymaps ]]
 --  See `:help vim.keymap.set()`
