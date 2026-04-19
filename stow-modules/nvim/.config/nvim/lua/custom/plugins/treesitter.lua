@@ -43,7 +43,9 @@ return {
 				elseif vim.tbl_contains(available_parsers, language) then
 					-- Auto-install missing parser and enable after installation
 					require("nvim-treesitter").install(language):await(function()
-						treesitter_try_attach(buf, language)
+						if vim.api.nvim_buf_is_valid(buf) then
+							treesitter_try_attach(buf, language)
+						end
 					end)
 				else
 					-- Try to enable in case the parser exists but is not from nvim-treesitter
