@@ -39,6 +39,9 @@
       set -g allow-passthrough on
       set -g mouse on
 
+      # Allow programs to rename the window via escape sequences
+      set -g allow-rename on
+
       # Optimize for terminal resizing
       set-option -gw aggressive-resize on
 
