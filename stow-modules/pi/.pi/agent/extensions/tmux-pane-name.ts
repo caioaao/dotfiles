@@ -40,7 +40,7 @@ async function generatePaneName(prompt: string, ctx: ExtensionContext): Promise<
 						content: [
 							{
 								type: "text" as const,
-								text: `Give me a very short creative name (1-3 words, max 20 chars) for a coding session about the following task:\n\n${prompt}\n\nJust respond with the name, nothing else. Be creative but make it relevant to the task.`,
+								text: `Give me a very short name (1-3 words, max 20 chars) for a coding session about the following task:\n\n${prompt}\n\nJust respond with the name, nothing else. Be creative but make it relevant to the task.`,
 							},
 						],
 						timestamp: Date.now(),
@@ -70,7 +70,7 @@ function showBusy() {
 	if (paneName) setWindowName(paneName);
 }
 
-export default function (pi: ExtensionAPI) {
+export default function(pi: ExtensionAPI) {
 	inTmux = !!process.env.TMUX;
 
 	pi.on("session_start", async (event, ctx) => {
@@ -92,9 +92,9 @@ export default function (pi: ExtensionAPI) {
 						? content
 						: Array.isArray(content)
 							? content
-									.filter((c): c is { type: "text"; text: string } => c.type === "text")
-									.map((c) => c.text)
-									.join("\n")
+								.filter((c): c is { type: "text"; text: string } => c.type === "text")
+								.map((c) => c.text)
+								.join("\n")
 							: "";
 				if (text) {
 					named = true;
