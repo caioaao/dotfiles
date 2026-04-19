@@ -18,6 +18,7 @@ bootstrap:
 	just stow mise true
 	just stow claude-code true
 	just bootstrap-pi
+	just setup-dev-secrets
 
 bootstrap-pi:
 	mkdir -p $HOME/.pi/agent/{skills,extensions/subagent,agents,prompts}
@@ -32,6 +33,9 @@ stow module adopt="false": xdg-base-dirs
 		extra=""
 	fi
 	stow ${extra} -t $HOME -d {{ justfile_directory() }}/stow-modules {{ module }}
+
+setup-dev-secrets:
+	op item get dev-secrets --fields notesPlain --account my.1password.com > $XDG_CONFIG_HOME/zsh.d/10-secrets.sh
 
 [linux]
 enroll-fingerprint:
