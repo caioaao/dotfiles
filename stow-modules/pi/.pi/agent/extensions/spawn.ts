@@ -49,14 +49,23 @@ async function spawnFromCommand(
   const parentSession = ctx.sessionManager.getSessionFile();
 
   try {
-    const result = await ctx.newSession({ parentSession });
+    const result = await ctx.newSession({
+      parentSession,
+      withSession: async (replacementCtx: any) => {
+        // Pre-fill the editor in the new session so the user can review and submit.
+        // Must use the replacement ctx — the outer ctx is stale after newSession.
+        replacementCtx.ui.setEditorText(combined);
+        replacementCtx.ui.notify(
+          "Session spawned. Press Enter to submit the pre-filled prompt.",
+          "success",
+        );
+      },
+    });
 
     if (result.cancelled) {
       return { ok: false, reason: "Session creation was cancelled by another extension." };
     }
 
-    // Pre-fill the editor so the user can review and submit
-    ctx.ui.setEditorText(combined);
     return { ok: true };
   } catch (err: any) {
     return { ok: false, reason: `newSession failed: ${err?.message ?? err}` };
@@ -86,11 +95,11 @@ export default function (pi: ExtensionAPI) {
       const result = await spawnFromCommand(prompt, ctx);
 
       if (!result.ok) {
+        // Safe to use ctx here only because newSession failed/was cancelled,
+        // i.e. no session replacement occurred. On success, the success notify
+        // is emitted from inside withSession using the replacement ctx.
         ctx.ui.notify(result.reason!, "error");
-        return;
       }
-
-      ctx.ui.notify("Session spawned. Press Enter to submit the pre-filled prompt.", "success");
     },
   });
 
