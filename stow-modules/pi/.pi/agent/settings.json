@@ -2,5 +2,7 @@
   "lastChangelogVersion": "0.67.6",
   "packages": [
     "https://github.com/lucasmeijer/pi-bash-live-view"
-  ]
+  ],
+  "defaultProvider": "anthropic",
+  "defaultModel": "claude-opus-4-7"
 }
