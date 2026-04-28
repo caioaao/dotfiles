@@ -9,6 +9,7 @@ stow-modules/claude-code/.claude/projects/
 .claude/settings.local.json
 
 # Pi runtime data
+/.pi/
 stow-modules/pi/.pi/agent/sessions/
 stow-modules/pi/.pi/agent/auth.json
 stow-modules/pi/.pi/agent/git/
