@@ -97,7 +97,7 @@ return {
 		--  Feel free to add/remove any LSPs that you want here. They will automatically be installed.
 		--  See `:help lsp-config` for information about keys and how to configure
 		local servers = {
-			elixirls = {},
+			expert = {},
 			rust_analyzer = {},
 			ts_ls = {},
 		}
