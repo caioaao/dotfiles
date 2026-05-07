@@ -1,8 +1,10 @@
 {
-  "lastChangelogVersion": "0.70.5",
+  "lastChangelogVersion": "0.71.1",
   "packages": [
-    "https://github.com/lucasmeijer/pi-bash-live-view"
+    "https://github.com/lucasmeijer/pi-bash-live-view",
+    "/etc/pi-packages/plannotator-pi-extension"
   ],
   "defaultProvider": "anthropic",
-  "defaultModel": "claude-opus-4-7"
+  "defaultModel": "claude-opus-4-7",
+  "defaultThinkingLevel": "xhigh"
 }

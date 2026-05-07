@@ -8,10 +8,10 @@
 }:
 
 let
-  version = "0.70.5";
+  version = "0.71.1";
   tarball = fetchurl {
     url = "https://registry.npmjs.org/@mariozechner/pi-coding-agent/-/pi-coding-agent-${version}.tgz";
-    hash = "sha256-DpT12PmbDcnLWtMkyxz6vrYA5EV20MDRf8rnA6ByMRU=";
+    hash = "sha256-OPlYLfgVq9FmbINMixzFkmxlWTmmGBqLwCHe9g1rbEk=";
   };
   srcWithLock = runCommand "pi-coding-agent-${version}-src" {} ''
     mkdir -p $out
@@ -23,7 +23,7 @@ buildNpmPackage {
   pname = "pi-coding-agent";
   inherit version;
   src = srcWithLock;
-  npmDepsHash = "sha256-pcIf6NrV8l2tzhlrs3MvHIDgz8BLr+vaSIKu5cXPtls=";
+  npmDepsHash = "sha256-X/hxlEdk1/6ku3u9qOjOugGiku9IqIrS9E5vf2DFObY=";
   makeCacheWritable = true;
   dontNpmBuild = true;
   postInstall = ''
