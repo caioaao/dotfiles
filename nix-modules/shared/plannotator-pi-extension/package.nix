@@ -15,10 +15,10 @@
 # (turndown, @pierre/diffs, @joplin/turndown-plugin-gfm) without a network.
 
 let
-  version = "0.19.8";
+  version = "0.19.14";
   tarball = fetchurl {
     url  = "https://registry.npmjs.org/@plannotator/pi-extension/-/pi-extension-${version}.tgz";
-    hash = "sha256-OuY1VX/5vNhK2rago0ALvMfCEPV/u3qa9knwfe7JrUw=";
+    hash = "sha256-L9DRIEEdPquenx+ejxBoUufzxe4Q2eDmN449rOIOIDk=";
   };
   # The published tarball has no package-lock.json. We generate one once
   # (see ./README.md) and graft it onto the unpacked source so buildNpmPackage
@@ -34,7 +34,7 @@ buildNpmPackage {
   inherit version;
   src = srcWithLock;
 
-  npmDepsHash = "sha256-Z/HowSmdS2A+JnBtN2IwrtPjVY/KaAn29AP7CVCOriI=";
+  npmDepsHash = "sha256-oiiZsd1UG1nIa7xhnOcUKpyr2J2qWbghXildxE036Ok=";
 
   # Nothing to build — pi loads the .ts files directly. Skipping `npm run build`
   # also avoids the upstream build script which expects a sibling apps/hook
@@ -48,8 +48,11 @@ buildNpmPackage {
   installPhase = ''
     runHook preInstall
 
-    # Drop devDeps and peerDeps before copying. peerDeps (@mariozechner/*)
-    # are provided by pi at runtime and would balloon the closure ~250MB.
+    # Drop devDeps and peerDeps before copying. The peerDep on pi itself
+    # (currently `@mariozechner/pi-coding-agent`, will become
+    # `@earendil-works/pi-coding-agent` once plannotator republishes against
+    # the new scope) is provided by pi at runtime and would balloon the
+    # closure ~250MB.
     npm prune --omit=dev --omit=peer --offline --no-audit --no-fund
 
     target=$out/lib/node_modules/@plannotator/pi-extension

@@ -1,7 +1,7 @@
 # plannotator-pi-extension (Nix package)
 
 Declarative Nix build of [`@plannotator/pi-extension`](https://www.npmjs.com/package/@plannotator/pi-extension)
-so the package can be loaded as a [pi local-path package](https://github.com/badlogic/pi-mono)
+so the package can be loaded as a [pi local-path package](https://github.com/earendil-works/pi)
 without a global npm install.
 
 The build output is exposed at the stable path

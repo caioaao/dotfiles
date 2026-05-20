@@ -4,7 +4,7 @@
     "https://github.com/lucasmeijer/pi-bash-live-view",
     "/etc/pi-packages/plannotator-pi-extension"
   ],
-  "defaultProvider": "anthropic",
-  "defaultModel": "claude-opus-4-7",
-  "defaultThinkingLevel": "xhigh"
+  "defaultProvider": "google",
+  "defaultModel": "gemini-3.5-flash",
+  "defaultThinkingLevel": "high"
 }

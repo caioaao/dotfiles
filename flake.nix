@@ -14,11 +14,15 @@
     # determinate is used in macOS
     determinate.url = "https://flakehub.com/f/DeterminateSystems/determinate/3";
 
-    pi-coding-agent.url = "path:./nix-modules/shared/pi-coding-agent";
-    pi-coding-agent.inputs.nixpkgs.follows = "nixpkgs";
+    # pi — terminal-based coding agent.
+    # Renamed from `pi-coding-agent` (npm: @mariozechner/pi-coding-agent) to
+    # `pi` (npm: @earendil-works/pi-coding-agent) in April 2026. See
+    # https://mariozechner.at/posts/2026-04-08-ive-sold-out/.
+    pi.url = "path:./nix-modules/shared/pi";
+    pi.inputs.nixpkgs.follows = "nixpkgs";
   };
 
-  outputs = { nixpkgs, nixpkgs-unstable, nix-darwin, nix-homebrew, determinate, pi-coding-agent, ... }:
+  outputs = { nixpkgs, nixpkgs-unstable, nix-darwin, nix-homebrew, determinate, pi, ... }:
     let
       # Pick the CPU/OS for each machine
       linuxSystem = "x86_64-linux";
@@ -34,7 +38,7 @@
         in {
           claude-code = unstable.claude-code;
           neovim = unstable.neovim;
-          pi-coding-agent = pi-coding-agent.packages.${final.system}.default;
+          pi = pi.packages.${final.system}.default;
         };
     in {
       # ---------- NixOS ----------

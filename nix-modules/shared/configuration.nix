@@ -25,15 +25,15 @@ let
   # we package it as a regular Nix derivation so it lives in /run/current-system
   # and gets rebuilt/pinned via the flake.
   plannotator = let
-    version = "0.19.8";
+    version = "0.19.14";
     sources = {
       "aarch64-darwin" = {
         asset = "plannotator-darwin-arm64";
-        hash  = "sha256-aSKiS98e4TX9MPr/eKCjm4NlbQSjzLEirfNJChRjFWY=";
+        hash  = "sha256-9yAtGIQylW/0K9jMl8Ak076fgDaYBlWB5Yl+czOpd+s=";
       };
       "x86_64-linux" = {
         asset = "plannotator-linux-x64";
-        hash  = "sha256-b+HrGVQwJYF0q5tv0mDjqR+/mkhax4lkU+eC8nYTYGQ=";
+        hash  = "sha256-5tVu6ArVOIZNL+eqSzJcMje0OiLdk/G1582V1glhv4w=";
       };
     };
     src = sources.${pkgs.stdenv.hostPlatform.system} or
@@ -93,7 +93,7 @@ in {
     git-revise
     git-spice
     git-lfs
-    pi-coding-agent
+    pi
     plannotator
     github-cli
     gum
