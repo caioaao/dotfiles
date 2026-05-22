@@ -42,6 +42,10 @@
       # Allow programs to rename the window via escape sequences
       set -g allow-rename on
 
+      # Forward tmux session name to the host terminal (Ghostty tab title)
+      set -g set-titles on
+      set -g set-titles-string '#{s/__/./:session_name}'
+
       # Optimize for terminal resizing
       set-option -gw aggressive-resize on
 
