@@ -1,5 +1,5 @@
 {
-  "lastChangelogVersion": "0.71.1",
+  "lastChangelogVersion": "0.75.4",
   "packages": [
     "https://github.com/lucasmeijer/pi-bash-live-view",
     "/etc/pi-packages/plannotator-pi-extension"
