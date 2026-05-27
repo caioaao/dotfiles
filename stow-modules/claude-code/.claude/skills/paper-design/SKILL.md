@@ -12,7 +12,7 @@ Use the Paper MCP tools to create or refine UI designs on the user's canvas, fol
 
 Read these files before any design work:
 
-1. Read `AGENTS.md` — project identity, stack, UI framework details, docs locations.
+1. Read `AGENTS.md` - project identity, stack, UI framework details, docs locations.
 2. Look for a design system spec. If one exists, treat it as the canonical reference for colors, typography, spacing, and component patterns.
 3. Skim filenames for awareness of existing features and pages.
 4. If the task involves a specific feature, read its spec too.
@@ -21,23 +21,23 @@ Read these files before any design work:
 
 ### 1. Understand the Canvas
 
-1. `get_basic_info` — file structure, artboards, loaded fonts.
-2. `get_selection` — what the user is focused on.
+1. `get_basic_info` - file structure, artboards, loaded fonts.
+2. `get_selection` - what the user is focused on.
 3. If existing artboards are relevant, `get_tree_summary` + `get_screenshot` to understand current state.
 
 ### 2. Clarify Intent
 
 If the request is ambiguous, use `AskUserQuestion`:
 
-- **header:** "Scope" / **question:** "What are we designing?" — options relevant to the request
-- **header:** "Device" / **question:** "What viewport?" — "Desktop (1440px)", "Mobile (390px)", "Both"
-- **header:** "Mode" / **question:** "Color mode preference?" — "Dark", "Light", "Both"
+- **header:** "Scope" / **question:** "What are we designing?" - options relevant to the request
+- **header:** "Device" / **question:** "What viewport?" - "Desktop (1440px)", "Mobile (390px)", "Both"
+- **header:** "Mode" / **question:** "Color mode preference?" - "Dark", "Light", "Both"
 
 ### 3. Design
 
 1. Write a short design brief (palette, type, spacing, direction) aligned with the design system spec (if one exists).
 2. `create_artboard`.
-3. Build incrementally — one visual group per `write_html` call.
+3. Build incrementally - one visual group per `write_html` call.
 4. Use `duplicate_nodes` + `update_styles` + `set_text_content` for repeated elements.
 5. Screenshot after every 2-3 modifications.
 
@@ -58,8 +58,8 @@ Fix issues before moving on.
 
 If this design was created for a Linear ticket (provided via `$ARGUMENTS` or discussed with the user):
 
-1. Call `finish_working_on_nodes` — this returns the URL of the created/modified artboard.
-2. Attach the Paper URL to the ticket: `mcp__linear-server__create_attachment` with the ticket ID, the Paper URL as `url`, and a title like "Design — [artboard name]".
+1. Call `finish_working_on_nodes` - this returns the URL of the created/modified artboard.
+2. Attach the Paper URL to the ticket: `mcp__linear-server__create_attachment` with the ticket ID, the Paper URL as `url`, and a title like "Design - [artboard name]".
 
 ### 6. Finish
 

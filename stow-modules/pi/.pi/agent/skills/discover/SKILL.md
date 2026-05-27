@@ -1,6 +1,6 @@
 ---
 name: discover
-description: Discovery phase — surface codebase facts about a feature into a scratch findings artifact, before planning or coding. Use when bootstrapping work on a new feature, ticket, or change scope.
+description: Discovery phase - surface codebase facts about a feature into a scratch findings artifact, before planning or coding. Use when bootstrapping work on a new feature, ticket, or change scope.
 disable-model-invocation: true
 ---
 
@@ -11,7 +11,7 @@ Produce a discovery artifact for a feature or ticket. **No code yet, no plan yet
 ## Input
 
 - A topic slug (used as the output filename)
-- Optionally: an anchor — a spec path, ticket description, anchor file, or feature summary.
+- Optionally: an anchor - a spec path, ticket description, anchor file, or feature summary.
 
 If no anchor is provided, ask the user for one. Don't guess.
 
@@ -35,16 +35,16 @@ If no anchor is provided, ask the user for one. Don't guess.
 
 5. **Write findings** to `.local/<topic-slug>-findings.md` with these sections:
 
-   - **Summary** — 3–5 bullets, your reading of the anchor (surface ambiguities here)
-   - **Applicable rules** — quote load-bearing lines, cite by filename
-   - **Anchor files** — `path : purpose : what changes`
-   - **Sibling patterns** — what to mirror, what to deviate from
-   - **Hidden coupling** — anything not in the anchor but the implementer must respect
-   - **Open questions** — ambiguities to resolve before planning
-   - **Suggested vertical slices** — first-pass decomposition
+   - **Summary** - 3–5 bullets, your reading of the anchor (surface ambiguities here)
+   - **Applicable rules** - quote load-bearing lines, cite by filename
+   - **Anchor files** - `path : purpose : what changes`
+   - **Sibling patterns** - what to mirror, what to deviate from
+   - **Hidden coupling** - anything not in the anchor but the implementer must respect
+   - **Open questions** - ambiguities to resolve before planning
+   - **Suggested vertical slices** - first-pass decomposition
 
 6. Emit a one-line summary of the artifact and stop. The user will route the findings into a planning phase next.
 
 ## Privacy invariants
 
-The findings file lives in `.local/` (gitignored scratch). It is **not** committed. Downstream phases must not reference `.local/` paths in code, comments, commits, or PR bodies — they cite findings by content, not path.
+The findings file lives in `.local/` (gitignored scratch). It is **not** committed. Downstream phases must not reference `.local/` paths in code, comments, commits, or PR bodies - they cite findings by content, not path.

@@ -48,19 +48,19 @@ If too broad, suggest splitting. Drill deeper into user flow iteratively.
 
 Use `AskUserQuestion` to clarify impact areas. Adapt questions to the project's stack (from AGENTS.md). Batch related questions (up to 4 per call).
 
-**Call 1 — Data & Schema:**
+**Call 1 - Data & Schema:**
 1. **header:** "New entities" / **question:** "Does this introduce new entities or fields?"
    - Options: "New entity", "New fields on existing entity", "No schema changes"
 2. **header:** "Schema" / **question:** "Are database schema changes needed?"
    - Options: "New table(s)", "New columns on existing table", "New indexes only", "No DB changes"
 
-**Call 2 — Code boundaries:**
+**Call 2 - Code boundaries:**
 3. **header:** "Business logic" / **question:** "Does this need new modules or functions in the business logic layer?"
    - Options: "New module", "New functions on existing module", "No logic changes"
 4. **header:** "UI" / **question:** "What UI changes are needed?"
    - Options: "New page/view", "New component(s)", "Modified existing view", "No UI changes"
 
-**Call 3 — Infrastructure:**
+**Call 3 - Infrastructure:**
 5. **header:** "External services" / **question:** "Does this interact with external services or APIs?"
    - Options: "New integration", "Modified existing integration", "No external service changes"
 6. **header:** "Config" / **question:** "Are new config keys or env vars needed?"
@@ -95,13 +95,13 @@ Produce a markdown document. Adapt the section structure to the project's stack 
 [Numbered steps, concrete examples]
 
 ## Data Model Changes
-[New entities, fields, schema definitions, migrations — using the project's ORM/DB conventions]
+[New entities, fields, schema definitions, migrations - using the project's ORM/DB conventions]
 
 ## Business Logic Changes
-[New or modified modules/functions with type signatures — using the project's language conventions]
+[New or modified modules/functions with type signatures - using the project's language conventions]
 
 ## UI Changes
-[Routes, views, components — using the project's framework conventions]
+[Routes, views, components - using the project's framework conventions]
 
 ## Configuration Changes
 [New config keys, env vars, defaults]
@@ -125,7 +125,7 @@ Tell the human where you saved it and why.
 ### Phase 6: Commit to docs/ (if long-lived)
 
 Use `AskUserQuestion`:
-- **header:** "Commit to docs?" / **question:** "Should this spec also be committed to `docs/specs/` for long-term reference? (Do this if the spec defines system behavior that outlives this specific ticket/project — e.g., domain model changes, API contracts.)"
+- **header:** "Commit to docs?" / **question:** "Should this spec also be committed to `docs/specs/` for long-term reference? (Do this if the spec defines system behavior that outlives this specific ticket/project - e.g., domain model changes, API contracts.)"
   - Options: "Yes, commit to docs/specs/", "No, Linear is enough for this"
 
 If yes:
@@ -135,7 +135,7 @@ If yes:
 ## Rules
 
 - One spec per feature. If the human describes multiple features, split them.
-- Be concrete: include schema definitions, type signatures, and example data — using the project's language and framework conventions.
+- Be concrete: include schema definitions, type signatures, and example data - using the project's language and framework conventions.
 - Challenge vague requirements. "Make it better" is not a spec.
 - The human owns the final spec.
 - Use the Linear team from AGENTS.md for all ticket operations.

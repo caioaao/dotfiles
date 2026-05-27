@@ -1,7 +1,7 @@
 ---
 description: Scrub transient `.local/` references from code, comments, commits, and PR bodies
 ---
-Drop all mentions of files under `.local/` — they are gitignored scratch and won't survive merge.
+Drop all mentions of files under `.local/` - they are gitignored scratch and won't survive merge.
 
 Steps:
 1. Search the working tree (staged + unstaged + committed-on-this-branch) for `.local/` references:
@@ -18,4 +18,4 @@ Steps:
 4. After scrubbing, re-run the search. Confirm zero matches.
 5. If the branch is stacked: `gt restack` to propagate amends.
 
-Do not delete the `.local/` files themselves — they're useful scratch. Only remove **references** to them from committed artifacts.
+Do not delete the `.local/` files themselves - they're useful scratch. Only remove **references** to them from committed artifacts.

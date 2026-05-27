@@ -11,7 +11,7 @@ optional_inputs:
 
 ## What This Skill Does
 
-Generates `PROMPT_build.md` (~100-150 lines) — a project-specific prompt fed to the CLI tool via stdin in headless mode. Each invocation handles exactly one task: select the highest-priority task from the plan, implement it completely, validate, commit, and exit. The loop script restarts with a clean context window.
+Generates `PROMPT_build.md` (~100-150 lines) - a project-specific prompt fed to the CLI tool via stdin in headless mode. Each invocation handles exactly one task: select the highest-priority task from the plan, implement it completely, validate, commit, and exit. The loop script restarts with a clean context window.
 
 PROMPT_build.md is NOT a planning tool. It consumes the plan and executes one task per iteration.
 
@@ -26,10 +26,10 @@ This is **step 4 of 5** in the ralphio bootstrap sequence:
 5. generate-loop → loop.sh
 
 **Optional inputs that improve output quality:**
-- `AGENTS.md` — validation commands become backpressure gates (critical)
-- `specs/*` — requirements and acceptance criteria
+- `AGENTS.md` - validation commands become backpressure gates (critical)
+- `specs/*` - requirements and acceptance criteria
 
-This skill works without these inputs, but `AGENTS.md` is strongly recommended — validation commands are essential for the build loop to self-correct.
+This skill works without these inputs, but `AGENTS.md` is strongly recommended - validation commands are essential for the build loop to self-correct.
 
 ## Before Generating
 
@@ -37,10 +37,10 @@ Study the target project thoroughly before writing anything:
 
 - Directory structure and source code layout
 - Tech stack and framework conventions
-- `AGENTS.md` — validation commands (build, test, typecheck, lint), constraints, project identity
-- Existing `specs/` — domain understanding
-- Git conventions — commit message style, branch strategy
-- Build/test/lint scripts — exact commands
+- `AGENTS.md` - validation commands (build, test, typecheck, lint), constraints, project identity
+- Existing `specs/` - domain understanding
+- Git conventions - commit message style, branch strategy
+- Build/test/lint scripts - exact commands
 
 ## What the Generated Prompt Must Accomplish
 
@@ -51,7 +51,7 @@ When executed inside the loop, the generated `PROMPT_build.md` must instruct Cla
 - Study `specs/` for requirements and acceptance criteria
 - Study `IMPLEMENTATION_PLAN.md` for current task list and priorities
 
-Use exact phrasing: **"Study existing implementation. Don't assume not implemented — search first."**
+Use exact phrasing: **"Study existing implementation. Don't assume not implemented - search first."**
 
 ### Phase 1: Task Selection
 Read `IMPLEMENTATION_PLAN.md` and select the highest-priority unchecked task (`- [ ]`).
@@ -68,11 +68,11 @@ Before implementing, search the codebase:
 - Identify related code that may be affected
 - Confirm the task actually needs implementation (it may already be done)
 
-Guardrail: **"Don't assume not implemented — search first."**
+Guardrail: **"Don't assume not implemented - search first."**
 
 ### Phase 3: Implementation
 Implement the selected task:
-- **Complete implementation** — no placeholders, no stubs, no TODOs
+- **Complete implementation** - no placeholders, no stubs, no TODOs
 - Follow existing code patterns and conventions in the project
 - If bugs are discovered during implementation (even unrelated), fix them
 
@@ -94,21 +94,21 @@ Update `IMPLEMENTATION_PLAN.md`:
 ### Phase 6: Commit and Exit
 - `git add` changed files (be specific, not `git add .`)
 - `git commit` with a descriptive message explaining intent, not mechanics
-- Exit the process — the loop script handles restart
+- Exit the process - the loop script handles restart
 
 ### Guardrails (Highest Priority)
 These must appear prominently in the generated prompt:
-- **One task per iteration** — do not batch
-- **Implement completely** — no partial implementations
-- **Validate before committing** — backpressure is non-negotiable
-- **Search before assuming** — "don't assume not implemented"
+- **One task per iteration** - do not batch
+- **Implement completely** - no partial implementations
+- **Validate before committing** - backpressure is non-negotiable
+- **Search before assuming** - "don't assume not implemented"
 
 ## What the Generated Prompt Must Exclude
 
-- **Planning logic** — the build prompt does not decide what to build next beyond selecting from the plan
-- **References to ralphio or meta-prompts** — `PROMPT_build.md` is project-specific and self-contained
-- **Generic coding advice** — Claude already knows how to code; don't waste context on "write clean code"
-- **Architecture prescriptions** — the build prompt follows existing patterns, it doesn't establish new ones
+- **Planning logic** - the build prompt does not decide what to build next beyond selecting from the plan
+- **References to ralphio or meta-prompts** - `PROMPT_build.md` is project-specific and self-contained
+- **Generic coding advice** - Claude already knows how to code; don't waste context on "write clean code"
+- **Architecture prescriptions** - the build prompt follows existing patterns, it doesn't establish new ones
 
 ## Parameterization
 
@@ -123,7 +123,7 @@ Discover and embed these project-specific values:
 | Use this | Not this | Why |
 |---|---|---|
 | "Study existing implementation" | "Look at the code" | Activates deep analysis |
-| "Don't assume not implemented — search first" | "Check if it exists" | Strong backpressure against duplication |
+| "Don't assume not implemented - search first" | "Check if it exists" | Strong backpressure against duplication |
 | "Non-negotiable" | "Important" or "Required" | Hard stop, not a suggestion |
 | "Backpressure" | "Validation step" | Frames validation as a gate, not a checkbox |
 | "One task per iteration" | "Keep changes small" | Concrete, unambiguous constraint |
@@ -133,18 +133,18 @@ Discover and embed these project-specific values:
 ## Structure Template
 
 ```markdown
-# Build Prompt — [Project Name]
+# Build Prompt - [Project Name]
 
 [One-line project identity.]
 
 ## Before Implementation
 
 Study these in order:
-1. `AGENTS.md` — constraints and validation commands (source of truth)
-2. `specs/` — requirements and acceptance criteria
-3. `IMPLEMENTATION_PLAN.md` — task list and priorities
+1. `AGENTS.md` - constraints and validation commands (source of truth)
+2. `specs/` - requirements and acceptance criteria
+3. `IMPLEMENTATION_PLAN.md` - task list and priorities
 
-Don't assume not implemented — search first.
+Don't assume not implemented - search first.
 
 ## Task Selection
 
@@ -200,15 +200,15 @@ In `IMPLEMENTATION_PLAN.md`:
 
 ## Anti-Patterns
 
-- **Task batching**: "While I'm here, let me also fix..." — one task per iteration. Extra work gets added to the plan for the next iteration.
+- **Task batching**: "While I'm here, let me also fix..." - one task per iteration. Extra work gets added to the plan for the next iteration.
 
-- **Skipping validation**: "The change is small, tests aren't needed" — validation is the backpressure that makes the loop self-correcting. Without it, errors compound.
+- **Skipping validation**: "The change is small, tests aren't needed" - validation is the backpressure that makes the loop self-correcting. Without it, errors compound.
 
-- **Partial implementations**: "I'll finish the error handling in the next iteration" — each iteration must produce a complete, validated increment. No IOUs.
+- **Partial implementations**: "I'll finish the error handling in the next iteration" - each iteration must produce a complete, validated increment. No IOUs.
 
 - **Assuming without searching**: Reimplementing something that exists elsewhere in the codebase. Always search first.
 
-- **Generic commit messages**: "Update code" or "Fix bug" — explain the intent: "Validate email uniqueness before persisting registration."
+- **Generic commit messages**: "Update code" or "Fix bug" - explain the intent: "Validate email uniqueness before persisting registration."
 
 ## Design Principles (ralphio system)
 
@@ -243,4 +243,4 @@ The build prompt consumes what the plan prompt produces. Both must agree on this
 
 ---
 
-The core insight: backpressure is what makes the loop self-correcting. Without validation gates, each iteration can silently introduce errors that compound. The build prompt's job is not just to implement — it is to implement, prove correctness, and leave the codebase in a known-good state. Every iteration must earn its commit.
+The core insight: backpressure is what makes the loop self-correcting. Without validation gates, each iteration can silently introduce errors that compound. The build prompt's job is not just to implement - it is to implement, prove correctness, and leave the codebase in a known-good state. Every iteration must earn its commit.

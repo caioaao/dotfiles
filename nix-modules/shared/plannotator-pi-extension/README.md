@@ -27,7 +27,7 @@ tarball = fetchurl {
 };
 ```
 
-Rebuild — Nix will error with the correct SRI hash. Paste it in.
+Rebuild - Nix will error with the correct SRI hash. Paste it in.
 
 ### 2. Regenerate `package-lock.json`
 

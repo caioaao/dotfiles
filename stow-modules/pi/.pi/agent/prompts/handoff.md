@@ -5,7 +5,7 @@ argument-hint: "<scope-or-ticket> [output-path] [extra context...]"
 Author a self-contained follow-up prompt for a fresh session. The next session will consume this with `/drive-slice` (or equivalent) and has **no memory of this conversation**.
 
 Scope: `$1`
-Output: `${2:-.local/$1-followup.md}` (gitignored scratch — never committed)
+Output: `${2:-.local/$1-followup.md}` (gitignored scratch - never committed)
 
 The follow-up must be reconstructable from disk alone. Include:
 
@@ -13,7 +13,7 @@ The follow-up must be reconstructable from disk alone. Include:
    - Which branch to work on (never create a new one unless told)
    - Which commit to amend (e.g. `gt modify <sha>`, `gt absorb`, `git commit --amend`) or whether to add new commits
    - Whether to restack / submit at the end
-2. **Context anchors.** Paths and SHAs only — no narrative recap:
+2. **Context anchors.** Paths and SHAs only - no narrative recap:
    - Spec / ADR / rule paths in the repo's doc tree
    - Plan / structure / slice paths under `.local/`
    - Relevant commits (`git show <sha>`)

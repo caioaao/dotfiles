@@ -11,7 +11,7 @@ optional_inputs:
 
 ## What This Skill Does
 
-Generates `PROMPT_spec.md` (~100-150 lines) — a project-specific prompt used in interactive sessions where a human collaborates with Claude to author requirement specs. The human brings raw requirements (conversations, notes, user stories, feature ideas) and Claude uses this prompt to transform them into well-scoped spec files in `specs/`.
+Generates `PROMPT_spec.md` (~100-150 lines) - a project-specific prompt used in interactive sessions where a human collaborates with Claude to author requirement specs. The human brings raw requirements (conversations, notes, user stories, feature ideas) and Claude uses this prompt to transform them into well-scoped spec files in `specs/`.
 
 This is the only generated artifact used interactively by a human. It is NOT used inside an automated loop.
 
@@ -26,8 +26,8 @@ This is **step 2 of 5** in the ralphio bootstrap sequence:
 5. generate-loop → loop.sh
 
 **Optional inputs that improve output quality:**
-- `AGENTS.md` — provides project constraints and domain vocabulary
-- Existing `specs/` — provides tone and format to match
+- `AGENTS.md` - provides project constraints and domain vocabulary
+- Existing `specs/` - provides tone and format to match
 
 This skill works without these inputs, but output quality improves when they exist.
 
@@ -35,10 +35,10 @@ This skill works without these inputs, but output quality improves when they exi
 
 Study the target project thoroughly before writing anything:
 
-- Existing `specs/` directory (if present) — tone, format, domain vocabulary
-- README and project description — domain context and project identity
-- `AGENTS.md` (if present) — project constraints, tech stack, validation commands
-- Project structure — language, framework, existing patterns
+- Existing `specs/` directory (if present) - tone, format, domain vocabulary
+- README and project description - domain context and project identity
+- `AGENTS.md` (if present) - project constraints, tech stack, validation commands
+- Project structure - language, framework, existing patterns
 
 **Two layers of "study first":** You study the project now to generate the prompt. The generated prompt instructs its user (Claude in the interactive session) to study the project before writing specs.
 
@@ -55,22 +55,22 @@ Each topic becomes one spec file. **Scope test:** Each topic can be summarized i
 ### 3. Produce Spec Files
 One file per topic in `specs/`. Each file contains:
 - Clear statement of the behavioral outcome
-- Acceptance criteria — observable, testable results
+- Acceptance criteria - observable, testable results
 - Non-goals for that topic (what is explicitly out of scope)
 
 ### 4. Enforce Quality Constraints
 - Specs describe WHAT, never HOW (no code, no implementation details)
 - Acceptance criteria are behavioral outcomes, not test cases
-- Each spec is self-contained — readable without cross-referencing other specs
+- Each spec is self-contained - readable without cross-referencing other specs
 - Specs do not prescribe architecture, file structure, or technology choices
 
 ## What the Generated Prompt Must Exclude
 
-- **File naming conventions** — let the user or Claude choose naturally during the session
-- **Fixed number of specs** — the number is driven by requirements, not a template
-- **References to ralphio, the loop, or meta-prompts** — `PROMPT_spec.md` is project-specific and self-contained
-- **Implementation hints** — even subtle ones like "this will be consumed by a planning agent"
-- **Cross-references between specs** — each spec must stand alone
+- **File naming conventions** - let the user or Claude choose naturally during the session
+- **Fixed number of specs** - the number is driven by requirements, not a template
+- **References to ralphio, the loop, or meta-prompts** - `PROMPT_spec.md` is project-specific and self-contained
+- **Implementation hints** - even subtle ones like "this will be consumed by a planning agent"
+- **Cross-references between specs** - each spec must stand alone
 
 ## Language That Activates Good Behavior
 
@@ -86,13 +86,13 @@ One file per topic in `specs/`. Each file contains:
 ## Structure Template
 
 ```markdown
-# Spec Writing Guide — [Project Name]
+# Spec Writing Guide - [Project Name]
 
 [One-line project identity from README/AGENTS.md.]
 
 ## Before Writing Specs
 
-Study existing specs in `specs/` and source code in [discovered source paths]. Don't assume not implemented — search first. [If AGENTS.md exists: "AGENTS.md is the source of truth for project constraints."]
+Study existing specs in `specs/` and source code in [discovered source paths]. Don't assume not implemented - search first. [If AGENTS.md exists: "AGENTS.md is the source of truth for project constraints."]
 
 ## Your Role
 
@@ -111,31 +111,31 @@ Push beyond the first answer. Ask "why" and "what happens when" to surface edge 
 
 Each topic of concern becomes one file in `specs/`. Each file contains:
 
-1. **Behavioral outcome** — what the system does, not how it does it
-2. **Acceptance criteria** — observable results that confirm the outcome
-3. **Non-goals** — what this spec explicitly does not cover
+1. **Behavioral outcome** - what the system does, not how it does it
+2. **Acceptance criteria** - observable results that confirm the outcome
+3. **Non-goals** - what this spec explicitly does not cover
 
 ### Scope Test
 If a topic cannot be summarized in one sentence without "and," split it into separate specs.
 
 ### Quality Rules (Non-Negotiable)
-- Describe WHAT, never HOW — no code, no implementation, no architecture
+- Describe WHAT, never HOW - no code, no implementation, no architecture
 - Acceptance criteria are behavioral outcomes, not test cases
-- Each spec is self-contained — no cross-references to other specs
+- Each spec is self-contained - no cross-references to other specs
 - Do not prescribe technology, file structure, or API design
 
-[## Domain Vocabulary — optional section if project has established terms]
+[## Domain Vocabulary - optional section if project has established terms]
 ```
 
 ## Anti-Patterns
 
-- **Implementation leaking into specs**: "The API should return JSON with fields..." — this is design, not requirements. Write "The system should provide registration status to the caller" instead.
+- **Implementation leaking into specs**: "The API should return JSON with fields..." - this is design, not requirements. Write "The system should provide registration status to the caller" instead.
 
-- **Over-scoped topics**: "User management" covering registration, authentication, profiles, and permissions — this is four specs, not one.
+- **Over-scoped topics**: "User management" covering registration, authentication, profiles, and permissions - this is four specs, not one.
 
 - **Acceptance criteria as test scripts**: "Given X, when Y, then Z" is a test case format. Write "Users can recover access using their email address" instead.
 
-- **Spec cross-references**: "See auth-spec.md for the token format" — if two specs need to agree, either merge them or make each self-contained.
+- **Spec cross-references**: "See auth-spec.md for the token format" - if two specs need to agree, either merge them or make each self-contained.
 
 - **Premature specificity**: Specifying error codes, field names, or response formats. These are implementation decisions that belong in the code, not the spec.
 
@@ -160,4 +160,4 @@ Specs produced by PROMPT_spec.md are consumed by the plan prompt and build promp
 
 ---
 
-The core insight: specs are not requirements documents — they are *constraints that enable*. A good spec narrows the solution space enough that an autonomous agent can build the right thing, without narrowing it so much that the agent cannot make reasonable implementation decisions. Every line should either constrain an outcome or prevent a misunderstanding. Everything else is noise.
+The core insight: specs are not requirements documents - they are *constraints that enable*. A good spec narrows the solution space enough that an autonomous agent can build the right thing, without narrowing it so much that the agent cannot make reasonable implementation decisions. Every line should either constrain an outcome or prevent a misunderstanding. Everything else is noise.

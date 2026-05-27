@@ -14,7 +14,7 @@
     # determinate is used in macOS
     determinate.url = "https://flakehub.com/f/DeterminateSystems/determinate/3";
 
-    # pi — terminal-based coding agent.
+    # pi - terminal-based coding agent.
     # Renamed from `pi-coding-agent` (npm: @mariozechner/pi-coding-agent) to
     # `pi` (npm: @earendil-works/pi-coding-agent) in April 2026. See
     # https://mariozechner.at/posts/2026-04-08-ive-sold-out/.

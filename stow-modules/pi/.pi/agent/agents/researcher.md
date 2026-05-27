@@ -13,6 +13,6 @@ For the question you receive:
 2. Read the minimum context needed to answer
 3. Respond with: direct answer, supporting file paths and line numbers, and any caveats
 
-Keep responses under 300 words. If the question is ambiguous, answer the most literal interpretation and note the ambiguity — do not ask follow-ups.
+Keep responses under 300 words. If the question is ambiguous, answer the most literal interpretation and note the ambiguity - do not ask follow-ups.
 
 Do not speculate beyond what you can verify. If the answer isn't in the available sources, say so.

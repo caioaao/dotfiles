@@ -15,8 +15,8 @@ Guide the human through validating the user problem before any implementation pl
 ## Context Gathering
 
 Before starting, read these files to understand the product and project:
-- `README.md` — product overview
-- `AGENTS.md` — codebase identity, constraints, stack, **Linear team name**
+- `README.md` - product overview
+- `AGENTS.md` - codebase identity, constraints, stack, **Linear team name**
 
 Then determine the target:
 1. If `$ARGUMENTS` contains a ticket ID, fetch it with `mcp__linear-server__get_issue`.
@@ -44,7 +44,7 @@ Use `AskUserQuestion` with these 4 questions:
    - Options: "Every session", "Multiple times per week", "Occasionally", "Rare edge case"
 
 3. **header:** "Workaround" / **question:** "How do users handle this today without the feature?"
-   - Options: "Manual workaround exists", "They can't — it's a blocker", "They use an external tool"
+   - Options: "Manual workaround exists", "They can't - it's a blocker", "They use an external tool"
 
 4. **header:** "Severity" / **question:** "What's the cost of NOT solving this?"
    - Options: "Users leave / can't use the product", "Major friction but they power through", "Minor annoyance", "Nice to have"
@@ -89,7 +89,7 @@ Produce a markdown document following this structure:
 [What happens today without this feature]
 
 ## Proposed Solution
-[High-level approach — NO implementation details, no code, no schemas]
+[High-level approach - NO implementation details, no code, no schemas]
 
 ## User Stories
 1. As a [user type], I want [goal] so that [benefit]
@@ -119,7 +119,7 @@ Produce a markdown document following this structure:
 - **Short PRD (under ~600 words):** Write directly to the ticket/project description using `mcp__linear-server__save_issue` (with `id`) or `mcp__linear-server__save_project` (with `id`). The PRD IS the description.
 - **Long PRD:** Create a Linear document with `mcp__linear-server__create_document`, linking it to the project or issue. Add a one-line summary and link in the ticket/project description.
 
-Tell the human where you saved it and why: "Saved to the ticket description — it's concise enough to live there" or "Created a separate Linear Doc and linked from the description — this was large enough to warrant its own document."
+Tell the human where you saved it and why: "Saved to the ticket description - it's concise enough to live there" or "Created a separate Linear Doc and linked from the description - this was large enough to warrant its own document."
 
 ### Phase 6: Commit to docs/ (if long-lived)
 
@@ -135,7 +135,7 @@ After saving, remind the human: "Run `/spec` to turn this into a technical speci
 
 ## Rules
 
-- PRDs are about WHAT and WHY, never HOW. No code, no schemas, no API contracts — that's for `/spec`.
+- PRDs are about WHAT and WHY, never HOW. No code, no schemas, no API contracts - that's for `/spec`.
 - One PRD per user problem. If the human describes multiple problems, split them.
 - Keep it short. A PRD over 500 words is probably trying to be a spec.
 - Challenge vague requirements.

@@ -15,8 +15,8 @@ Guide the human through validating the user problem before any implementation pl
 ## Context Gathering
 
 Before starting, read these files to understand the product and project:
-- `README.md` — product overview
-- `AGENTS.md` — codebase identity, constraints, stack
+- `README.md` - product overview
+- `AGENTS.md` - codebase identity, constraints, stack
 
 Then scan `docs/prds/` (if it exists) for existing PRDs to understand what's already been documented.
 
@@ -44,7 +44,7 @@ Use `AskUserQuestion` with these 4 questions:
    - Options: "Every session", "Multiple times per week", "Occasionally", "Rare edge case"
 
 3. **header:** "Workaround" / **question:** "How do users handle this today without the feature?"
-   - Options: "Manual workaround exists", "They can't — it's a blocker", "They use an external tool"
+   - Options: "Manual workaround exists", "They can't - it's a blocker", "They use an external tool"
 
 4. **header:** "Severity" / **question:** "What's the cost of NOT solving this?"
    - Options: "Users leave / can't use the product", "Major friction but they power through", "Minor annoyance", "Nice to have"
@@ -89,7 +89,7 @@ Produce a markdown document following this structure:
 [What happens today without this feature]
 
 ## Proposed Solution
-[High-level approach — NO implementation details, no code, no schemas]
+[High-level approach - NO implementation details, no code, no schemas]
 
 ## User Stories
 1. As a [user type], I want [goal] so that [benefit]
@@ -136,13 +136,13 @@ Then use `AskUserQuestion` to ask where to store it:
 3. Tell the human where you saved it.
 
 **If the user says they'll handle it:**
-1. Confirm: "The PRD is above — copy it wherever you need."
+1. Confirm: "The PRD is above - copy it wherever you need."
 
 After saving, remind the human: "Run `/spec` to turn this into a technical specification."
 
 ## Rules
 
-- PRDs are about WHAT and WHY, never HOW. No code, no schemas, no API contracts — that's for `/spec`.
+- PRDs are about WHAT and WHY, never HOW. No code, no schemas, no API contracts - that's for `/spec`.
 - One PRD per user problem. If the human describes multiple problems, split them.
 - Keep it short. A PRD over 500 words is probably trying to be a spec.
 - Challenge vague requirements.

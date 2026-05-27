@@ -29,11 +29,11 @@ Sets up Ralph loops (autonomous AI coding) in your project by generating all req
 Generate all 5 artifacts in sequence:
 
 1. Study the target project thoroughly
-2. Generate `AGENTS.md` — project identity, validation commands, constraints
-3. Generate `PROMPT_spec.md` — tailored for this project's domain
-4. Generate `PROMPT_plan.md` — with correct source paths and validation commands
-5. Generate `PROMPT_build.md` — with backpressure gates from AGENTS.md
-6. Generate `loop.sh` — configured for this project's CLI and model preferences
+2. Generate `AGENTS.md` - project identity, validation commands, constraints
+3. Generate `PROMPT_spec.md` - tailored for this project's domain
+4. Generate `PROMPT_plan.md` - with correct source paths and validation commands
+5. Generate `PROMPT_build.md` - with backpressure gates from AGENTS.md
+6. Generate `loop.sh` - configured for this project's CLI and model preferences
 
 Show progress as you go:
 ```
@@ -47,8 +47,8 @@ Show progress as you go:
 ### Option B: Selective Generation
 
 If some artifacts already exist, skip them:
-- "Generate only PROMPT_plan.md and PROMPT_build.md" — user already has AGENTS.md
-- "Regenerate loop.sh" — user changed CLI preferences
+- "Generate only PROMPT_plan.md and PROMPT_build.md" - user already has AGENTS.md
+- "Regenerate loop.sh" - user changed CLI preferences
 
 For selective generation, use the individual skills:
 - `ralphio-generate-agents`
@@ -61,13 +61,13 @@ For selective generation, use the individual skills:
 
 Study the target project to understand:
 
-- **Project identity** — what it is, where it's deployed
-- **Tech stack** — language, framework, build system
-- **Directory structure** — source paths (not all projects use `src/`)
-- **Validation commands** — build, test, lint scripts
-- **Git conventions** — commit style, branch strategy
-- **CLI preferences** — which AI tool (claude), model preferences
-- **Existing artifacts** — check for existing AGENTS.md, specs/, prompts
+- **Project identity** - what it is, where it's deployed
+- **Tech stack** - language, framework, build system
+- **Directory structure** - source paths (not all projects use `src/`)
+- **Validation commands** - build, test, lint scripts
+- **Git conventions** - commit style, branch strategy
+- **CLI preferences** - which AI tool (claude), model preferences
+- **Existing artifacts** - check for existing AGENTS.md, specs/, prompts
 
 ## Bootstrap Order Matters
 
@@ -99,14 +99,14 @@ Once all artifacts are generated, show the user their next steps:
 Your Ralph loop is ready!
 
 Files generated:
-  AGENTS.md        — Review and customize project constraints
-  PROMPT_spec.md   — Use interactively to write requirement specs
-  PROMPT_plan.md   — Used by loop.sh in plan mode
-  PROMPT_build.md  — Used by loop.sh in build mode
-  loop.sh          — Orchestration script
+  AGENTS.md        - Review and customize project constraints
+  PROMPT_spec.md   - Use interactively to write requirement specs
+  PROMPT_plan.md   - Used by loop.sh in plan mode
+  PROMPT_build.md  - Used by loop.sh in build mode
+  loop.sh          - Orchestration script
 
 Next steps:
-  1. Review AGENTS.md — add any missing constraints or validation commands
+  1. Review AGENTS.md - add any missing constraints or validation commands
   2. Write specs:      claude --prompt PROMPT_spec.md
   3. Run planning:     ./loop.sh plan
   4. Start building:   ./loop.sh build
@@ -125,13 +125,13 @@ The loop will:
 Each artifact is generated once and owned by the user. ralphio does not update, patch, or version generated artifacts. Customize freely.
 
 ### Self-Contained Artifacts
-Each generated file contains everything it needs. No imports, no cross-file references that could break. PROMPT_plan.md doesn't `#include` from AGENTS.md — it embeds the validation commands directly.
+Each generated file contains everything it needs. No imports, no cross-file references that could break. PROMPT_plan.md doesn't `#include` from AGENTS.md - it embeds the validation commands directly.
 
 ### Study Before Generating
-Every generator studies the target project before producing output. Discovery over assumption. Don't generate generic artifacts — tailor them to this specific project.
+Every generator studies the target project before producing output. Discovery over assumption. Don't generate generic artifacts - tailor them to this specific project.
 
 ### Duplication Over Indirection
-When two artifacts must agree on a format (e.g., IMPLEMENTATION_PLAN.md structure), the convention is stated in both independently. This optimizes for LLM context quality — each prompt is complete in isolation.
+When two artifacts must agree on a format (e.g., IMPLEMENTATION_PLAN.md structure), the convention is stated in both independently. This optimizes for LLM context quality - each prompt is complete in isolation.
 
 ## Troubleshooting
 
@@ -142,7 +142,7 @@ The generator didn't find enough project context. Check:
 - Run `ralphio-generate-agents` again after adding project documentation.
 
 ### "Validation commands are wrong"
-Edit AGENTS.md directly — you own it. Then regenerate PROMPT_plan.md and PROMPT_build.md to pick up the changes (or edit them directly too).
+Edit AGENTS.md directly - you own it. Then regenerate PROMPT_plan.md and PROMPT_build.md to pick up the changes (or edit them directly too).
 
 ### "loop.sh uses wrong CLI flags"
 Edit loop.sh directly. Common adjustments:
@@ -152,8 +152,8 @@ Edit loop.sh directly. Common adjustments:
 
 ### "I only want to regenerate one artifact"
 Use the individual skills:
-- `ralphio-generate-agents` — just AGENTS.md
-- `ralphio-generate-plan` — just PROMPT_plan.md
+- `ralphio-generate-agents` - just AGENTS.md
+- `ralphio-generate-plan` - just PROMPT_plan.md
 - etc.
 
 ## Individual Skills Reference
@@ -170,4 +170,4 @@ For expert use or selective regeneration:
 
 ---
 
-The core insight: Ralph loops are simple — study, plan, build, validate, commit, repeat. The complexity is in getting the prompts right for *your specific project*. This skill handles that complexity so you can focus on building.
+The core insight: Ralph loops are simple - study, plan, build, validate, commit, repeat. The complexity is in getting the prompts right for *your specific project*. This skill handles that complexity so you can focus on building.

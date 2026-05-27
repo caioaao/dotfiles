@@ -7,7 +7,7 @@
   ripgrep,
 }:
 
-# pi — terminal-based coding agent.
+# pi - terminal-based coding agent.
 #
 # Upstream moved from `badlogic/pi-mono` (npm: `@mariozechner/pi-coding-agent`)
 # to `earendil-works/pi` (npm: `@earendil-works/pi-coding-agent`) in April 2026.

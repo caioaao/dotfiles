@@ -1,5 +1,5 @@
 {
-  description = "pi — terminal-based coding agent";
+  description = "pi - terminal-based coding agent";
 
   inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.11";
 

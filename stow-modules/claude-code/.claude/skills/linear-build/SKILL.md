@@ -22,7 +22,7 @@ Before starting, read `AGENTS.md` for:
 ### If a ticket ID is provided in `$ARGUMENTS`:
 
 1. Fetch it with `mcp__linear-server__get_issue` (with `includeRelations: true`).
-2. If the ticket is already **"In Progress"**, treat this as a **resume** — skip the blocker check and the status update in Step 2 (it's already In Progress). Go straight to loading context and implementing.
+2. If the ticket is already **"In Progress"**, treat this as a **resume** - skip the blocker check and the status update in Step 2 (it's already In Progress). Go straight to loading context and implementing.
 3. Otherwise, check that its blocking dependencies are all in a "Done" state. If not, warn the human:
    - **header:** "Blocked" / **question:** "This ticket is blocked by [list of blockers]. They aren't done yet."
    - Options: "Skip to next unblocked ticket", "I'll resolve the dependency first", "Implement anyway (ignore dependency)"
@@ -35,7 +35,7 @@ Before starting, read `AGENTS.md` for:
 4. For each candidate, check `mcp__linear-server__get_issue` with `includeRelations: true` to find one that is **not blocked** (all `blockedBy` issues are in a "Done" state).
 5. If multiple unblocked tickets exist, pick the highest-priority one. If priorities are equal, pick the one with the fewest dependencies (most foundational).
 6. **Advance the picked ticket** to "In Progress": `mcp__linear-server__save_issue` with `id` and `state: "In Progress"`.
-7. If no unblocked tickets exist, check if all tickets are Done — if so, output `ALL_TASKS_COMPLETE`. Otherwise, report: "All remaining tickets in this project are blocked. Nothing to implement."
+7. If no unblocked tickets exist, check if all tickets are Done - if so, output `ALL_TASKS_COMPLETE`. Otherwise, report: "All remaining tickets in this project are blocked. Nothing to implement."
 
 ### If NO argument is provided:
 
@@ -52,14 +52,14 @@ Before starting, read `AGENTS.md` for:
 
 Once you have the ticket, load its full context:
 
-1. **Read the ticket description** — this contains the what, why, files to touch, tests to write, and acceptance criteria.
+1. **Read the ticket description** - this contains the what, why, files to touch, tests to write, and acceptance criteria.
 2. **Get the project** (if the ticket belongs to one): `mcp__linear-server__get_project` with `includeResources: true`. Read the project description for high-level context.
-3. **Read linked documents** — only fetch documents explicitly referenced in the ticket description or project resources. Don't fetch everything.
-4. **Update ticket status** to "In Progress" (skip if already In Progress — i.e., resuming): `mcp__linear-server__save_issue` with `id` and `state: "In Progress"`.
+3. **Read linked documents** - only fetch documents explicitly referenced in the ticket description or project resources. Don't fetch everything.
+4. **Update ticket status** to "In Progress" (skip if already In Progress - i.e., resuming): `mcp__linear-server__save_issue` with `id` and `state: "In Progress"`.
 
 ## Step 3: Evaluate Whether to Use `/batch`
 
-After reading the ticket and its context, assess whether the work is **large-scale and parallelizable** — i.e., it touches many independent files or subsystems with similar, repetitive changes.
+After reading the ticket and its context, assess whether the work is **large-scale and parallelizable** - i.e., it touches many independent files or subsystems with similar, repetitive changes.
 
 **Use `/batch` when ALL of these are true:**
 - The ticket requires changes to **5+ files** across independent areas of the codebase.
@@ -68,7 +68,7 @@ After reading the ticket and its context, assess whether the work is **large-sca
 
 **If `/batch` is appropriate:**
 1. Invoke the `/batch` skill with a clear instruction derived from the ticket description. Include the ticket ID for traceability.
-2. After `/batch` completes, proceed to **Step 6** (Commit & Mark Done) — `/batch` handles implementation and validation via parallel agents.
+2. After `/batch` completes, proceed to **Step 6** (Commit & Mark Done) - `/batch` handles implementation and validation via parallel agents.
 
 **If `/batch` is NOT appropriate** (most tickets), continue to Step 4.
 

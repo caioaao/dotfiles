@@ -11,4 +11,4 @@ sudo darwin-rebuild switch --flake .#darwin  # macOS rebuild
 
 ## Docs
 
-- [Stow module patterns](docs/stow-module-patterns.md) — creating/modifying stow modules, pitfalls, testing, rollback
+- [Stow module patterns](docs/stow-module-patterns.md) - creating/modifying stow modules, pitfalls, testing, rollback

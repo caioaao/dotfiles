@@ -1,6 +1,6 @@
 # Personality-Based Agentic Coding System
 
-You have 6 personality agents. **IMPORTANT: Engage them often—intuition alone is rarely enough.**
+You have 6 personality agents. **IMPORTANT: Engage them often-intuition alone is rarely enough.**
 
 ## The 6 Personalities
 
@@ -21,7 +21,7 @@ Skip only for truly trivial tasks (typo fixes, obvious one-liners).
 
 ### Before Planning
 - Consult agents to explore the problem from different angles
-- Seek opposing perspectives—don't just confirm your initial intuition
+- Seek opposing perspectives-don't just confirm your initial intuition
 - Scale agent count to task complexity (1-3 agents)
 
 ### After Planning
@@ -114,5 +114,5 @@ All personalities return this structure:
 - **CRITICAL**: For non-trivial tasks, NEVER plan without consulting agents first
 - **CRITICAL**: Seek opposing perspectives, not just validation
 - If all agents agree easily, you haven't challenged your thinking enough
-- Synthesize conflicts—that's where good decisions emerge
+- Synthesize conflicts-that's where good decisions emerge
 - If you catch yourself planning without agents, STOP and invoke them

@@ -11,7 +11,7 @@ optional_inputs:
 
 ## What This Skill Does
 
-Generates `PROMPT_plan.md` (~100-150 lines) — a project-specific prompt fed to the CLI tool via stdin in headless mode. Each invocation reads the current state of the project (specs, source code, existing plan) and produces or updates `IMPLEMENTATION_PLAN.md`.
+Generates `PROMPT_plan.md` (~100-150 lines) - a project-specific prompt fed to the CLI tool via stdin in headless mode. Each invocation reads the current state of the project (specs, source code, existing plan) and produces or updates `IMPLEMENTATION_PLAN.md`.
 
 PROMPT_plan.md is NOT an implementation guide. It produces a prioritized task list. The build prompt handles implementation.
 
@@ -26,8 +26,8 @@ This is **step 3 of 5** in the ralphio bootstrap sequence:
 5. generate-loop → loop.sh
 
 **Optional inputs that improve output quality:**
-- `AGENTS.md` — provides validation commands that define "done"
-- `specs/*` — provides requirements for gap analysis
+- `AGENTS.md` - provides validation commands that define "done"
+- `specs/*` - provides requirements for gap analysis
 
 This skill works without these inputs, but output quality significantly improves when they exist.
 
@@ -35,11 +35,11 @@ This skill works without these inputs, but output quality significantly improves
 
 Study the target project thoroughly before writing anything:
 
-- Directory structure — to produce correct path references in the prompt
-- Tech stack — to calibrate analysis instructions
-- `AGENTS.md` (if present) — validation commands, constraints, project identity
-- Existing `specs/` — to understand the domain and spec format
-- Source code layout — not all projects use `src/`
+- Directory structure - to produce correct path references in the prompt
+- Tech stack - to calibrate analysis instructions
+- `AGENTS.md` (if present) - validation commands, constraints, project identity
+- Existing `specs/` - to understand the domain and spec format
+- Source code layout - not all projects use `src/`
 
 ## What the Generated Prompt Must Accomplish
 
@@ -51,7 +51,7 @@ When executed inside the loop, the generated `PROMPT_plan.md` must instruct Clau
 - Study `IMPLEMENTATION_PLAN.md` (if present) for current state
 - Study existing source code to understand what is already implemented
 
-Use exact phrasing: **"Study existing implementation. Don't assume not implemented — search first."**
+Use exact phrasing: **"Study existing implementation. Don't assume not implemented - search first."**
 
 ### Phase 1: Gap Analysis
 Compare specs against existing code:
@@ -60,13 +60,13 @@ Compare specs against existing code:
 - What violates spec acceptance criteria?
 - What inconsistencies exist between specs and code?
 
-Key guardrail: **"Don't assume functionality is missing — confirm with code search first."**
+Key guardrail: **"Don't assume functionality is missing - confirm with code search first."**
 
 ### Phase 2: Plan Generation
 Create or update `IMPLEMENTATION_PLAN.md`:
 - Prioritized list of tasks, highest priority first
 - Each task describes a behavioral outcome (what to build), not implementation steps
-- Each task should be completable in a single build iteration — decompose if too large
+- Each task should be completable in a single build iteration - decompose if too large
 - Consider dependencies between tasks when ordering
 - When regenerating, remove previously completed tasks to keep focus
 
@@ -74,15 +74,15 @@ Create or update `IMPLEMENTATION_PLAN.md`:
 These must appear prominently in the generated prompt:
 - **"Plan only. Do NOT implement anything."**
 - **"Do NOT create, modify, or delete source code files."**
-- **"Don't assume not implemented — search first."**
+- **"Don't assume not implemented - search first."**
 
 ## What the Generated Prompt Must Exclude
 
-- **Implementation instructions** — the plan prompt analyzes and prioritizes; it does not tell Claude how to code
-- **Git operations** — the plan prompt only reads the project and writes `IMPLEMENTATION_PLAN.md`
-- **References to ralphio or meta-prompts** — `PROMPT_plan.md` is project-specific and self-contained
-- **Architecture prescriptions** — the plan lists what to build, not how to structure it
-- **Generic planning advice** — Claude already knows how to plan; the prompt steers project-specific behavior
+- **Implementation instructions** - the plan prompt analyzes and prioritizes; it does not tell Claude how to code
+- **Git operations** - the plan prompt only reads the project and writes `IMPLEMENTATION_PLAN.md`
+- **References to ralphio or meta-prompts** - `PROMPT_plan.md` is project-specific and self-contained
+- **Architecture prescriptions** - the plan lists what to build, not how to structure it
+- **Generic planning advice** - Claude already knows how to plan; the prompt steers project-specific behavior
 
 ## Parameterization
 
@@ -97,7 +97,7 @@ Discover and embed these project-specific values into the generated prompt:
 | Use this | Not this | Why |
 |---|---|---|
 | "Study existing implementation" | "Review the code" | Activates deep analysis, not scanning |
-| "Don't assume not implemented — search first" | "Check what exists" | Strong backpressure against hallucinated gaps |
+| "Don't assume not implemented - search first" | "Check what exists" | Strong backpressure against hallucinated gaps |
 | "Behavioral outcome" | "Task description" | Steers toward observable results |
 | "Completable in a single build iteration" | "Small enough" | Concrete sizing constraint |
 | "Plan only. Do NOT implement." | "This is a planning phase" | Hard stop, not a suggestion |
@@ -106,19 +106,19 @@ Discover and embed these project-specific values into the generated prompt:
 ## Structure Template
 
 ```markdown
-# Planning Prompt — [Project Name]
+# Planning Prompt - [Project Name]
 
 [One-line project identity.]
 
 ## Before Planning
 
 Study these in order:
-1. `AGENTS.md` — project constraints and validation commands
-2. `specs/` — all requirement specs (source of truth for what to build)
-3. `IMPLEMENTATION_PLAN.md` — current plan state (if present)
-4. [Discovered source paths] — existing implementation
+1. `AGENTS.md` - project constraints and validation commands
+2. `specs/` - all requirement specs (source of truth for what to build)
+3. `IMPLEMENTATION_PLAN.md` - current plan state (if present)
+4. [Discovered source paths] - existing implementation
 
-Don't assume not implemented — search first.
+Don't assume not implemented - search first.
 
 ## Gap Analysis
 
@@ -140,7 +140,7 @@ Format:
 
 ## Tasks
 
-- [ ] [Behavioral outcome — what the system should do]
+- [ ] [Behavioral outcome - what the system should do]
 - [ ] [Another behavioral outcome]
 - [x] [Completed task]
   > Completed. [Optional discovery notes.]
@@ -149,7 +149,7 @@ Format:
 Rules:
 - Highest priority first
 - Each task is a behavioral outcome, not an implementation step
-- Each task should be completable in one build iteration — decompose if too large
+- Each task should be completable in one build iteration - decompose if too large
 - When regenerating, remove previously completed tasks
 - Consider dependencies when ordering
 
@@ -157,18 +157,18 @@ Rules:
 
 - Plan only. Do NOT implement anything.
 - Do NOT create, modify, or delete source code files.
-- Don't assume not implemented — search first.
+- Don't assume not implemented - search first.
 ```
 
 ## Anti-Patterns
 
-- **Implementation steps masquerading as tasks**: "Create a UserService class with validate() method" — this prescribes implementation. Write "Validate user input before persisting" instead.
+- **Implementation steps masquerading as tasks**: "Create a UserService class with validate() method" - this prescribes implementation. Write "Validate user input before persisting" instead.
 
 - **Assuming without searching**: Listing "implement authentication" when the project already has auth. Always confirm gaps with code search.
 
-- **Monolithic tasks**: "Build the entire API layer" — this is many build iterations. Decompose into individually completable outcomes.
+- **Monolithic tasks**: "Build the entire API layer" - this is many build iterations. Decompose into individually completable outcomes.
 
-- **Technology prescriptions**: "Use Redis for caching" — the plan describes outcomes, not technology choices.
+- **Technology prescriptions**: "Use Redis for caching" - the plan describes outcomes, not technology choices.
 
 - **Stale completed tasks**: When regenerating, remove completed tasks. The plan is a forward-looking work queue, not a changelog.
 
@@ -194,7 +194,7 @@ Format requirements:
 - Each task describes a behavioral outcome (what to build), not implementation steps
 - The build agent marks completed tasks in-place (does not remove them) so progress is visible
 - The plan agent removes completed tasks when regenerating, keeping the plan focused
-- The plan is disposable — regenerate by re-running the plan loop when trajectory diverges
+- The plan is disposable - regenerate by re-running the plan loop when trajectory diverges
 
 ```markdown
 # Implementation Plan
@@ -210,4 +210,4 @@ Format requirements:
 
 ---
 
-The core insight: a plan is a disposable trajectory, not a commitment. Its value is in focusing the next build iteration on the highest-impact work. When the trajectory diverges from reality, regenerate — don't patch. The plan is cheap; the context window is expensive.
+The core insight: a plan is a disposable trajectory, not a commitment. Its value is in focusing the next build iteration on the highest-impact work. When the trajectory diverges from reality, regenerate - don't patch. The plan is cheap; the context window is expensive.

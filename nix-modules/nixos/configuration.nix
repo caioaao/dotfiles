@@ -99,10 +99,10 @@
     # Declarative keyd config (no manual file editing)
     keyboards = {
       default = {
-        # [ids] section — match all keyboards, but exclude the Moonlander by id
+        # [ids] section - match all keyboards, but exclude the Moonlander by id
         ids = [ "*" "-3297:1969" ];
 
-        # [main] section — swap caps and left control
+        # [main] section - swap caps and left control
         settings.main = {
           capslock    = "layer(control)";
           leftcontrol = "capslock";

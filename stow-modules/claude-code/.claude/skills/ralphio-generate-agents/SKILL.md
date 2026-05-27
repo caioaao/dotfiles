@@ -9,7 +9,7 @@ optional_inputs: []
 
 ## What This Skill Does
 
-Generates `AGENTS.md` — a concise operational guide (~40-60 lines) loaded into every AI agent session. It's the "heart of the loop" — it steers agent behavior toward correct patterns and away from common mistakes.
+Generates `AGENTS.md` - a concise operational guide (~40-60 lines) loaded into every AI agent session. It's the "heart of the loop" - it steers agent behavior toward correct patterns and away from common mistakes.
 
 AGENTS.md is NOT documentation, NOT a README, NOT a changelog.
 
@@ -29,11 +29,11 @@ This skill has no dependencies. Run it first.
 
 Study the target project thoroughly before writing anything:
 
-- README and project description — domain context and project identity
-- Directory structure — language, framework, existing patterns
-- Build/test/lint scripts — validation commands
-- Config files — constraints and conventions
-- Existing AGENTS.md (if present) — preserve valuable operational notes
+- README and project description - domain context and project identity
+- Directory structure - language, framework, existing patterns
+- Build/test/lint scripts - validation commands
+- Config files - constraints and conventions
+- Existing AGENTS.md (if present) - preserve valuable operational notes
 
 ## What to Include (Steering Information)
 
@@ -47,7 +47,7 @@ Example: "Zola static blog deployed to https://example.com"
 ### 2. "Study First" Command
 The single most important line. Forces the agent to search before assuming.
 
-Use exact phrasing: **"Study existing [code/posts/tests/etc]. Don't assume not implemented — search first."**
+Use exact phrasing: **"Study existing [code/posts/tests/etc]. Don't assume not implemented - search first."**
 
 This specific language activates careful, investigative behavior.
 
@@ -75,8 +75,8 @@ Things that would cause silent correctness errors if violated:
 ### 6. Non-Obvious Patterns
 Things that look wrong but are intentional. Without these, the agent will "fix" them:
 
-- Inverted conventions ("title is larger than headline — intentional")
-- Signature design elements ("paper texture background — do not remove")
+- Inverted conventions ("title is larger than headline - intentional")
+- Signature design elements ("paper texture background - do not remove")
 - Unusual defaults ("20px base, not 16px")
 
 ### 7. Operational Notes Section
@@ -103,8 +103,8 @@ Remove anything the agent can learn by reading files:
 | Use this | Not this | Why |
 |---|---|---|
 | "Study" | "Read" or "Look at" | Activates deeper analysis, not superficial scanning |
-| "Don't assume not implemented — search first" | "Check if it exists" | Creates strong backpressure against hallucinated reimplementation |
-| "Source of truth" | "Reference" or "Guide" | Establishes authority hierarchy — agent won't override it |
+| "Don't assume not implemented - search first" | "Check if it exists" | Creates strong backpressure against hallucinated reimplementation |
+| "Source of truth" | "Reference" or "Guide" | Establishes authority hierarchy - agent won't override it |
 | "Non-negotiable" | "Important" or "Required" | Hard stop, not a suggestion |
 | Exact commands: `npm test` | "Run the tests" | Eliminates guessing, enables copy-paste execution |
 | "Grows reactively" | "Add notes here" | Signals incremental, observation-driven evolution |
@@ -134,7 +134,7 @@ Remove anything the agent can learn by reading files:
 
 ## [Domain-Specific Section]
 
-[Only if the project has a content domain with semantic rules — e.g., blog post format, API versioning scheme.]
+[Only if the project has a content domain with semantic rules - e.g., blog post format, API versioning scheme.]
 
 ## Operational Notes
 
@@ -145,7 +145,7 @@ _Grows reactively. When you learn something new about running the project, add i
 
 ## Anti-Patterns
 
-- **Bloat**: A long AGENTS.md pollutes every future session's context window. Brevity is not a nice-to-have — it directly impacts agent intelligence. The "smart zone" of context is ~40-60% of the window.
+- **Bloat**: A long AGENTS.md pollutes every future session's context window. Brevity is not a nice-to-have - it directly impacts agent intelligence. The "smart zone" of context is ~40-60% of the window.
 
 - **Prescribing the obvious**: Don't tell the agent how to use git, how to run standard CLI tools, or what a directory structure means.
 
@@ -165,4 +165,4 @@ _Grows reactively. When you learn something new about running the project, add i
 
 ---
 
-The core insight: prompts are signposts, not manuals. You're not teaching the agent — you're steering latent knowledge it already has. Every line should either prevent a specific mistake or activate a specific domain of expertise. Everything else is noise that degrades performance.
+The core insight: prompts are signposts, not manuals. You're not teaching the agent - you're steering latent knowledge it already has. Every line should either prevent a specific mistake or activate a specific domain of expertise. Everything else is noise that degrades performance.

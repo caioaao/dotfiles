@@ -11,7 +11,7 @@ optional_inputs:
 
 ## What This Skill Does
 
-Generates `loop.sh` (~50-80 lines) — an executable bash script that orchestrates the Ralph loop. It feeds prompt files to the CLI tool in headless mode, pushes after each iteration, and restarts with a clean context. It supports two modes: `build` (default) and `plan`.
+Generates `loop.sh` (~50-80 lines) - an executable bash script that orchestrates the Ralph loop. It feeds prompt files to the CLI tool in headless mode, pushes after each iteration, and restarts with a clean context. It supports two modes: `build` (default) and `plan`.
 
 loop.sh is NOT a process manager, monitoring system, or CI pipeline. It is a simple loop with a clean exit.
 
@@ -26,10 +26,10 @@ This is **step 5 of 5** in the ralphio bootstrap sequence:
 5. **generate-loop → loop.sh** ← you are here
 
 **Optional inputs that improve output quality:**
-- `PROMPT_plan.md` — needed at runtime (should exist by now)
-- `PROMPT_build.md` — needed at runtime (should exist by now)
+- `PROMPT_plan.md` - needed at runtime (should exist by now)
+- `PROMPT_build.md` - needed at runtime (should exist by now)
 
-This skill can run without these, but the generated script will reference them — they must exist before running `loop.sh`.
+This skill can run without these, but the generated script will reference them - they must exist before running `loop.sh`.
 
 ## Before Generating
 
@@ -83,12 +83,12 @@ Trap Ctrl+C for clean exit without corrupting state.
 
 ## What the Generated Script Must Exclude
 
-- **Process management** — no daemonization, no PID files, no backgrounding
-- **Log aggregation** — stdout/stderr is sufficient; don't build a logging system
-- **Branch management** — user creates branches; the script just pushes current
-- **Environment setup** — no dependency installation, no version checks beyond CLI availability
-- **Cost tracking** — no token counting, no API cost monitoring
-- **Retry logic** — if an iteration fails, stop and let the human investigate
+- **Process management** - no daemonization, no PID files, no backgrounding
+- **Log aggregation** - stdout/stderr is sufficient; don't build a logging system
+- **Branch management** - user creates branches; the script just pushes current
+- **Environment setup** - no dependency installation, no version checks beyond CLI availability
+- **Cost tracking** - no token counting, no API cost monitoring
+- **Retry logic** - if an iteration fails, stop and let the human investigate
 
 ## Parameterization
 
@@ -190,8 +190,8 @@ done
 
 - **Study before generating**: Discover the project's CLI preferences before producing output.
 
-- **Simplicity over features**: The loop's power is in its simplicity and statelessness. Complexity in the orchestrator defeats the purpose — the intelligence is in the prompts, not the script.
+- **Simplicity over features**: The loop's power is in its simplicity and statelessness. Complexity in the orchestrator defeats the purpose - the intelligence is in the prompts, not the script.
 
 ---
 
-The core insight: the loop's power is in its simplicity and statelessness. Each iteration starts with a clean context window, implements one task, validates, commits, and exits. The loop script just restarts the process. Complexity in the orchestrator defeats the purpose — the intelligence is in the prompts, not the script.
+The core insight: the loop's power is in its simplicity and statelessness. Each iteration starts with a clean context window, implements one task, validates, commits, and exits. The loop script just restarts the process. Complexity in the orchestrator defeats the purpose - the intelligence is in the prompts, not the script.

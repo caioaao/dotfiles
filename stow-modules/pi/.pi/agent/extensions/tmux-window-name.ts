@@ -1,7 +1,7 @@
 /**
  * Tmux Window Name Extension
  *
- * Self-contained — no tmux config changes required. While pi is running it
+ * Self-contained - no tmux config changes required. While pi is running it
  * installs an `automatic-rename-format` that consults a per-pane
  * `@pi_status` user option. Pi publishes `idle` / `busy` on its own pane, so
  * tmux's active-pane-driven `#W` shows `pi` / `pi [idle]` when pi's pane is
@@ -70,7 +70,7 @@ function tmuxFire(...args: string[]) {
 async function installFormat() {
 	// Capture the current effective format. If it already contains our
 	// sentinel (e.g. a prior pi run crashed), keep whatever we previously
-	// saved — don't snapshot ourselves over the user's real value.
+	// saved - don't snapshot ourselves over the user's real value.
 	const current = (await tmux("show-options", "-gwv", "automatic-rename-format")).trim();
 	if (!current.includes(SENTINEL)) {
 		// `-gw` prints `option "value"` when explicit, nothing when default.

@@ -3,7 +3,7 @@
 Declarative Nix package for [pi](https://github.com/earendil-works/pi), a
 terminal-based coding agent.
 
-> **Heads up — April 2026 rename.** Upstream moved from
+> **Heads up - April 2026 rename.** Upstream moved from
 > `badlogic/pi-mono` (npm scope `@mariozechner/pi-coding-agent`) to
 > `earendil-works/pi` (npm scope `@earendil-works/pi-coding-agent`). The CLI
 > binary is still `pi`. Background:
@@ -27,7 +27,7 @@ tarball = fetchurl {
 };
 ```
 
-Rebuild — Nix will error with the correct `hash`. Paste it in. (Or compute it
+Rebuild - Nix will error with the correct `hash`. Paste it in. (Or compute it
 upfront with `nix store prefetch-file --hash-type sha256 <url>`.)
 
 ### 2. Regenerate `package-lock.json`
@@ -49,7 +49,7 @@ In `package.nix`, set `npmDepsHash` to `""`:
 npmDepsHash = "";
 ```
 
-Rebuild — Nix will error with the correct `npmDepsHash`. Paste it in. (Or
+Rebuild - Nix will error with the correct `npmDepsHash`. Paste it in. (Or
 compute it upfront with
 `nix run nixpkgs#prefetch-npm-deps -- ./package-lock.json`.)
 

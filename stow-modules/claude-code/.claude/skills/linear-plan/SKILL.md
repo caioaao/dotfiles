@@ -6,7 +6,7 @@ argument-hint: "[ticket-id or project-name]"
 
 # Planning
 
-You are a planning agent that reads specs, reads current source code, and produces implementation tickets in Linear — a set of atomic, dependency-ordered issues that an agent can complete one at a time.
+You are a planning agent that reads specs, reads current source code, and produces implementation tickets in Linear - a set of atomic, dependency-ordered issues that an agent can complete one at a time.
 
 ## Context Gathering
 
@@ -44,7 +44,7 @@ Break the gap into tasks. Each task must be:
 ### Step 3: Dependency Ordering
 
 Order tasks following the natural dependency layers of the project's architecture (from AGENTS.md):
-1. Data layer first (schemas, migrations, models — no dependencies)
+1. Data layer first (schemas, migrations, models - no dependencies)
 2. Domain/business logic next (depends on data layer)
 3. External integrations follow (depend on domain layer)
 4. UI/presentation layer last (depends on everything)
@@ -92,7 +92,7 @@ If the planning target was a **ticket** (not already a project) and the plan has
    - `state`: "cancelled"
    - Add a comment or update the description noting it was converted to a project, with a reference to the project name
 
-Remember the project name — you'll assign all implementation tickets to it in the next step.
+Remember the project name - you'll assign all implementation tickets to it in the next step.
 
 If the target was already a project, or the plan has only one task, skip this step.
 
@@ -110,10 +110,10 @@ For each task, use `mcp__linear-server__save_issue` with:
 [What to implement]
 
 ## Why
-[Context from the spec/PRD — make this self-contained so the build agent doesn't need project-level context]
+[Context from the spec/PRD - make this self-contained so the build agent doesn't need project-level context]
 
 ## Files
-[Files to create or modify — this is the file-ownership contract]
+[Files to create or modify - this is the file-ownership contract]
 
 ## Tests
 [What tests to write]
@@ -123,7 +123,7 @@ For each task, use `mcp__linear-server__save_issue` with:
 - [ ] Validation command passes (from AGENTS.md)
 
 ## Context
-[Link to the parent project and any relevant Linear docs. Include the key technical details the build agent needs — don't force it to fetch the full spec if only a subset is relevant.]
+[Link to the parent project and any relevant Linear docs. Include the key technical details the build agent needs - don't force it to fetch the full spec if only a subset is relevant.]
 ```
 
 - `blockedBy`: Array of issue IDs this task depends on (from previously created issues)

@@ -1,13 +1,13 @@
 /**
- * Spawn extension — create a child session seeded with the parent's last output.
+ * Spawn extension - create a child session seeded with the parent's last output.
  *
  * The new session's first message is: "<user prompt> <last assistant text>".
  * This is useful for branching off a result (e.g. "Sort these." + the list the
  * agent just produced) without carrying the full conversation history.
  *
  * Usage:
- *   /spawn                        — prompts for a starting instruction
- *   /spawn Summarize the results  — uses the argument directly
+ *   /spawn                        - prompts for a starting instruction
+ *   /spawn Summarize the results  - uses the argument directly
  *
  * Also registered as a tool so the agent can call it on behalf of the user.
  */
@@ -53,7 +53,7 @@ async function spawnFromCommand(
       parentSession,
       withSession: async (replacementCtx: any) => {
         // Pre-fill the editor in the new session so the user can review and submit.
-        // Must use the replacement ctx — the outer ctx is stale after newSession.
+        // Must use the replacement ctx - the outer ctx is stale after newSession.
         replacementCtx.ui.setEditorText(combined);
         replacementCtx.ui.notify(
           "Session spawned. Press Enter to submit the pre-filled prompt.",

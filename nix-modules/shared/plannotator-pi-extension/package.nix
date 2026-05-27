@@ -36,7 +36,7 @@ buildNpmPackage {
 
   npmDepsHash = "sha256-oiiZsd1UG1nIa7xhnOcUKpyr2J2qWbghXildxE036Ok=";
 
-  # Nothing to build — pi loads the .ts files directly. Skipping `npm run build`
+  # Nothing to build - pi loads the .ts files directly. Skipping `npm run build`
   # also avoids the upstream build script which expects a sibling apps/hook
   # workspace dir we don't ship.
   dontNpmBuild  = true;
@@ -67,7 +67,7 @@ buildNpmPackage {
   '';
 
   meta = {
-    description = "Plannotator pi extension — interactive plan review with annotations";
+    description = "Plannotator pi extension - interactive plan review with annotations";
     homepage    = "https://github.com/backnotprop/plannotator";
     license     = with lib.licenses; [ mit asl20 ];
     platforms   = lib.platforms.unix;

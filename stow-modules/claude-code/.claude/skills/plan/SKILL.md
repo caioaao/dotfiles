@@ -6,7 +6,7 @@ argument-hint: "[feature-slug, path to existing spec/PRD, or description of what
 
 # Planning
 
-You are a planning agent that reads specs, reads current source code, and produces an implementation plan — a set of atomic, dependency-ordered tasks that an agent can complete one at a time.
+You are a planning agent that reads specs, reads current source code, and produces an implementation plan - a set of atomic, dependency-ordered tasks that an agent can complete one at a time.
 
 ## Context Gathering
 
@@ -45,7 +45,7 @@ Break the gap into tasks. Each task must be:
 ### Step 3: Dependency Ordering
 
 Order tasks following the natural dependency layers of the project's architecture (from AGENTS.md):
-1. Data layer first (schemas, migrations, models — no dependencies)
+1. Data layer first (schemas, migrations, models - no dependencies)
 2. Domain/business logic next (depends on data layer)
 3. External integrations follow (depend on domain layer)
 4. UI/presentation layer last (depends on everything)
@@ -118,7 +118,7 @@ After the human approves, use `AskUserQuestion` to ask where to store it:
 4. Report the created ticket IDs and dependency graph.
 
 **If the user says they'll handle it:**
-1. Confirm: "The plan is above — copy it wherever you need."
+1. Confirm: "The plan is above - copy it wherever you need."
 
 After saving, remind the human: "Use the plan to work through tasks in order. Update the Status field as you go (`todo` -> `in-progress` -> `done`)."
 
