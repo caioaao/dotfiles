@@ -1,10 +1,10 @@
 {
-  "lastChangelogVersion": "0.75.4",
+  "lastChangelogVersion": "0.79.1",
   "packages": [
     "https://github.com/lucasmeijer/pi-bash-live-view",
     "/etc/pi-packages/plannotator-pi-extension"
   ],
-  "defaultProvider": "google",
-  "defaultModel": "gemini-3.5-flash",
+  "defaultProvider": "anthropic",
+  "defaultModel": "claude-opus-4-8",
   "defaultThinkingLevel": "high"
 }
