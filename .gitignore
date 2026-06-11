@@ -15,6 +15,10 @@ stow-modules/pi/.pi/agent/auth.json
 stow-modules/pi/.pi/agent/git/
 stow-modules/pi/.pi/agent/extensions/*/node_modules/
 
+# white list pi config
+!/.pi/prompts/
+!/.pi/settings.json
+
 # Machine-specific git config (not tracked)
 stow-modules/git/.config/git/config.local
 .local/
