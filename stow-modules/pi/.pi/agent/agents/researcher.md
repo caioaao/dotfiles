@@ -1,7 +1,6 @@
 ---
 name: researcher
 description: Read-only codebase investigator. Answers one technical question at a time with file paths, line numbers, and condensed context.
-model: gemini-3.5-flash
 ---
 
 # Researcher

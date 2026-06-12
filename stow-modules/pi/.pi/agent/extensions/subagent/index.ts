@@ -241,6 +241,7 @@ async function runSingleAgent(
 	agentName: string,
 	task: string,
 	cwd: string | undefined,
+	model: string | undefined,
 	step: number | undefined,
 	signal: AbortSignal | undefined,
 	onUpdate: OnUpdateCallback | undefined,
@@ -263,7 +264,7 @@ async function runSingleAgent(
 	}
 
 	const args: string[] = ["--mode", "json", "-p", "--no-session"];
-	if (agent.model) args.push("--model", agent.model);
+	if (model) args.push("--model", model);
 	if (agent.tools && agent.tools.length > 0) args.push("--tools", agent.tools.join(","));
 
 	let tmpPromptDir: string | null = null;
@@ -277,7 +278,7 @@ async function runSingleAgent(
 		messages: [],
 		stderr: "",
 		usage: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, cost: 0, contextTokens: 0, turns: 0 },
-		model: agent.model,
+		model,
 		step,
 	};
 
@@ -399,16 +400,25 @@ async function runSingleAgent(
 	}
 }
 
+const ModelSchema = Type.Optional(
+	Type.String({
+		description:
+			'Model for the agent process (e.g. "provider/model-id"). Overrides the top-level model. Defaults to the caller\'s current model.',
+	}),
+);
+
 const TaskItem = Type.Object({
 	agent: Type.String({ description: "Name of the agent to invoke" }),
 	task: Type.String({ description: "Task to delegate to the agent" }),
 	cwd: Type.Optional(Type.String({ description: "Working directory for the agent process" })),
+	model: ModelSchema,
 });
 
 const ChainItem = Type.Object({
 	agent: Type.String({ description: "Name of the agent to invoke" }),
 	task: Type.String({ description: "Task with optional {previous} placeholder for prior output" }),
 	cwd: Type.Optional(Type.String({ description: "Working directory for the agent process" })),
+	model: ModelSchema,
 });
 
 const AgentScopeSchema = StringEnum(["user", "project", "both"] as const, {
@@ -426,6 +436,12 @@ const SubagentParams = Type.Object({
 		Type.Boolean({ description: "Prompt before running project-local agents. Default: true.", default: true }),
 	),
 	cwd: Type.Optional(Type.String({ description: "Working directory for the agent process (single mode)" })),
+	model: Type.Optional(
+		Type.String({
+			description:
+				'Model for spawned agents (e.g. "provider/model-id"). Per-task model overrides this. Defaults to the caller\'s current model.',
+		}),
+	),
 });
 
 export default function (pi: ExtensionAPI) {
@@ -442,6 +458,8 @@ export default function (pi: ExtensionAPI) {
 
 		async execute(_toolCallId, params, signal, onUpdate, ctx) {
 			const agentScope: AgentScope = params.agentScope ?? "user";
+			const defaultModel =
+				params.model ?? (ctx.model ? `${ctx.model.provider}/${ctx.model.id}` : undefined);
 			const discovery = discoverAgents(ctx.cwd, agentScope);
 			const agents = discovery.agents;
 			const confirmProjectAgents = params.confirmProjectAgents ?? true;
@@ -527,6 +545,7 @@ export default function (pi: ExtensionAPI) {
 						step.agent,
 						taskWithContext,
 						step.cwd,
+						step.model ?? defaultModel,
 						i + 1,
 						signal,
 						chainUpdate,
@@ -601,6 +620,7 @@ export default function (pi: ExtensionAPI) {
 						t.agent,
 						t.task,
 						t.cwd,
+						t.model ?? defaultModel,
 						undefined,
 						signal,
 						// Per-task update callback
@@ -640,6 +660,7 @@ export default function (pi: ExtensionAPI) {
 					params.agent,
 					params.task,
 					params.cwd,
+					defaultModel,
 					undefined,
 					signal,
 					onUpdate,
