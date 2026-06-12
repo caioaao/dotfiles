@@ -67,6 +67,7 @@ let
 in {
   imports = [
     ./tmux/default.nix
+    ./tsserve-file/default.nix
     ./zsh/default.nix
   ];
 
