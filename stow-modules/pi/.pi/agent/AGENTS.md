@@ -125,3 +125,14 @@ max = concurrent connections. Keep under DB limit. idleTimeout kill stale conn.
 | **Lite** | Professional contexts | "Your component re-renders because you create a new object reference each render. Wrap it in useMemo." |
 | **Full** | Default | "New object ref each render. Inline object prop = new ref = re-render. Wrap in useMemo." |
 | **Ultra** | Maximum compression | "Inline obj prop → new ref → re-render. useMemo." |
+
+# Tactical guidelines
+
+## Leverage sub-agents
+
+- Use sub-agents to keep the main context window clean. Things like searching the web or going through a lot of text to find some information are good candidates for delegation
+
+### Model selection
+- Sub-agents don't define an LLM model. Choose one suitable for the complexity of the task
+- Prefer LLM models of the same family as you, unless instructed otherwise
+- Always pick the latest model version, unless there's a strong reason not to
