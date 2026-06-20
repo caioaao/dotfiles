@@ -35,7 +35,7 @@ stow module adopt="false": xdg-base-dirs
 	stow ${extra} -t $HOME -d {{ justfile_directory() }}/stow-modules {{ module }}
 
 setup-dev-secrets:
-	op item get dev-secrets --fields notesPlain --account my.1password.com > $XDG_CONFIG_HOME/zsh.d/10-secrets.sh
+	op item get dev-secrets --fields notesPlain --account my.1password.com > $XDG_CONFIG_HOME/zsh/zshenv.d/10-secrets.sh
 
 [linux]
 enroll-fingerprint:
