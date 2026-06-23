@@ -39,6 +39,10 @@ sudo nixos-rebuild switch --flake .#nixos-cloud
 sudo darwin-rebuild switch --flake .#darwin
 ```
 
+## Upgrading nix
+
+Run `nix flake update`. Then run the `rebuild` command specific to the platform.
+
 ## References
 
 - https://github.com/esigs/.dotfiles
