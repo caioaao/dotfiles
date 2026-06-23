@@ -169,20 +169,23 @@ stow-modules/tool/
 
 ## Shell Integration Pattern
 
-Many stow modules include zsh integration via the `zsh.d/` pattern:
+Many stow modules include zsh integration via the `zsh/zshrc.d/` (interactive) and `zsh/zshenv.d/` (environment) pattern:
 
 ```
 stow-modules/tool/
 └── .config/
-    └── zsh.d/
-        └── 50-tool.sh  # Sourced by zsh automatically
+    └── zsh/
+        ├── zshrc.d/
+        │   └── 50-tool.sh    # Sourced by interactive shells
+        └── zshenv.d/
+            └── 20-tool.sh    # Sourced by all shells (env vars, paths)
 ```
 
 **Naming convention:** `NN-tool.sh` where NN is load order (00-99)
-- `00-19`: Early initialization (paths, environment)
-- `20-49`: Tool-specific configs
-- `50-79`: Aliases and functions
-- `80-99`: Late initialization (prompts, hooks)
+- `00-19`: Early initialization (paths, environment) — use `zshenv.d/`
+- `20-49`: Tool-specific configs — use `zshenv.d/` or `zshrc.d/`
+- `50-79`: Aliases and functions — use `zshrc.d/`
+- `80-99`: Late initialization (prompts, hooks) — use `zshrc.d/`
 
 **When to add shell integration:**
 - Tool requires environment variables
