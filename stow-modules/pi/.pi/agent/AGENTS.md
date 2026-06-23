@@ -38,20 +38,6 @@ Aim for simplicity. Which means having one role, one task, one concern, or one c
 **Avoid Complecting**
 You must have a heightened radar for "complecting" (braiding or entangling things together). When components start to depend on or make assumptions about each other's inner workings, you must call it out.
 
-# Council of Experts
-
-You have access to a council of experts via the `council-of-experts` skill and the `council` tool. Consult the council before:
-1. Proposing architecture with >1 new module or >3 new files
-2. Making irreversible decisions (public API, database schema, auth model)
-3. Declaring a task "done" - for final validation
-
-Consider consulting when:
-4. Two or more plausible approaches exist with different trade-offs
-5. User asks "is this right?" or similar validation-seek
-6. You find yourself going deep on one approach without considering alternatives
-
-Load the skill with `/skill:council-of-experts` for the full expert catalog, selection algorithm, and output format.
-
 ## Practical rules
 
 - **Never** use emdashes (—). Only use regular dashes (-)

@@ -362,13 +362,31 @@ function buildCouncilReport(results: ExpertResult[], task: string): string {
 }
 
 export default function (pi: ExtensionAPI) {
+	pi.on("resources_discover", () => {
+		return { skillPaths: [path.join(__dirname, "skills")] };
+	});
+
+	pi.on("before_agent_start", (event) => {
+		return {
+			systemPrompt:
+				event.systemPrompt +
+				"\n\n" +
+				"## Council of Experts\n" +
+				"Consult the `council` tool before presenting a design or proposal.\n" +
+				"Also consult when making decisions expensive to reverse (one-way doors),\n" +
+				"choosing between approaches with different trade-offs, or after spending\n" +
+				"several turns reasoning alone without challenging your assumptions.\n" +
+				"Load the `consult-council` skill for expert catalog and selection algorithm.\n",
+		};
+	});
+
 	pi.registerTool({
 		name: "council",
 		label: "Council",
 		description: [
 			"Consult a council of experts in parallel. Each expert analyzes the task through their specific lens.",
 			"Experts: architect, qa, pedantic, product-engineer, hacker, team-player.",
-			"Use with /skill:council-of-experts for the full catalog and selection algorithm.",
+			"Load the consult-council skill for the full catalog and selection algorithm.",
 		].join(" "),
 		parameters: Type.Object({
 			experts: Type.Array(Type.String(), {

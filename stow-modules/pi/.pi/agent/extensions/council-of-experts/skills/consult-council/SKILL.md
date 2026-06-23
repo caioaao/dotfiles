@@ -1,5 +1,5 @@
 ---
-name: council-of-experts
+name: consult-council
 description: Consult a council of 6 experts (architect, qa, pedantic, product-engineer, hacker, team-player) in parallel. Each expert analyzes the task through their specific lens. Use before proposing multi-module architecture, making irreversible decisions, or validating work.
 ---
 
