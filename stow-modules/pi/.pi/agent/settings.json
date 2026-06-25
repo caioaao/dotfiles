@@ -2,9 +2,10 @@
   "lastChangelogVersion": "0.79.1",
   "packages": [
     "https://github.com/lucasmeijer/pi-bash-live-view",
-    "/etc/pi-packages/plannotator-pi-extension"
+    "/etc/pi-packages/plannotator-pi-extension",
+    "npm:@ff-labs/pi-fff@0.9.5"
   ],
   "defaultProvider": "anthropic",
   "defaultModel": "claude-opus-4-8",
-  "defaultThinkingLevel": "high"
+  "defaultThinkingLevel": "xhigh"
 }
