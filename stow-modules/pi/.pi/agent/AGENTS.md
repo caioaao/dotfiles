@@ -130,9 +130,12 @@ max = concurrent connections. Keep under DB limit. idleTimeout kill stale conn.
 
 ## Leverage sub-agents
 
-- Use sub-agents to keep the main context window clean. Things like searching the web or going through a lot of text to find some information are good candidates for delegation
+- Sub-agents are generic coding agents in an isolated context window. There's no specialist to pick - YOU write the task prompt that governs the sub-agent. Give it all the context it needs; it can't see your conversation.
+- Use sub-agents to keep the main context window clean. Searching the web or sifting a lot of text to extract a small answer are good delegation candidates.
+- For read-only work (research, recon), say so in the prompt. The sub-agent inherits the full toolset; the prompt is the only constraint (a suggestion, not an enforced sandbox).
+- Set `label` for readable rows in parallel/chain runs.
 
 ### Model selection
-- Sub-agents don't define an LLM model. Choose one suitable for the complexity of the task
+- Sub-agents inherit your current model by default. Override per-call with `model` when a cheaper or faster model suits the task.
 - Prefer LLM models of the same family as you, unless instructed otherwise
 - Always pick the latest model version, unless there's a strong reason not to
