@@ -12,6 +12,7 @@
     enable = true;
     user = "caio";
     autoMigrate = true;
+    trust.formulae = [ "withgraphite/tap/graphite" ];
   };
 
   system.primaryUser = "caio";
