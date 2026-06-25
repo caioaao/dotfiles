@@ -1,13 +1,15 @@
 /**
- * Subagent Tool - Delegate tasks to specialized agents
+ * Subagent Tool - Delegate tasks to generic subagents
  *
- * Spawns a separate `pi` process for each subagent invocation,
- * giving it an isolated context window.
+ * Spawns a separate `pi` process for each invocation, giving it an isolated
+ * context window. The subagent runs as a generic coding agent (pi's default
+ * system prompt, full toolset). Its behavior is governed entirely by the task
+ * prompt the caller writes - there is no agent selection.
  *
  * Supports three modes:
- *   - Single: { agent: "name", task: "..." }
- *   - Parallel: { tasks: [{ agent: "name", task: "..." }, ...] }
- *   - Chain: { chain: [{ agent: "name", task: "... {previous} ..." }, ...] }
+ *   - Single:   { task: "..." }
+ *   - Parallel: { tasks: [{ task: "..." }, ...] }
+ *   - Chain:    { chain: [{ task: "... {previous} ..." }, ...] }
  *
  * Uses JSON mode to capture structured output from subagents.
  */
@@ -16,17 +18,58 @@ import { spawn } from "node:child_process";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
+import { fileURLToPath } from "node:url";
 import type { AgentToolResult } from "@mariozechner/pi-agent-core";
 import type { Message } from "@mariozechner/pi-ai";
-import { StringEnum } from "@mariozechner/pi-ai";
-import { type ExtensionAPI, getMarkdownTheme, withFileMutationQueue } from "@mariozechner/pi-coding-agent";
+import { type ExtensionAPI, getMarkdownTheme } from "@mariozechner/pi-coding-agent";
 import { Container, Markdown, Spacer, Text } from "@mariozechner/pi-tui";
 import { Type } from "@sinclair/typebox";
-import { type AgentConfig, type AgentScope, discoverAgents } from "./agents.js";
 
 const MAX_PARALLEL_TASKS = 8;
 const MAX_CONCURRENCY = 4;
 const COLLAPSED_ITEM_COUNT = 10;
+
+// Skills bundled with this extension live under <extension dir>/skills and are
+// contributed via the `resources_discover` event (see default export). Keeping the
+// delegation skill here ships it with the tool instead of as a standalone skill.
+const EXTENSION_DIR = path.dirname(fileURLToPath(import.meta.url));
+
+// Recursion / escape safety. Subagents may use ANY tool EXCEPT this denylist, so
+// research tasks keep broad capability: bash + CLIs for web search and doc fetching,
+// extension/custom tools, and skills. The denylist is the one hard invariant:
+//   - subagent:      direct recursion (the original fork-bomb).
+//   - council:       fans out more paid LLM expert calls.
+//   - questionnaire: needs an interactive UI; would hang a headless (-p) child.
+//   - spawn_session: spawns new sessions.
+// DENYLIST is a deliberate choice - broad capability is a core use case. The cost
+// (vs an allowlist) is that a FUTURE process-spawning / recursive extension tool is
+// allowed by default; add it here when one is introduced. bash stays allowed, so
+// recursion *prevention* is best-effort - the hard guarantee is *cleanup*
+// (process-group kill reaps the whole descendant tree on abort).
+const BLOCKED_SUBAGENT_TOOLS = ["subagent", "council", "questionnaire", "spawn_session"];
+
+/**
+ * Validate an optional per-task tool list. Returns the explicit allowlist to pass to
+ * `--tools` (narrowing that task), or `undefined` to use the permissive default
+ * (everything except BLOCKED_SUBAGENT_TOOLS, via `--exclude-tools`). Fails loud on a
+ * blocked or malformed entry rather than silently degrading the child.
+ */
+function resolveTools(requested: string[] | undefined): string[] | undefined {
+	if (requested === undefined) return undefined;
+	if (!Array.isArray(requested) || requested.length === 0) {
+		throw new Error("tools: [] is ambiguous - omit `tools` for the permissive default, or list explicit tool names.");
+	}
+	const blocked = new Set(BLOCKED_SUBAGENT_TOOLS);
+	for (const t of requested) {
+		if (typeof t !== "string" || t !== t.toLowerCase()) {
+			throw new Error(`Invalid tool name ${JSON.stringify(t)}: tool names are lowercase identifiers.`);
+		}
+		if (blocked.has(t)) {
+			throw new Error(`Tool '${t}' is not allowed in subagents (recursion/escape prevention).`);
+		}
+	}
+	return [...requested];
+}
 
 function formatTokens(count: number): string {
 	if (count < 1000) return count.toString();
@@ -140,9 +183,8 @@ interface UsageStats {
 }
 
 interface SingleResult {
-	agent: string;
-	agentSource: "user" | "project" | "unknown";
 	task: string;
+	label?: string;
 	exitCode: number;
 	messages: Message[];
 	stderr: string;
@@ -155,9 +197,16 @@ interface SingleResult {
 
 interface SubagentDetails {
 	mode: "single" | "parallel" | "chain";
-	agentScope: AgentScope;
-	projectAgentsDir: string | null;
 	results: SingleResult[];
+}
+
+function previewText(s: string, n: number): string {
+	const clean = s.replace(/\s+/g, " ").trim();
+	return clean.length > n ? `${clean.slice(0, n)}...` : clean;
+}
+
+function displayLabel(r: { label?: string; task: string }): string {
+	return r.label?.trim() ? r.label : previewText(r.task, 50) || "(empty task)";
 }
 
 function getFinalOutput(messages: Message[]): string {
@@ -207,16 +256,6 @@ async function mapWithConcurrencyLimit<TIn, TOut>(
 	return results;
 }
 
-async function writePromptToTempFile(agentName: string, prompt: string): Promise<{ dir: string; filePath: string }> {
-	const tmpDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), "pi-subagent-"));
-	const safeName = agentName.replace(/[^\w.-]+/g, "_");
-	const filePath = path.join(tmpDir, `prompt-${safeName}.md`);
-	await withFileMutationQueue(filePath, async () => {
-		await fs.promises.writeFile(filePath, prompt, { encoding: "utf-8", mode: 0o600 });
-	});
-	return { dir: tmpDir, filePath };
-}
-
 function getPiInvocation(args: string[]): { command: string; args: string[] } {
 	const currentScript = process.argv[1];
 	const isBunVirtualScript = currentScript?.startsWith("/$bunfs/root/");
@@ -237,43 +276,30 @@ type OnUpdateCallback = (partial: AgentToolResult<SubagentDetails>) => void;
 
 async function runSingleAgent(
 	defaultCwd: string,
-	agents: AgentConfig[],
-	agentName: string,
 	task: string,
+	label: string | undefined,
 	cwd: string | undefined,
 	model: string | undefined,
+	tools: string[] | undefined,
 	step: number | undefined,
 	signal: AbortSignal | undefined,
 	onUpdate: OnUpdateCallback | undefined,
 	makeDetails: (results: SingleResult[]) => SubagentDetails,
 ): Promise<SingleResult> {
-	const agent = agents.find((a) => a.name === agentName);
-
-	if (!agent) {
-		const available = agents.map((a) => `"${a.name}"`).join(", ") || "none";
-		return {
-			agent: agentName,
-			agentSource: "unknown",
-			task,
-			exitCode: 1,
-			messages: [],
-			stderr: `Unknown agent: "${agentName}". Available agents: ${available}.`,
-			usage: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, cost: 0, contextTokens: 0, turns: 0 },
-			step,
-		};
-	}
-
-	const args: string[] = ["--mode", "json", "-p", "--no-session"];
+	// --no-context-files: stop the global AGENTS.md "leverage sub-agents" nudge from
+	//   propagating into children (the accidental-recursion trigger).
+	// Tool scoping: permissive by default (deny only the recursion/escape set) so
+	//   research subagents keep bash + CLIs + extension tools + skills; a per-task
+	//   `tools` list narrows to an explicit allowlist instead.
+	const args: string[] = ["--mode", "json", "-p", "--no-session", "--no-context-files"];
+	if (tools && tools.length > 0) args.push("--tools", tools.join(","));
+	else args.push("--exclude-tools", BLOCKED_SUBAGENT_TOOLS.join(","));
 	if (model) args.push("--model", model);
-	if (agent.tools && agent.tools.length > 0) args.push("--tools", agent.tools.join(","));
-
-	let tmpPromptDir: string | null = null;
-	let tmpPromptPath: string | null = null;
+	args.push(`Task: ${task}`);
 
 	const currentResult: SingleResult = {
-		agent: agentName,
-		agentSource: agent.source,
 		task,
+		label,
 		exitCode: 0,
 		messages: [],
 		stderr: "",
@@ -291,113 +317,106 @@ async function runSingleAgent(
 		}
 	};
 
-	try {
-		if (agent.systemPrompt.trim()) {
-			const tmp = await writePromptToTempFile(agent.name, agent.systemPrompt);
-			tmpPromptDir = tmp.dir;
-			tmpPromptPath = tmp.filePath;
-			args.push("--append-system-prompt", tmpPromptPath);
-		}
+	let wasAborted = false;
 
-		args.push(`Task: ${task}`);
-		let wasAborted = false;
+	const exitCode = await new Promise<number>((resolve) => {
+		const invocation = getPiInvocation(args);
+		const proc = spawn(invocation.command, invocation.args, {
+			cwd: cwd ?? defaultCwd,
+			shell: false,
+			stdio: ["ignore", "pipe", "pipe"],
+			// Own process group so abort can reap the ENTIRE descendant tree
+			// (including bash-spawned grandchildren), not just the direct child.
+			detached: true,
+		});
+		let buffer = "";
 
-		const exitCode = await new Promise<number>((resolve) => {
-			const invocation = getPiInvocation(args);
-			const proc = spawn(invocation.command, invocation.args, {
-				cwd: cwd ?? defaultCwd,
-				shell: false,
-				stdio: ["ignore", "pipe", "pipe"],
-			});
-			let buffer = "";
-
-			const processLine = (line: string) => {
-				if (!line.trim()) return;
-				let event: any;
-				try {
-					event = JSON.parse(line);
-				} catch {
-					return;
-				}
-
-				if (event.type === "message_end" && event.message) {
-					const msg = event.message as Message;
-					currentResult.messages.push(msg);
-
-					if (msg.role === "assistant") {
-						currentResult.usage.turns++;
-						const usage = msg.usage;
-						if (usage) {
-							currentResult.usage.input += usage.input || 0;
-							currentResult.usage.output += usage.output || 0;
-							currentResult.usage.cacheRead += usage.cacheRead || 0;
-							currentResult.usage.cacheWrite += usage.cacheWrite || 0;
-							currentResult.usage.cost += usage.cost?.total || 0;
-							currentResult.usage.contextTokens = usage.totalTokens || 0;
-						}
-						if (!currentResult.model && msg.model) currentResult.model = msg.model;
-						if (msg.stopReason) currentResult.stopReason = msg.stopReason;
-						if (msg.errorMessage) currentResult.errorMessage = msg.errorMessage;
-					}
-					emitUpdate();
-				}
-
-				if (event.type === "tool_result_end" && event.message) {
-					currentResult.messages.push(event.message as Message);
-					emitUpdate();
-				}
-			};
-
-			proc.stdout.on("data", (data) => {
-				buffer += data.toString();
-				const lines = buffer.split("\n");
-				buffer = lines.pop() || "";
-				for (const line of lines) processLine(line);
-			});
-
-			proc.stderr.on("data", (data) => {
-				currentResult.stderr += data.toString();
-			});
-
-			proc.on("close", (code) => {
-				if (buffer.trim()) processLine(buffer);
-				resolve(code ?? 0);
-			});
-
-			proc.on("error", () => {
-				resolve(1);
-			});
-
-			if (signal) {
-				const killProc = () => {
-					wasAborted = true;
-					proc.kill("SIGTERM");
-					setTimeout(() => {
-						if (!proc.killed) proc.kill("SIGKILL");
-					}, 5000);
-				};
-				if (signal.aborted) killProc();
-				else signal.addEventListener("abort", killProc, { once: true });
+		const processLine = (line: string) => {
+			if (!line.trim()) return;
+			let event: any;
+			try {
+				event = JSON.parse(line);
+			} catch {
+				return;
 			}
+
+			if (event.type === "message_end" && event.message) {
+				const msg = event.message as Message;
+				currentResult.messages.push(msg);
+
+				if (msg.role === "assistant") {
+					currentResult.usage.turns++;
+					const usage = msg.usage;
+					if (usage) {
+						currentResult.usage.input += usage.input || 0;
+						currentResult.usage.output += usage.output || 0;
+						currentResult.usage.cacheRead += usage.cacheRead || 0;
+						currentResult.usage.cacheWrite += usage.cacheWrite || 0;
+						currentResult.usage.cost += usage.cost?.total || 0;
+						currentResult.usage.contextTokens = usage.totalTokens || 0;
+					}
+					if (!currentResult.model && msg.model) currentResult.model = msg.model;
+					if (msg.stopReason) currentResult.stopReason = msg.stopReason;
+					if (msg.errorMessage) currentResult.errorMessage = msg.errorMessage;
+				}
+				emitUpdate();
+			}
+
+			if (event.type === "tool_result_end" && event.message) {
+				currentResult.messages.push(event.message as Message);
+				emitUpdate();
+			}
+		};
+
+		proc.stdout.on("data", (data) => {
+			buffer += data.toString();
+			const lines = buffer.split("\n");
+			buffer = lines.pop() || "";
+			for (const line of lines) processLine(line);
 		});
 
-		currentResult.exitCode = exitCode;
-		if (wasAborted) throw new Error("Subagent was aborted");
-		return currentResult;
-	} finally {
-		if (tmpPromptPath)
-			try {
-				fs.unlinkSync(tmpPromptPath);
-			} catch {
-				/* ignore */
-			}
-		if (tmpPromptDir)
-			try {
-				fs.rmdirSync(tmpPromptDir);
-			} catch {
-				/* ignore */
-			}
-	}
+		proc.stderr.on("data", (data) => {
+			currentResult.stderr += data.toString();
+		});
+
+		proc.on("close", (code) => {
+			if (buffer.trim()) processLine(buffer);
+			resolve(code ?? 0);
+		});
+
+		proc.on("error", () => {
+			resolve(1);
+		});
+
+		if (signal) {
+			// Signal the whole process group (negative pid) so bash-spawned
+			// grandchildren die too; fall back to the direct child if the group
+			// signal fails (e.g. pid already gone).
+			const killTree = (sig: NodeJS.Signals) => {
+				try {
+					if (proc.pid !== undefined) process.kill(-proc.pid, sig);
+					else proc.kill(sig);
+				} catch {
+					try {
+						proc.kill(sig);
+					} catch {}
+				}
+			};
+			const killProc = () => {
+				wasAborted = true;
+				killTree("SIGTERM");
+				setTimeout(() => {
+					if (!proc.killed) killTree("SIGKILL");
+				}, 5000);
+			};
+			if (signal.aborted) killProc();
+			else signal.addEventListener("abort", killProc, { once: true });
+		}
+	});
+
+	currentResult.exitCode = exitCode;
+	if (wasAborted) throw new Error("Subagent was aborted");
+	return currentResult;
 }
 
 const ModelSchema = Type.Optional(
@@ -407,33 +426,44 @@ const ModelSchema = Type.Optional(
 	}),
 );
 
+const LabelSchema = Type.Optional(
+	Type.String({
+		description: "Optional short label shown in parallel/chain output. Defaults to a preview of the task.",
+	}),
+);
+
+const ToolsSchema = Type.Optional(
+	Type.Array(Type.String(), {
+		description:
+			"Tools the subagent may use - a capability GRANT, not the in-prose 'which tools/sources' guidance. OMIT for the permissive default: every tool EXCEPT subagent/council/questionnaire/spawn_session (so bash, CLIs, web-search skills, edit/write are all available - what most research/doc tasks want). Provide an explicit list only to NARROW a task, e.g. [\"read\",\"grep\",\"find\",\"ls\"] for read-only recon. subagent/council/questionnaire/spawn_session are always rejected (recursion/escape prevention).",
+	}),
+);
+
 const TaskItem = Type.Object({
-	agent: Type.String({ description: "Name of the agent to invoke" }),
-	task: Type.String({ description: "Task to delegate to the agent" }),
+	task: Type.String({ description: "Task/prompt that governs the generic subagent" }),
 	cwd: Type.Optional(Type.String({ description: "Working directory for the agent process" })),
 	model: ModelSchema,
+	label: LabelSchema,
+	tools: ToolsSchema,
 });
 
 const ChainItem = Type.Object({
-	agent: Type.String({ description: "Name of the agent to invoke" }),
-	task: Type.String({ description: "Task with optional {previous} placeholder for prior output" }),
+	task: Type.String({ description: "Task with optional {previous} placeholder for prior step output" }),
 	cwd: Type.Optional(Type.String({ description: "Working directory for the agent process" })),
 	model: ModelSchema,
-});
-
-const AgentScopeSchema = StringEnum(["user", "project", "both"] as const, {
-	description: 'Which agent directories to use. Default: "user". Use "both" to include project-local agents.',
-	default: "user",
+	label: LabelSchema,
+	tools: ToolsSchema,
 });
 
 const SubagentParams = Type.Object({
-	agent: Type.Optional(Type.String({ description: "Name of the agent to invoke (for single mode)" })),
-	task: Type.Optional(Type.String({ description: "Task to delegate (for single mode)" })),
-	tasks: Type.Optional(Type.Array(TaskItem, { description: `Array of {agent, task} for parallel execution. Maximum ${MAX_PARALLEL_TASKS} tasks - if you have more, split into sequential batches of ${MAX_PARALLEL_TASKS}.` })),
-	chain: Type.Optional(Type.Array(ChainItem, { description: "Array of {agent, task} for sequential execution" })),
-	agentScope: Type.Optional(AgentScopeSchema),
-	confirmProjectAgents: Type.Optional(
-		Type.Boolean({ description: "Prompt before running project-local agents. Default: true.", default: true }),
+	task: Type.Optional(Type.String({ description: "Task/prompt for single mode" })),
+	tasks: Type.Optional(
+		Type.Array(TaskItem, {
+			description: `Array of {task} for parallel execution. Maximum ${MAX_PARALLEL_TASKS} tasks - if you have more, split into sequential batches of ${MAX_PARALLEL_TASKS}.`,
+		}),
+	),
+	chain: Type.Optional(
+		Type.Array(ChainItem, { description: "Array of {task} run sequentially; use {previous} to inject prior output" }),
 	),
 	cwd: Type.Optional(Type.String({ description: "Working directory for the agent process (single mode)" })),
 	model: Type.Optional(
@@ -442,78 +472,90 @@ const SubagentParams = Type.Object({
 				'Model for spawned agents (e.g. "provider/model-id"). Per-task model overrides this. Defaults to the caller\'s current model.',
 		}),
 	),
+	label: LabelSchema,
+	tools: ToolsSchema,
 });
 
 export default function (pi: ExtensionAPI) {
+	// Ship the delegation-contract skill alongside the tool. pi loads any SKILL.md
+	// found under this directory at startup and on /reload.
+	pi.on("resources_discover", () => ({
+		skillPaths: [path.join(EXTENSION_DIR, "skills")],
+	}));
+
 	pi.registerTool({
 		name: "subagent",
 		label: "Subagent",
 		description: [
-			"Delegate tasks to specialized subagents with isolated context.",
-			`Modes: single (agent + task), parallel (tasks array, max ${MAX_PARALLEL_TASKS}), chain (sequential with {previous} placeholder).`,
-			'Default agent scope is "user" (from ~/.pi/agent/agents).',
-			'To enable project-local agents in .pi/agents, set agentScope: "both" (or "project").',
-		].join(" "),
+			"Delegate a task to a generic subagent that runs in an isolated context, like a regular coding agent.",
+			"The task prompt fully governs its behavior - write it with all the context the subagent needs; subagents load no context files (AGENTS.md), so make the task self-contained. There is no agent selection.",
+			"By default subagents may use ANY tool except subagent/council/questionnaire/spawn_session - so bash, CLIs, web-search skills, and edit/write are all available for research and doc-gathering. They CANNOT spawn their own subagents (no nesting). Pass `tools` only to NARROW a task (e.g. read-only recon).",
+			`Modes: single (task), parallel (tasks array, max ${MAX_PARALLEL_TASKS}), chain (sequential; use {previous} to inject prior step output).`,
+			"Examples:",
+			'- read-only recon: { task: "Investigate how X works. Do NOT modify files. Report file paths + line numbers." }',
+			'- parallel fan-out: { tasks: [{ task: "Summarize module A" }, { task: "Summarize module B" }] }',
+			'- chain: { chain: [{ task: "Find the bug in auth" }, { task: "Fix it: {previous}" }] }',
+			'For structured output, ask for it in the task (e.g. "return JSON {...}").',
+		].join("\n"),
 		parameters: SubagentParams,
 
 		async execute(_toolCallId, params, signal, onUpdate, ctx) {
-			const agentScope: AgentScope = params.agentScope ?? "user";
-			const defaultModel =
-				params.model ?? (ctx.model ? `${ctx.model.provider}/${ctx.model.id}` : undefined);
-			const discovery = discoverAgents(ctx.cwd, agentScope);
-			const agents = discovery.agents;
-			const confirmProjectAgents = params.confirmProjectAgents ?? true;
-
-			const hasChain = (params.chain?.length ?? 0) > 0;
-			const hasTasks = (params.tasks?.length ?? 0) > 0;
-			const hasSingle = Boolean(params.agent && params.task);
-			const modeCount = Number(hasChain) + Number(hasTasks) + Number(hasSingle);
+			const defaultModel = params.model ?? (ctx.model ? `${ctx.model.provider}/${ctx.model.id}` : undefined);
 
 			const makeDetails =
 				(mode: "single" | "parallel" | "chain") =>
-				(results: SingleResult[]): SubagentDetails => ({
-					mode,
-					agentScope,
-					projectAgentsDir: discovery.projectAgentsDir,
-					results,
-				});
+				(results: SingleResult[]): SubagentDetails => ({ mode, results });
 
-			if (modeCount !== 1) {
-				const available = agents.map((a) => `${a.name} (${a.source})`).join(", ") || "none";
+			// Named agents were removed. Fail loudly rather than silently ignore a stale `agent` field.
+			const raw = params as Record<string, unknown> & { tasks?: unknown[]; chain?: unknown[] };
+			const hasAgentField =
+				raw.agent !== undefined ||
+				(Array.isArray(raw.tasks) && raw.tasks.some((t) => (t as { agent?: unknown })?.agent !== undefined)) ||
+				(Array.isArray(raw.chain) && raw.chain.some((c) => (c as { agent?: unknown })?.agent !== undefined));
+			if (hasAgentField) {
 				return {
 					content: [
 						{
 							type: "text",
-							text: `Invalid parameters. Provide exactly one mode.\nAvailable agents: ${available}`,
+							text: "Named agents were removed. Pass `task` directly - the task prompt governs the generic subagent.",
 						},
 					],
 					details: makeDetails("single")([]),
+					isError: true,
 				};
 			}
 
-			if ((agentScope === "project" || agentScope === "both") && confirmProjectAgents && ctx.hasUI) {
-				const requestedAgentNames = new Set<string>();
-				if (params.chain) for (const step of params.chain) requestedAgentNames.add(step.agent);
-				if (params.tasks) for (const t of params.tasks) requestedAgentNames.add(t.agent);
-				if (params.agent) requestedAgentNames.add(params.agent);
+			const hasChain = (params.chain?.length ?? 0) > 0;
+			const hasTasks = (params.tasks?.length ?? 0) > 0;
+			const hasSingle = Boolean(params.task);
+			const modeCount = Number(hasChain) + Number(hasTasks) + Number(hasSingle);
 
-				const projectAgentsRequested = Array.from(requestedAgentNames)
-					.map((name) => agents.find((a) => a.name === name))
-					.filter((a): a is AgentConfig => a?.source === "project");
+			if (modeCount !== 1) {
+				return {
+					content: [
+						{
+							type: "text",
+							text: "Invalid parameters. Provide exactly one mode: task (single), tasks (parallel), or chain.",
+						},
+					],
+					details: makeDetails("single")([]),
+					isError: true,
+				};
+			}
 
-				if (projectAgentsRequested.length > 0) {
-					const names = projectAgentsRequested.map((a) => a.name).join(", ");
-					const dir = discovery.projectAgentsDir ?? "(unknown)";
-					const ok = await ctx.ui.confirm(
-						"Run project-local agents?",
-						`Agents: ${names}\nSource: ${dir}\n\nProject agents are repo-controlled. Only continue for trusted repositories.`,
-					);
-					if (!ok)
-						return {
-							content: [{ type: "text", text: "Canceled: project-local agents not approved." }],
-							details: makeDetails(hasChain ? "chain" : hasTasks ? "parallel" : "single")([]),
-						};
-				}
+			// Validate every task's tool allowlist up front so a bad `tools` value fails
+			// before any process is spawned (indices line up with the dispatch below).
+			let resolvedTools: (string[] | undefined)[];
+			try {
+				if (params.chain && params.chain.length > 0) resolvedTools = params.chain.map((s) => resolveTools(s.tools));
+				else if (params.tasks && params.tasks.length > 0) resolvedTools = params.tasks.map((t) => resolveTools(t.tools));
+				else resolvedTools = [resolveTools(params.tools)];
+			} catch (err) {
+				return {
+					content: [{ type: "text", text: err instanceof Error ? err.message : String(err) }],
+					details: makeDetails("single")([]),
+					isError: true,
+				};
 			}
 
 			if (params.chain && params.chain.length > 0) {
@@ -541,11 +583,11 @@ export default function (pi: ExtensionAPI) {
 
 					const result = await runSingleAgent(
 						ctx.cwd,
-						agents,
-						step.agent,
 						taskWithContext,
+						step.label,
 						step.cwd,
 						step.model ?? defaultModel,
+						resolvedTools[i],
 						i + 1,
 						signal,
 						chainUpdate,
@@ -559,7 +601,9 @@ export default function (pi: ExtensionAPI) {
 						const errorMsg =
 							result.errorMessage || result.stderr || getFinalOutput(result.messages) || "(no output)";
 						return {
-							content: [{ type: "text", text: `Chain stopped at step ${i + 1} (${step.agent}): ${errorMsg}` }],
+							content: [
+								{ type: "text", text: `Chain stopped at step ${i + 1} (${displayLabel(result)}): ${errorMsg}` },
+							],
 							details: makeDetails("chain")(results),
 							isError: true,
 						};
@@ -582,6 +626,7 @@ export default function (pi: ExtensionAPI) {
 							},
 						],
 						details: makeDetails("parallel")([]),
+						isError: true,
 					};
 
 				// Track all results for streaming updates
@@ -590,9 +635,8 @@ export default function (pi: ExtensionAPI) {
 				// Initialize placeholder results
 				for (let i = 0; i < params.tasks.length; i++) {
 					allResults[i] = {
-						agent: params.tasks[i].agent,
-						agentSource: "unknown",
 						task: params.tasks[i].task,
+						label: params.tasks[i].label,
 						exitCode: -1, // -1 = still running
 						messages: [],
 						stderr: "",
@@ -616,11 +660,11 @@ export default function (pi: ExtensionAPI) {
 				const results = await mapWithConcurrencyLimit(params.tasks, MAX_CONCURRENCY, async (t, index) => {
 					const result = await runSingleAgent(
 						ctx.cwd,
-						agents,
-						t.agent,
 						t.task,
+						t.label,
 						t.cwd,
 						t.model ?? defaultModel,
+						resolvedTools[index],
 						undefined,
 						signal,
 						// Per-task update callback
@@ -640,7 +684,7 @@ export default function (pi: ExtensionAPI) {
 				const successCount = results.filter((r) => r.exitCode === 0).length;
 				const summaries = results.map((r) => {
 					const output = getFinalOutput(r.messages);
-					return `[${r.agent}] ${r.exitCode === 0 ? "completed" : "failed"}:\n${output || "(no output)"}`;
+					return `[${displayLabel(r)}] ${r.exitCode === 0 ? "completed" : "failed"}:\n${output || "(no output)"}`;
 				});
 				return {
 					content: [
@@ -653,14 +697,14 @@ export default function (pi: ExtensionAPI) {
 				};
 			}
 
-			if (params.agent && params.task) {
+			if (params.task) {
 				const result = await runSingleAgent(
 					ctx.cwd,
-					agents,
-					params.agent,
 					params.task,
+					params.label,
 					params.cwd,
 					defaultModel,
+					resolvedTools[0],
 					undefined,
 					signal,
 					onUpdate,
@@ -671,7 +715,7 @@ export default function (pi: ExtensionAPI) {
 					const errorMsg =
 						result.errorMessage || result.stderr || getFinalOutput(result.messages) || "(no output)";
 					return {
-						content: [{ type: "text", text: `Agent ${result.stopReason || "failed"}: ${errorMsg}` }],
+						content: [{ type: "text", text: `Subagent ${result.stopReason || "failed"}: ${errorMsg}` }],
 						details: makeDetails("single")([result]),
 						isError: true,
 					};
@@ -682,31 +726,23 @@ export default function (pi: ExtensionAPI) {
 				};
 			}
 
-			const available = agents.map((a) => `${a.name} (${a.source})`).join(", ") || "none";
 			return {
-				content: [{ type: "text", text: `Invalid parameters. Available agents: ${available}` }],
+				content: [{ type: "text", text: "Invalid parameters. Provide task, tasks, or chain." }],
 				details: makeDetails("single")([]),
+				isError: true,
 			};
 		},
 
 		renderCall(args, theme, _context) {
-			const scope: AgentScope = args.agentScope ?? "user";
 			if (args.chain && args.chain.length > 0) {
 				let text =
-					theme.fg("toolTitle", theme.bold("subagent ")) +
-					theme.fg("accent", `chain (${args.chain.length} steps)`) +
-					theme.fg("muted", ` [${scope}]`);
+					theme.fg("toolTitle", theme.bold("subagent ")) + theme.fg("accent", `chain (${args.chain.length} steps)`);
 				for (let i = 0; i < Math.min(args.chain.length, 3); i++) {
 					const step = args.chain[i];
-					// Clean up {previous} placeholder for display
-					const cleanTask = step.task.replace(/\{previous\}/g, "").trim();
-					const preview = cleanTask.length > 40 ? `${cleanTask.slice(0, 40)}...` : cleanTask;
-					text +=
-						"\n  " +
-						theme.fg("muted", `${i + 1}.`) +
-						" " +
-						theme.fg("accent", step.agent) +
-						theme.fg("dim", ` ${preview}`);
+					const label = step.label?.trim()
+						? step.label
+						: previewText((step.task ?? "").replace(/\{previous\}/g, ""), 40);
+					text += `\n  ${theme.fg("muted", `${i + 1}.`)} ${theme.fg("dim", label)}`;
 				}
 				if (args.chain.length > 3) text += `\n  ${theme.fg("muted", `... +${args.chain.length - 3} more`)}`;
 				return new Text(text, 0, 0);
@@ -714,22 +750,18 @@ export default function (pi: ExtensionAPI) {
 			if (args.tasks && args.tasks.length > 0) {
 				let text =
 					theme.fg("toolTitle", theme.bold("subagent ")) +
-					theme.fg("accent", `parallel (${args.tasks.length} tasks)`) +
-					theme.fg("muted", ` [${scope}]`);
+					theme.fg("accent", `parallel (${args.tasks.length} tasks)`);
 				for (const t of args.tasks.slice(0, 3)) {
-					const preview = t.task.length > 40 ? `${t.task.slice(0, 40)}...` : t.task;
-					text += `\n  ${theme.fg("accent", t.agent)}${theme.fg("dim", ` ${preview}`)}`;
+					const label = t.label?.trim() ? t.label : previewText(t.task ?? "", 40);
+					text += `\n  ${theme.fg("dim", label)}`;
 				}
 				if (args.tasks.length > 3) text += `\n  ${theme.fg("muted", `... +${args.tasks.length - 3} more`)}`;
 				return new Text(text, 0, 0);
 			}
-			const agentName = args.agent || "...";
-			const preview = args.task ? (args.task.length > 60 ? `${args.task.slice(0, 60)}...` : args.task) : "...";
-			let text =
-				theme.fg("toolTitle", theme.bold("subagent ")) +
-				theme.fg("accent", agentName) +
-				theme.fg("muted", ` [${scope}]`);
-			text += `\n  ${theme.fg("dim", preview)}`;
+			const hasLabel = Boolean(args.label?.trim());
+			const heading = hasLabel ? (args.label as string) : previewText(args.task ?? "...", 60);
+			let text = theme.fg("toolTitle", theme.bold("subagent ")) + theme.fg("accent", heading);
+			if (hasLabel) text += `\n  ${theme.fg("dim", previewText(args.task ?? "", 60))}`;
 			return new Text(text, 0, 0);
 		},
 
@@ -767,7 +799,7 @@ export default function (pi: ExtensionAPI) {
 
 				if (expanded) {
 					const container = new Container();
-					let header = `${icon} ${theme.fg("toolTitle", theme.bold(r.agent))}${theme.fg("muted", ` (${r.agentSource})`)}`;
+					let header = `${icon} ${theme.fg("toolTitle", theme.bold(displayLabel(r)))}`;
 					if (isError && r.stopReason) header += ` ${theme.fg("error", `[${r.stopReason}]`)}`;
 					container.addChild(new Text(header, 0, 0));
 					if (isError && r.errorMessage)
@@ -803,7 +835,7 @@ export default function (pi: ExtensionAPI) {
 					return container;
 				}
 
-				let text = `${icon} ${theme.fg("toolTitle", theme.bold(r.agent))}${theme.fg("muted", ` (${r.agentSource})`)}`;
+				let text = `${icon} ${theme.fg("toolTitle", theme.bold(displayLabel(r)))}`;
 				if (isError && r.stopReason) text += ` ${theme.fg("error", `[${r.stopReason}]`)}`;
 				if (isError && r.errorMessage) text += `\n${theme.fg("error", `Error: ${r.errorMessage}`)}`;
 				else if (displayItems.length === 0) text += `\n${theme.fg("muted", "(no output)")}`;
@@ -854,7 +886,7 @@ export default function (pi: ExtensionAPI) {
 						container.addChild(new Spacer(1));
 						container.addChild(
 							new Text(
-								`${theme.fg("muted", `─── Step ${r.step}: `) + theme.fg("accent", r.agent)} ${rIcon}`,
+								`${theme.fg("muted", `─── Step ${r.step}: `) + theme.fg("accent", displayLabel(r))} ${rIcon}`,
 								0,
 								0,
 							),
@@ -901,7 +933,7 @@ export default function (pi: ExtensionAPI) {
 				for (const r of details.results) {
 					const rIcon = r.exitCode === 0 ? theme.fg("success", "✓") : theme.fg("error", "✗");
 					const displayItems = getDisplayItems(r.messages);
-					text += `\n\n${theme.fg("muted", `─── Step ${r.step}: `)}${theme.fg("accent", r.agent)} ${rIcon}`;
+					text += `\n\n${theme.fg("muted", `─── Step ${r.step}: `)}${theme.fg("accent", displayLabel(r))} ${rIcon}`;
 					if (displayItems.length === 0) text += `\n${theme.fg("muted", "(no output)")}`;
 					else text += `\n${renderDisplayItems(displayItems, 5)}`;
 				}
@@ -942,7 +974,7 @@ export default function (pi: ExtensionAPI) {
 
 						container.addChild(new Spacer(1));
 						container.addChild(
-							new Text(`${theme.fg("muted", "─── ") + theme.fg("accent", r.agent)} ${rIcon}`, 0, 0),
+							new Text(`${theme.fg("muted", "─── ") + theme.fg("accent", displayLabel(r))} ${rIcon}`, 0, 0),
 						);
 						container.addChild(new Text(theme.fg("muted", "Task: ") + theme.fg("dim", r.task), 0, 0));
 
@@ -987,7 +1019,7 @@ export default function (pi: ExtensionAPI) {
 								? theme.fg("success", "✓")
 								: theme.fg("error", "✗");
 					const displayItems = getDisplayItems(r.messages);
-					text += `\n\n${theme.fg("muted", "─── ")}${theme.fg("accent", r.agent)} ${rIcon}`;
+					text += `\n\n${theme.fg("muted", "─── ")}${theme.fg("accent", displayLabel(r))} ${rIcon}`;
 					if (displayItems.length === 0)
 						text += `\n${theme.fg("muted", r.exitCode === -1 ? "(running...)" : "(no output)")}`;
 					else text += `\n${renderDisplayItems(displayItems, 5)}`;

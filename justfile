@@ -21,7 +21,7 @@ bootstrap:
 	just setup-dev-secrets
 
 bootstrap-pi:
-	mkdir -p $HOME/.pi/agent/{skills,extensions/subagent,agents,prompts}
+	mkdir -p $HOME/.pi/agent/{skills,extensions/subagent,prompts}
 	just stow pi true 
 
 stow module adopt="false": xdg-base-dirs
