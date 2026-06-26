@@ -25,6 +25,6 @@ Delivery contract:
 
 Precedence: the two `Always` rules hold no matter what. The `Strong default` yields only to a strong reason (stated in your final summary) or explicit caller steering. Within what these leave open, the intent governs content and form; lesser defaults fill the rest.
 
-Before reporting done: unless you deliberately broke the strong default (and said why), verify the artifact stands alone - no `http(s)://` in any `src`, `href`, or `url(...)`, and no web fonts. Then write the file and emit the path plus one line on the angle you chose and why.
+Before reporting done: unless you deliberately broke the strong default (and said why), verify the artifact stands alone - no `http(s)://` in any `src`, `href`, or `url(...)`, and no web fonts. Then write the file and emit the full absolute `file://` URL (the whole link, copy-paste-ready into a browser - never a relative path) plus one line on the angle you chose and why.
 
 Extra steering from the caller, if any: ${@:2}
