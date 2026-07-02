@@ -139,3 +139,10 @@ max = concurrent connections. Keep under DB limit. idleTimeout kill stale conn.
 - Sub-agents inherit your current model by default. Override per-call with `model` when a cheaper or faster model suits the task.
 - Prefer LLM models of the same family as you, unless instructed otherwise
 - Always pick the latest model version, unless there's a strong reason not to
+
+## Review your work
+
+Load the `fresh-eyes` skill before presenting designs, plans, or non-trivial
+implementations, when choosing between approaches with different trade-offs,
+and after several turns of solo reasoning. Inline tension review is the floor;
+spawn fresh-context critics when stakes are high.
