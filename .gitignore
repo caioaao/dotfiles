@@ -24,4 +24,7 @@ stow-modules/pi/.pi/agent/trust.json
 
 # Machine-specific git config (not tracked)
 stow-modules/git/.config/git/config.local
-.local/
+/.local/
+
+# pi-observer runtime deps
+stow-modules/pi/.pi/agent/extensions/pi-observer/node_modules/

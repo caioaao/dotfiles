@@ -1,0 +1,3 @@
+#!/bin/sh
+# piobs - observe active pi sessions (pi-observer CLI)
+exec node "$HOME/.pi/agent/extensions/pi-observer/cli.ts" "$@"

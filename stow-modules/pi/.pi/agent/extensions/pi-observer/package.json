@@ -1,0 +1,13 @@
+{
+	"name": "pi-observer",
+	"private": true,
+	"version": "0.1.0",
+	"type": "module",
+	"description": "Big-picture feed of active pi sessions: registry extension + piobs CLI",
+	"engines": {
+		"node": ">=22.18"
+	},
+	"dependencies": {
+		"@earendil-works/pi-ai": "^0.79.1"
+	}
+}
