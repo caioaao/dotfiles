@@ -1,7 +1,8 @@
 {
   "lastChangelogVersion": "0.79.1",
   "packages": [
-    "npm:@ff-labs/pi-fff@0.9.5"
+    "/run/current-system/sw/share/pi/packages/pi-fff",
+    "/run/current-system/sw/share/pi/packages/pi-observer"
   ],
   "defaultProvider": "anthropic",
   "defaultModel": "claude-opus-4-8",
