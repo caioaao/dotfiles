@@ -4,6 +4,12 @@
 	"version": "0.1.0",
 	"type": "module",
 	"description": "Big-picture feed of active pi sessions: registry extension + piobs CLI",
+	"bin": {
+		"piobs": "cli.ts"
+	},
+	"pi": {
+		"extensions": ["./index.ts"]
+	},
 	"engines": {
 		"node": ">=22.18"
 	},
