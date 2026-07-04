@@ -5,6 +5,6 @@
     "/run/current-system/sw/share/pi/packages/pi-observer"
   ],
   "defaultProvider": "anthropic",
-  "defaultModel": "claude-opus-4-8",
-  "defaultThinkingLevel": "xhigh"
+  "defaultModel": "claude-fable-5",
+  "defaultThinkingLevel": "high"
 }
