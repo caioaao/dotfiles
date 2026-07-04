@@ -13,6 +13,10 @@ let
     vendorHash = "sha256-T6zSwQdDWYQqe8trIlhpU8dUQXtz8OGmnW5L5AVjGn8=";
     subPackages = [ "." ];
   };
+
+  # Pi extensions/packages as nix derivations. Referenced from
+  # ~/.pi/agent/settings.json via /run/current-system/sw/share/pi/packages/.
+  pi-packages = pkgs.callPackage ./pi-packages { };
 in {
   imports = [
     ./tmux/default.nix
@@ -38,6 +42,7 @@ in {
     git-spice
     git-lfs
     pi
+    pi-packages
     github-cli
     gum
     just

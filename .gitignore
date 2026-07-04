@@ -26,5 +26,5 @@ stow-modules/pi/.pi/agent/trust.json
 stow-modules/git/.config/git/config.local
 /.local/
 
-# pi-observer runtime deps
-stow-modules/pi/.pi/agent/extensions/pi-observer/node_modules/
+# pi packages built by nix; node_modules only appears during local dev
+nix-modules/shared/pi-packages/*/node_modules/
