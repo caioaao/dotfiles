@@ -1,10 +1,12 @@
 {
-  "lastChangelogVersion": "0.79.1",
+  "lastChangelogVersion": "0.80.2",
   "packages": [
     "/run/current-system/sw/share/pi/packages/pi-fff",
-    "/run/current-system/sw/share/pi/packages/pi-observer"
+    "/run/current-system/sw/share/pi/packages/pi-observer",
+    "/run/current-system/sw/share/pi/packages/pi-linear-tools"
   ],
   "defaultProvider": "anthropic",
   "defaultModel": "claude-fable-5",
-  "defaultThinkingLevel": "high"
+  "defaultThinkingLevel": "high",
+  "theme": "dark"
 }
