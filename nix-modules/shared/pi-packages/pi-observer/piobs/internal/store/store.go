@@ -124,9 +124,11 @@ func (s *Store) EnsureDirs() error {
 }
 
 // ListSessions reads every registry doc, derives effective state via the
-// pid-reuse-guarded liveness check, and sorts working -> idle -> exited,
-// most recently updated first within each group. Docs with an unknown
-// schemaVersion are rejected (skipped), per contract.
+// pid-reuse-guarded liveness check, and sorts idle -> working -> exited
+// (idle sessions wait on the user, so they surface first), tmux-attached
+// before headless within each group, most recently updated first within
+// each subgroup. Docs with an unknown schemaVersion are rejected
+// (skipped), per contract.
 func (s *Store) ListSessions() []SessionInfo {
 	_ = s.EnsureDirs()
 	entries, err := os.ReadDir(s.SessionsDir())
@@ -157,9 +159,9 @@ func (s *Store) ListSessions() []SessionInfo {
 	}
 	rank := func(st SessionState) int {
 		switch st {
-		case Working:
-			return 0
 		case Idle:
+			return 0
+		case Working:
 			return 1
 		default:
 			return 2
@@ -169,6 +171,11 @@ func (s *Store) ListSessions() []SessionInfo {
 		ri, rj := rank(out[i].EffectiveState), rank(out[j].EffectiveState)
 		if ri != rj {
 			return ri < rj
+		}
+		// tmux-attached sessions are the user's own; headless ones are
+		// usually subagents and rank below them.
+		if ti, tj := out[i].Tmux != nil, out[j].Tmux != nil; ti != tj {
+			return ti
 		}
 		return out[i].UpdatedAt > out[j].UpdatedAt
 	})

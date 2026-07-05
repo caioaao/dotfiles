@@ -158,19 +158,23 @@ func TestListSessionsSortAndLiveness(t *testing.T) {
 	writeDoc(t, s, `{"schemaVersion":1,"sessionId":"working","pid":2,"state":"working","updatedAt":"2026-01-01T00:00:00.000Z"}`, "working")
 	// claims working but pid is dead -> effective exited
 	writeDoc(t, s, `{"schemaVersion":1,"sessionId":"crashed","pid":3,"state":"working","updatedAt":"2026-01-03T00:00:00.000Z"}`, "crashed")
+	// tmux-attached working session ranks above headless ones despite
+	// being older (headless = usually a subagent)
+	writeDoc(t, s, `{"schemaVersion":1,"sessionId":"working-tmux","pid":2,"state":"working","tmux":{"pane":"%1"},"updatedAt":"2025-12-01T00:00:00.000Z"}`, "working-tmux")
 
 	got := s.ListSessions()
-	if len(got) != 3 {
+	if len(got) != 4 {
 		t.Fatalf("got %d sessions", len(got))
 	}
-	wantOrder := []string{"working", "idle-new", "crashed"}
+	// idle first (waiting on the user), then working, then exited
+	wantOrder := []string{"idle-new", "working-tmux", "working", "crashed"}
 	for i, id := range wantOrder {
 		if got[i].SessionID != id {
 			t.Fatalf("position %d: got %s, want %s (full: %+v)", i, got[i].SessionID, id, got)
 		}
 	}
-	if got[2].EffectiveState != Exited {
-		t.Fatalf("crashed session: effective state %s, want exited", got[2].EffectiveState)
+	if got[3].EffectiveState != Exited {
+		t.Fatalf("crashed session: effective state %s, want exited", got[3].EffectiveState)
 	}
 }
 
