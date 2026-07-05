@@ -84,8 +84,53 @@ type FeedEntry struct {
 
 type DistillerState struct {
 	UpTo int64 `json:"upTo"`
-	// State is the distiller's rolling summary, carried across calls.
+	// State is a short rolling summary (mirrors Doc.Now), kept for
+	// backward compatibility and cheap list titles.
 	State string `json:"state"`
+	// Doc is the distiller's living brief: rewritten in full on every
+	// distill pass. Nil until the first LLM chunk completes.
+	Doc *SessionDoc `json:"doc,omitempty"`
+}
+
+// SessionDoc is the narrator's document: fixed skeleton (now, waiting,
+// story), adaptive middle (sections). The distiller rewrites the whole
+// doc each pass - narration needs revision, which append-only feed
+// lines cannot express.
+type SessionDoc struct {
+	// Now: 1-2 present-tense sentences - what the agent is doing and why.
+	Now string `json:"now"`
+	// Waiting: set only when the agent stopped and needs the human.
+	Waiting string `json:"waiting,omitempty"`
+	// Sections is the adaptive middle: plan, hypotheses, findings,
+	// decisions, risks. Unknown kinds render as titled prose.
+	Sections []DocSection `json:"sections,omitempty"`
+	// Story: past-tense narrative of how the task evolved; older
+	// material compresses more on each rewrite.
+	Story string `json:"story"`
+}
+
+// Known DocSection kinds. Open enum: readers render unknown kinds as
+// titled prose instead of dropping them.
+const (
+	SectionPlan       = "plan"
+	SectionHypotheses = "hypotheses"
+	SectionFindings   = "findings"
+	SectionDecisions  = "decisions"
+	SectionRisks      = "risks"
+)
+
+type DocSection struct {
+	Kind string `json:"kind"`
+	// Text or Items; a section with both renders Text then Items.
+	Text  string    `json:"text,omitempty"`
+	Items []DocItem `json:"items,omitempty"`
+}
+
+type DocItem struct {
+	// State: plan uses done|doing|todo; hypotheses open|ruledout|confirmed.
+	// Empty renders as a plain bullet.
+	State string `json:"state,omitempty"`
+	Text  string `json:"text"`
 }
 
 // Store roots all data-dir paths. Tests point it at a temp dir.
@@ -319,10 +364,12 @@ func (s *Store) Watermark(sessionID string) DistillerState {
 		return *cached
 	}
 	state := ""
+	var doc *SessionDoc
 	if cached != nil {
 		state = cached.State
+		doc = cached.Doc
 	}
-	return DistillerState{UpTo: fromFeed, State: state}
+	return DistillerState{UpTo: fromFeed, State: state, Doc: doc}
 }
 
 func (s *Store) ClearFeed(sessionID string) error {

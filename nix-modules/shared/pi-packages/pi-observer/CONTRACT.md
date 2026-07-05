@@ -88,10 +88,43 @@ so feeds stay greppable and byte-compatible across implementations.
 
 ## DistillerState (`feed/<sessionId>.state.json`)
 
-| field   | type   | notes                                           |
-| ------- | ------ | ----------------------------------------------- |
-| `upTo`  | number | byte offset distilled so far                    |
-| `state` | string | distiller's rolling summary, <= 500 chars       |
+| field   | type              | notes                                                  |
+| ------- | ----------------- | ------------------------------------------------------ |
+| `upTo`  | number            | byte offset distilled so far                           |
+| `state` | string            | short rolling summary (mirrors `doc.now`), <= 500 chars |
+| `doc`   | SessionDoc \| absent | the living brief; rewritten in full on every distill pass |
+
+### SessionDoc
+
+The narrator's document. Fixed skeleton (`now`, `waiting`, `story`),
+adaptive middle (`sections`). Unlike the append-only feed, the doc is
+**rewritten** each pass - narration needs revision. Readers MUST
+tolerate a missing `doc` (older state files).
+
+| field      | type                 | notes                                                     |
+| ---------- | -------------------- | --------------------------------------------------------- |
+| `now`      | string               | 1-2 present-tense sentences; what + why. <= 400 chars     |
+| `waiting`  | string \| absent     | set only when the agent needs the human. <= 400 chars     |
+| `sections` | DocSection[] \| absent | 0-5 sections. Writers SHOULD emit <= 3                  |
+| `story`    | string               | past-tense narrative of the task's evolution. <= 2500 chars |
+
+### DocSection
+
+| field   | type              | notes                                             |
+| ------- | ----------------- | -------------------------------------------------- |
+| `kind`  | string            | `plan` \| `hypotheses` \| `findings` \| `decisions` \| `risks`; open enum |
+| `text`  | string \| absent  | prose body, <= 1500 chars                          |
+| `items` | DocItem[] \| absent | <= 10 items                                       |
+
+Readers MUST render unknown `kind` values as a titled prose section
+instead of dropping them (mirror of the feed's unknown-kind rule).
+
+### DocItem
+
+| field   | type             | notes                                                        |
+| ------- | ---------------- | ------------------------------------------------------------ |
+| `state` | string \| absent | `plan`: done\|doing\|todo; `hypotheses`: open\|ruledout\|confirmed; unknown/absent renders as a plain bullet |
+| `text`  | string           | <= 250 chars                                                 |
 
 ## Watermark rule (crash-safe, exact)
 
@@ -125,7 +158,7 @@ Optional; missing file or fields fall back to defaults.
 | ----------- | ------ | ------------------ |
 | `provider`  | string | `anthropic`        |
 | `modelId`   | string | `claude-haiku-4-5` |
-| `maxTokens` | number | `1024`             |
+| `maxTokens` | number | `2048`             |
 
 ## Implementations
 

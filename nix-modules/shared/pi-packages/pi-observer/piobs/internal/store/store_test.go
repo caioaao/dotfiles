@@ -55,7 +55,7 @@ func TestWatermarkStateAheadOfFeed(t *testing.T) {
 // The feed wins for upTo, but the cached rolling summary is kept.
 func TestWatermarkFeedAheadOfState(t *testing.T) {
 	s := tempStore(t)
-	if err := s.WriteState("sid", DistillerState{UpTo: 100, State: "old summary"}); err != nil {
+	if err := s.WriteState("sid", DistillerState{UpTo: 100, State: "old summary", Doc: &SessionDoc{Now: "old now", Story: "arc"}}); err != nil {
 		t.Fatal(err)
 	}
 	mustAppend(t, s, "sid", []FeedEntry{
@@ -64,6 +64,34 @@ func TestWatermarkFeedAheadOfState(t *testing.T) {
 	wm := s.Watermark("sid")
 	if wm.UpTo != 400 || wm.State != "old summary" {
 		t.Fatalf("got %+v, want upTo=400 state=\"old summary\"", wm)
+	}
+	if wm.Doc == nil || wm.Doc.Now != "old now" {
+		t.Fatalf("cached doc must survive the feed-wins path: %+v", wm.Doc)
+	}
+}
+
+func TestStateDocRoundTrip(t *testing.T) {
+	s := tempStore(t)
+	in := DistillerState{UpTo: 7, State: "now line", Doc: &SessionDoc{
+		Now:     "now line",
+		Waiting: "needs a decision",
+		Sections: []DocSection{
+			{Kind: SectionPlan, Items: []DocItem{{State: "done", Text: "a"}, {State: "todo", Text: "b"}}},
+			{Kind: "custom", Text: "unknown kind survives round trip"},
+		},
+		Story: "the arc so far",
+	}}
+	if err := s.WriteState("sid", in); err != nil {
+		t.Fatal(err)
+	}
+	out := s.ReadState("sid")
+	if out == nil || out.Doc == nil {
+		t.Fatal("state or doc missing after round trip")
+	}
+	if out.Doc.Waiting != in.Doc.Waiting || out.Doc.Story != in.Doc.Story ||
+		len(out.Doc.Sections) != 2 || out.Doc.Sections[1].Kind != "custom" ||
+		out.Doc.Sections[0].Items[1].State != "todo" {
+		t.Fatalf("round trip mangled doc: %+v", out.Doc)
 	}
 }
 
