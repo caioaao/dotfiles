@@ -29,6 +29,10 @@ in {
 
   programs.direnv.enable = true;
 
+  # Expose pi packages at /run/current-system/sw/share/pi/packages;
+  # only whitelisted share/ subdirs get linked into the system path.
+  environment.pathsToLink = [ "/share/pi" ];
+
   environment.systemPackages = with pkgs; [
     _1password-cli
     bc
