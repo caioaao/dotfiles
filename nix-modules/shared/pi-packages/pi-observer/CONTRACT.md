@@ -77,7 +77,7 @@ One JSON object per line, append-only, chronological.
 | -------- | ------ | ------------------------------------------------------------ |
 | `t`      | string | ISO 8601                                                     |
 | `kind`   | string | `phase` \| `insight` \| `note` \| `backtrack` \| `done` \| `error` \| `prompt` |
-| `text`   | string | one line; writers truncate (LLM lines/prompts 300, done 500; branch markers carry a fixed prefix and may slightly exceed 300) |
+| `text`   | string | one line; writers truncate (LLM lines 120, prompts 300, done 500; branch markers carry a fixed prefix and may slightly exceed 300). Readers MUST tolerate up to 500 regardless of kind |
 | `detail` | string | optional, <= 600 chars                                       |
 | `upTo`   | number | session-file **byte** offset this line covers                |
 
