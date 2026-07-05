@@ -79,6 +79,9 @@
       bind H previous-window
       bind L next-window
 
+      # Renumber windows automatically when closing one
+      set -g renumber-windows on
+
       # ===============================
       # Session Management (TMS)
       # ===============================
