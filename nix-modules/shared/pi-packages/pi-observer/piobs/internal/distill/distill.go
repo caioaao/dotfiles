@@ -46,8 +46,8 @@ Rules for "lines":
 - kind "insight": standalone reasoning nugget - a realization, key decision, discovered constraint.
 - kind "backtrack": agent reversed course, abandoned an approach, or discovered its assumption was wrong.
 - kind "note": anything else worth one glance.
-- "text": one short specific sentence. "Exploring binary search over commit range" - never generic filler like "working on the task".
-- "detail" (optional): 1-3 sentences of genuinely interesting reasoning - why this approach, the rejected alternative, the surprise. Omit by default. "text" must stand alone without it. Never fabricate reasoning that is not in the activity.
+- "text": one short specific sentence. "Exploring binary search over commit range" - never generic filler like "working on the task". Inline markdown code spans (backticks) are welcome for identifiers, paths, and commands.
+- "detail" (optional): 1-3 sentences of genuinely interesting reasoning - why this approach, the rejected alternative, the surprise. Omit by default. "text" must stand alone without it. Never fabricate reasoning that is not in the activity. Markdown is allowed here: inline code and short lists (2-3 items) render well; avoid headings and code fences.
 - Never restate what FEED TAIL already says. Never narrate tool mechanics ("ran grep", "read file").
 
 Rules for "state": updated rolling summary, max 400 chars: current goal, chosen approach, position in the plan. Always provide it.`
