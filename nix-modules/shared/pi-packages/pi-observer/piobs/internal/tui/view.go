@@ -69,9 +69,8 @@ func (m *model) refreshFeed() {
 		}
 	}
 
-	atBottom := m.viewport.AtBottom()
 	m.viewport.SetContent(strings.Join(lines, "\n"))
-	if m.follow || atBottom {
+	if m.follow {
 		m.viewport.GotoBottom()
 	}
 }
@@ -90,6 +89,14 @@ func (m *model) renderRaw(doc store.SessionInfo) []string {
 	if doc.SessionFile == "" {
 		return []string{dimStyle.Render(" ephemeral session (--no-session): no content source")}
 	}
+	// Session files grow large; a full parse per 1s tick would stall the
+	// update loop. Reuse the cache until the file (or pane) changes.
+	width := m.viewport.Width()
+	size := m.sizes[doc.SessionID].size
+	c := &m.rawCache
+	if c.sessionID == doc.SessionID && c.size == size && c.width == width && c.lines != nil {
+		return c.lines
+	}
 	res := session.ParseSince(doc.SessionFile, 0)
 	items := res.Items
 	if len(items) > rawViewItems {
@@ -97,10 +104,11 @@ func (m *model) renderRaw(doc store.SessionInfo) []string {
 	}
 	var out []string
 	for _, line := range strings.Split(session.RenderItems(items), "\n") {
-		for _, l := range wrap(line, m.viewport.Width()-2) {
+		for _, l := range wrap(line, width-2) {
 			out = append(out, " "+l)
 		}
 	}
+	*c = rawCache{sessionID: doc.SessionID, size: size, width: width, lines: out}
 	return out
 }
 

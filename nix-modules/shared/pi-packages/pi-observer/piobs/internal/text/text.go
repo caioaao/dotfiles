@@ -9,7 +9,9 @@ import (
 	"strings"
 )
 
-var whitespace = regexp.MustCompile(`\s+`)
+// JS \s is Unicode-aware; Go's is ASCII-only. Include the separators JS
+// collapses so feed text matches the TS implementation.
+var whitespace = regexp.MustCompile(`[\s\p{Z}\x{2028}\x{2029}\x{FEFF}]+`)
 
 // Truncate cuts s to at most n runes, replacing the tail with an ellipsis.
 func Truncate(s string, n int) string {

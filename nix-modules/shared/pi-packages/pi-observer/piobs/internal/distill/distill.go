@@ -140,6 +140,13 @@ func (d *Distiller) Session(ctx context.Context, doc store.SessionInfo, onEntry 
 	var turnBuffer []*session.ActivityItem
 	flushTurns := func() error {
 		for len(turnBuffer) > 0 {
+			// Cancellation must be observed between chunks, not only
+			// inside the HTTP call: a cancelled distill must stop
+			// appending/advancing state (the TUI may have cleared the
+			// feed for a redistill).
+			if err := ctx.Err(); err != nil {
+				return err
+			}
 			n := min(chunkTurns, len(turnBuffer))
 			chunk := turnBuffer[:n]
 			turnBuffer = turnBuffer[n:]
@@ -163,6 +170,9 @@ func (d *Distiller) Session(ctx context.Context, doc store.SessionInfo, onEntry 
 	}
 
 	for _, item := range res.Items {
+		if err := ctx.Err(); err != nil {
+			return count, err
+		}
 		if item.Type == session.Turn {
 			turnBuffer = append(turnBuffer, item)
 			continue

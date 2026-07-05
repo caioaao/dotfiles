@@ -29,8 +29,9 @@ scratch from the session file.
 - **gc exception**: the CLI additionally holds delete rights over
   `sessions/` docs - it removes the registry doc *and* the feed/state
   files for sessions whose effective state is `exited` and whose
-  `updatedAt` is older than 14 days. This is the only cross-ownership
-  write and it is delete-only.
+  `updatedAt` is older than 14 days (an unparseable `updatedAt` counts
+  as older). This is the only cross-ownership write and it is
+  delete-only.
 
 Both sides create `sessions/` and `feed/` (mkdir -p) before writing.
 
@@ -76,13 +77,14 @@ One JSON object per line, append-only, chronological.
 | -------- | ------ | ------------------------------------------------------------ |
 | `t`      | string | ISO 8601                                                     |
 | `kind`   | string | `phase` \| `insight` \| `note` \| `backtrack` \| `done` \| `error` \| `prompt` |
-| `text`   | string | one line, <= 300 chars (done: <= 500)                        |
+| `text`   | string | one line; writers truncate (LLM lines/prompts 300, done 500; branch markers carry a fixed prefix and may slightly exceed 300) |
 | `detail` | string | optional, <= 600 chars                                       |
 | `upTo`   | number | session-file **byte** offset this line covers                |
 
 Readers MUST tolerate a partially-written (non-newline-terminated or
 corrupt) final line by skipping it. Unknown `kind` values render as
-`note`.
+`note`. Writers MUST NOT HTML-escape JSON (`<`, `>`, `&` stay literal),
+so feeds stay greppable and byte-compatible across implementations.
 
 ## DistillerState (`feed/<sessionId>.state.json`)
 

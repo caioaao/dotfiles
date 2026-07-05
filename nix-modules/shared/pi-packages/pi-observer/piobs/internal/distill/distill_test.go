@@ -177,6 +177,26 @@ func TestLLMErrorKeepsWatermarkConsistent(t *testing.T) {
 	}
 }
 
+// A cancelled distill must stop appending and advancing state between
+// chunks: the TUI clears the feed for redistill right after cancelling.
+func TestCancelStopsWritesBetweenChunks(t *testing.T) {
+	var lines []string
+	for i := 0; i < 16; i++ {
+		lines = append(lines, turnLine(fmt.Sprintf("step %d", i)))
+	}
+	st, doc := setup(t, lines)
+	ctx, cancel := context.WithCancel(context.Background())
+	llm := &fakeLLM{responses: []string{`{"lines":[{"kind":"note","text":"first"}],"state":"s1"}`}}
+	d := &Distiller{st: st, llm: llm}
+	n, err := d.Session(ctx, doc, func(store.FeedEntry) { cancel() })
+	if err == nil || n != 1 {
+		t.Fatalf("n=%d err=%v, want cancellation after first chunk", n, err)
+	}
+	if len(llm.calls) != 1 {
+		t.Fatalf("second chunk still hit the LLM after cancel")
+	}
+}
+
 func TestParseResponse(t *testing.T) {
 	entries, state := parseResponse("```json\n{\"lines\":[{\"kind\":\"bogus\",\"text\":\" hi \",\"detail\":\" why \"}],\"state\":\"new\"}\n```", "old", ts)
 	if len(entries) != 1 {

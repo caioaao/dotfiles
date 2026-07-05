@@ -247,13 +247,12 @@ func (s *Store) AppendFeed(sessionID string, entries []FeedEntry) error {
 		return err
 	}
 	var b strings.Builder
+	enc := json.NewEncoder(&b)
+	enc.SetEscapeHTML(false) // keep feeds byte-compatible with the TS CLI (no \u003c)
 	for _, e := range entries {
-		line, err := json.Marshal(e)
-		if err != nil {
+		if err := enc.Encode(e); err != nil { // Encode appends the JSONL newline
 			return err
 		}
-		b.Write(line)
-		b.WriteByte('\n')
 	}
 	f, err := os.OpenFile(s.FeedPath(sessionID), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
 	if err != nil {
@@ -281,10 +280,13 @@ func (s *Store) WriteState(sessionID string, st DistillerState) error {
 	if err := s.EnsureDirs(); err != nil {
 		return err
 	}
-	raw, err := json.Marshal(st)
-	if err != nil {
+	var buf strings.Builder
+	enc := json.NewEncoder(&buf)
+	enc.SetEscapeHTML(false)
+	if err := enc.Encode(st); err != nil {
 		return err
 	}
+	raw := []byte(strings.TrimSuffix(buf.String(), "\n"))
 	path := s.StatePath(sessionID)
 	tmp := path + ".tmp"
 	if err := os.WriteFile(tmp, raw, 0o644); err != nil {
@@ -333,8 +335,10 @@ func (s *Store) GC(maxAgeDays int) int {
 		if info.EffectiveState != Exited {
 			continue
 		}
-		updated, err := time.Parse(time.RFC3339, info.UpdatedAt)
-		if err != nil || updated.After(cutoff) {
+		// Unparseable updatedAt counts as ancient (matches the TS CLI:
+		// NaN never compares above the cutoff), so corrupt docs still
+		// get collected instead of living forever.
+		if updated, err := time.Parse(time.RFC3339, info.UpdatedAt); err == nil && updated.After(cutoff) {
 			continue
 		}
 		_ = rmForce(s.RegistryPath(info.SessionID))

@@ -124,13 +124,26 @@ type model struct {
 	status      string
 	statusUntil time.Time
 
-	distilling   bool
-	distillingID string
-	cancel       context.CancelFunc
+	distilling bool
+	cancel     context.CancelFunc
+	// pendingRedistill queues a clear+force-distill requested while a
+	// distill was in flight (which had to be cancelled first).
+	pendingRedistill bool
+	loadingSessions  bool
 
 	sizes map[string]sizeTrack
 
-	feed feedView
+	feed     feedView
+	rawCache rawCache
+}
+
+// rawCache memoizes the raw-view rendering, keyed on the session file's
+// identity, size, and the pane width.
+type rawCache struct {
+	sessionID string
+	size      int64
+	width     int
+	lines     []string
 }
 
 func newModel(st *store.Store) *model {
@@ -223,6 +236,10 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 
 	case tickMsg:
+		if m.loadingSessions {
+			return m, m.tick()
+		}
+		m.loadingSessions = true
 		return m, tea.Batch(m.tick(), m.loadSessions)
 
 	case spinner.TickMsg:
@@ -235,13 +252,19 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case distillDoneMsg:
 		m.distilling = false
-		m.distillingID = ""
-		m.cancel = nil
+		if m.cancel != nil {
+			m.cancel()
+			m.cancel = nil
+		}
 		if msg.err != nil && !isCanceled(msg.err) {
 			m.setStatus(fmt.Sprintf("distill failed: %v", msg.err), errStatusTTL)
 		}
 		if sel, ok := m.selected(); ok && sel.SessionID == msg.sessionID {
 			m.refreshFeed()
+		}
+		if m.pendingRedistill {
+			m.pendingRedistill = false
+			return m, m.redistill()
 		}
 		return m, nil
 
@@ -254,9 +277,26 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 
 	// bubble everything else (filter internals, pagination) to the list
+	return m, m.updateList(msg)
+}
+
+// updateList forwards a message to the list and reacts to fallout: a
+// changed selection or a completed refilter both need the feed pane
+// rebuilt.
+func (m *model) updateList(msg tea.Msg) tea.Cmd {
+	before, _ := m.selected()
 	var cmd tea.Cmd
 	m.list, cmd = m.list.Update(msg)
-	return m, cmd
+	after, _ := m.selected()
+	switch {
+	case before.SessionID != after.SessionID:
+		m.onSelectionChanged()
+	default:
+		if _, ok := msg.(list.FilterMatchesMsg); ok {
+			m.refreshFeed()
+		}
+	}
+	return cmd
 }
 
 func (m *model) onKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
@@ -265,9 +305,7 @@ func (m *model) onKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		if msg.String() == "ctrl+c" {
 			return m, tea.Quit
 		}
-		var cmd tea.Cmd
-		m.list, cmd = m.list.Update(msg)
-		return m, cmd
+		return m, m.updateList(msg)
 	}
 
 	switch {
@@ -305,18 +343,18 @@ func (m *model) onKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		return m, m.maybeDistill(true)
 
 	case key.Matches(msg, m.keys.Redistill):
-		sel, ok := m.selected()
-		if !ok {
+		// An in-flight distill would race the feed clear (and resurrect
+		// the watermark): cancel it and queue the redistill for its
+		// completion message.
+		if m.distilling {
+			if m.cancel != nil {
+				m.cancel()
+			}
+			m.pendingRedistill = true
+			m.setStatus("redistilling from scratch...", statusTTL)
 			return m, nil
 		}
-		if err := m.st.ClearFeed(sel.SessionID); err != nil {
-			m.setStatus(fmt.Sprintf("redistill: %v", err), errStatusTTL)
-			return m, nil
-		}
-		m.feed.invalidate()
-		m.refreshFeed()
-		m.setStatus("redistilling from scratch...", statusTTL)
-		return m, m.maybeDistill(true)
+		return m, m.redistill()
 	}
 
 	// Scroll keys go to the viewport; leaving the bottom disengages
@@ -328,14 +366,24 @@ func (m *model) onKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		return m, vpCmd
 	}
 
-	before, _ := m.selected()
-	var cmd tea.Cmd
-	m.list, cmd = m.list.Update(msg)
-	after, _ := m.selected()
-	if before.SessionID != after.SessionID {
-		m.onSelectionChanged()
+	return m, m.updateList(msg)
+}
+
+// redistill clears the selected session's feed and force-distills.
+// Callers must ensure no distill is in flight.
+func (m *model) redistill() tea.Cmd {
+	sel, ok := m.selected()
+	if !ok {
+		return nil
 	}
-	return m, cmd
+	if err := m.st.ClearFeed(sel.SessionID); err != nil {
+		m.setStatus(fmt.Sprintf("redistill: %v", err), errStatusTTL)
+		return nil
+	}
+	m.feed.invalidate()
+	m.refreshFeed()
+	m.setStatus("redistilling from scratch...", statusTTL)
+	return m.maybeDistill(true)
 }
 
 func isScrollKey(msg tea.KeyPressMsg) bool {
@@ -357,6 +405,7 @@ func (m *model) onSelectionChanged() {
 }
 
 func (m *model) onSessionsLoaded(msg sessionsLoadedMsg) tea.Cmd {
+	m.loadingSessions = false
 	before, hadSel := m.selected()
 
 	items := make([]list.Item, len(msg.sessions))
@@ -365,8 +414,10 @@ func (m *model) onSessionsLoaded(msg sessionsLoadedMsg) tea.Cmd {
 	}
 	cmd := m.list.SetItems(items)
 
-	// keep selection stable across re-sorts
-	if hadSel {
+	// Keep selection stable across re-sorts. Select operates on visible
+	// items, so only remap indices when no filter is applied (SetItems
+	// refilters asynchronously; FilterMatchesMsg handles that path).
+	if hadSel && m.list.FilterState() == list.Unfiltered {
 		for i, it := range items {
 			if it.(sessionItem).info.SessionID == before.SessionID {
 				m.list.Select(i)
@@ -379,6 +430,11 @@ func (m *model) onSessionsLoaded(msg sessionsLoadedMsg) tea.Cmd {
 	for id, size := range msg.sizes {
 		if tr, ok := m.sizes[id]; !ok || tr.size != size {
 			m.sizes[id] = sizeTrack{size: size, changedAt: now}
+		}
+	}
+	for id := range m.sizes {
+		if _, ok := msg.sizes[id]; !ok {
+			delete(m.sizes, id) // session gc'd or file gone
 		}
 	}
 
@@ -415,7 +471,6 @@ func (m *model) maybeDistill(force bool) tea.Cmd {
 	ctx, cancel := context.WithCancel(context.Background())
 	m.cancel = cancel
 	m.distilling = true
-	m.distillingID = doc.SessionID
 	d := m.distiller
 	return func() tea.Msg {
 		n, err := d.Session(ctx, doc, nil)

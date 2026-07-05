@@ -121,6 +121,22 @@ func TestAppendFeedRoundTripOmitsEmptyDetail(t *testing.T) {
 	}
 }
 
+// Feeds must stay greppable and byte-compatible with the TS CLI: no
+// HTML escaping of <, >, & (JSON.stringify does not escape them).
+func TestAppendFeedDoesNotHTMLEscape(t *testing.T) {
+	s := tempStore(t)
+	mustAppend(t, s, "sid", []FeedEntry{
+		{T: "2026-01-01T00:00:00.000Z", Kind: KindNote, Text: "a -> b <c> & `d`", UpTo: 1},
+	})
+	raw, err := os.ReadFile(s.FeedPath("sid"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if want := `{"t":"2026-01-01T00:00:00.000Z","kind":"note","text":"a -> b <c> & ` + "`d`" + `","upTo":1}` + "\n"; string(raw) != want {
+		t.Fatalf("got %q, want %q", raw, want)
+	}
+}
+
 // --- registry ----------------------------------------------------------
 
 func TestListSessionsRejectsUnknownSchemaVersion(t *testing.T) {
@@ -169,13 +185,18 @@ func TestGC(t *testing.T) {
 	recent := time.Now().UTC().Format(time.RFC3339)
 	writeDoc(t, s, `{"schemaVersion":1,"sessionId":"old","pid":9,"state":"exited","updatedAt":"`+old+`"}`, "old")
 	writeDoc(t, s, `{"schemaVersion":1,"sessionId":"recent","pid":9,"state":"exited","updatedAt":"`+recent+`"}`, "recent")
+	// unparseable updatedAt counts as ancient (contract: never immortal)
+	writeDoc(t, s, `{"schemaVersion":1,"sessionId":"corrupt","pid":9,"state":"exited","updatedAt":"garbage"}`, "corrupt")
 	mustAppend(t, s, "old", []FeedEntry{{T: old, Kind: KindNote, Text: "x", UpTo: 1}})
 	if err := s.WriteState("old", DistillerState{UpTo: 1}); err != nil {
 		t.Fatal(err)
 	}
 
-	if n := s.GC(14); n != 1 {
-		t.Fatalf("gc removed %d, want 1", n)
+	if n := s.GC(14); n != 2 {
+		t.Fatalf("gc removed %d, want 2 (old + corrupt)", n)
+	}
+	if _, err := os.Stat(s.RegistryPath("corrupt")); !os.IsNotExist(err) {
+		t.Fatal("corrupt-updatedAt doc not collected")
 	}
 	for _, p := range []string{s.RegistryPath("old"), s.FeedPath("old"), s.StatePath("old")} {
 		if _, err := os.Stat(p); !os.IsNotExist(err) {
