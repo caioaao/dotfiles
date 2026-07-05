@@ -10,6 +10,7 @@ import { execFileSync } from "node:child_process";
 import { statSync } from "node:fs";
 import {
 	clearFeed,
+	collapse,
 	gc,
 	listSessions,
 	readFeed,
@@ -29,18 +30,27 @@ const ESC = "\x1b[";
 const reset = `${ESC}0m`;
 const dim = (s: string) => `${ESC}2m${s}${reset}`;
 const bold = (s: string) => `${ESC}1m${s}${reset}`;
-const inverse = (s: string) => `${ESC}7m${s}${reset}`;
 const fg = (n: number, s: string) => `${ESC}38;5;${n}m${s}${reset}`;
 
-const KIND_STYLE: Record<string, { badge: string; color: number }> = {
-	phase: { badge: "▶", color: 51 }, // cyan
-	insight: { badge: "✦", color: 213 }, // magenta
-	note: { badge: "·", color: 245 }, // grey
-	backtrack: { badge: "↩", color: 220 }, // yellow
-	done: { badge: "✔", color: 82 }, // green
-	error: { badge: "✖", color: 196 }, // red
-	prompt: { badge: "❯", color: 255 }, // white
+/**
+ * Re-apply a background color after every inner reset so styled fragments
+ * (fg/dim/bold all end with reset) don't punch holes in the highlight.
+ */
+const onBg = (bg: number, s: string) => {
+	const code = `${ESC}48;5;${bg}m`;
+	return code + s.split(reset).join(reset + code) + reset;
 };
+
+const KIND_STYLE: Record<string, { badge: string; color: number; paint?: number; dimText?: boolean }> =
+	{
+		phase: { badge: "▶", color: 45, paint: 45 }, // cyan - section-ish
+		insight: { badge: "✦", color: 213 }, // magenta badge, normal text
+		note: { badge: "·", color: 245, dimText: true }, // grey, recedes
+		backtrack: { badge: "↩", color: 220, paint: 220 }, // yellow
+		done: { badge: "✔", color: 82, paint: 82 }, // green
+		error: { badge: "✖", color: 196, paint: 196 }, // red
+		prompt: { badge: "❯", color: 231 }, // bright white
+	};
 
 interface UiState {
 	sessions: SessionInfo[];
@@ -251,7 +261,11 @@ export async function runTui(): Promise<void> {
 
 function renderSessionList(state: UiState, width: number, height: number): string[] {
 	const lines: string[] = [];
-	lines.push(bold(" pi-observer"));
+	const working = state.sessions.filter((s) => s.effectiveState === "working").length;
+	const idle = state.sessions.filter((s) => s.effectiveState === "idle").length;
+	const counts =
+		state.sessions.length === 0 ? "" : `  ${fg(82, String(working))}${dim("▸")} ${fg(75, String(idle))}${dim("◦")}`;
+	lines.push(` ${bold("pi-observer")}${counts}`);
 	lines.push("");
 	if (state.sessions.length === 0) {
 		lines.push(dim(" no sessions yet"));
@@ -259,21 +273,24 @@ function renderSessionList(state: UiState, width: number, height: number): strin
 	for (const s of state.sessions) {
 		if (lines.length >= height) break;
 		const isSel = s.sessionId === state.selectedId;
+		const exited = s.effectiveState === "exited";
 		const marker =
 			s.effectiveState === "working"
 				? fg(82, SPINNER[state.tick % SPINNER.length])
 				: s.effectiveState === "idle"
 					? fg(75, "●")
 					: dim("○");
-		const title = s.sessionName ?? s.lastPrompt ?? "(no prompt yet)";
-		const row1 = ` ${marker} ${clip(title, width - 5)}`;
+		const edge = isSel ? fg(45, "▎") : " ";
+		const title = clip(collapse(s.sessionName ?? s.lastPrompt ?? "(no prompt yet)"), width - 5);
+		const row1 = `${edge}${marker} ${exited ? dim(title) : title}`;
 		const cwdShort = s.cwd.replace(/^\/Users\/[^/]+/, "~");
 		const modelShort = s.model?.split("/")[1] ?? "?";
-		const row2 = `   ${clip(`${cwdShort} · ${modelShort} · ${age(s.updatedAt)}`, width - 4)}`;
-		lines.push(isSel ? inverse(padAnsi(row1, width)) : row1);
-		lines.push(isSel ? inverse(padAnsi(dim(row2), width)) : dim(row2));
+		const row2 = `${edge}  ${dim(clip(`${cwdShort} · ${modelShort} · ${age(s.updatedAt)}`, width - 4))}`;
+		lines.push(isSel ? onBg(237, padAnsi(row1, width)) : row1);
+		lines.push(isSel ? onBg(237, padAnsi(row2, width)) : row2);
 		if (s.effectiveState === "working" && s.currentActivity) {
-			lines.push(fg(245, `   ${clip(s.currentActivity, width - 4)}`));
+			const row3 = `${edge}  ${fg(245, `↳ ${clip(collapse(s.currentActivity), width - 6)}`)}`;
+			lines.push(isSel ? onBg(237, padAnsi(row3, width)) : row3);
 		}
 		lines.push("");
 	}
@@ -288,8 +305,20 @@ function renderFeedPane(
 ): string[] {
 	if (!doc) return [dim(" select a session")];
 
-	const header = ` ${bold(clip(doc.sessionName ?? doc.lastPrompt ?? doc.sessionId, width - 30))} ${dim(`[${doc.effectiveState}]`)} ${dim(doc.model ?? "")}`;
-	const lines: string[] = [header, dim("─".repeat(Math.max(0, width)))];
+	const stateColor =
+		doc.effectiveState === "working" ? 82 : doc.effectiveState === "idle" ? 75 : 245;
+	const rawTag = state.rawView ? ` ${fg(220, "[raw]")}` : "";
+	const title = clip(collapse(doc.sessionName ?? doc.lastPrompt ?? doc.sessionId), width - 12);
+	const cwdShort = doc.cwd.replace(/^\/Users\/[^/]+/, "~");
+	const meta = clip(
+		`${doc.effectiveState} · ${cwdShort} · ${doc.model ?? "?"} · ${age(doc.updatedAt)} ago`,
+		width - 4,
+	);
+	const lines: string[] = [
+		` ${fg(stateColor, "●")} ${bold(title)}${rawTag}`,
+		`   ${dim(meta)}`,
+		dim("─".repeat(Math.max(0, width))),
+	];
 
 	const body: string[] = [];
 	if (state.rawView) {
@@ -304,7 +333,9 @@ function renderFeedPane(
 	} else {
 		const feed = readFeed(doc.sessionId);
 		if (feed.length === 0) {
-			body.push(dim(" feed empty - waiting for activity (g to force distill)"));
+			body.push("");
+			body.push(dim(" nothing distilled yet"));
+			body.push(dim(` press ${reset}${bold("g")}${dim(" to distill now, or wait for activity")}`));
 		}
 		for (const entry of feed) {
 			body.push(...renderFeedEntry(entry, width, state.showDetails));
@@ -320,23 +351,59 @@ function renderFeedEntry(entry: FeedEntry, width: number, showDetails: boolean):
 	const style = KIND_STYLE[entry.kind] ?? KIND_STYLE.note;
 	const time = dim(entry.t.slice(11, 16));
 	const badge = fg(style.color, style.badge);
-	const textLines = wrap(entry.text, width - 10);
+	const textLines = wrap(collapse(entry.text), width - 10);
 	const out: string[] = [];
-	const first = entry.kind === "prompt" ? bold(textLines[0] ?? "") : textLines[0] ?? "";
-	out.push(` ${time} ${badge} ${first}`);
-	for (const cont of textLines.slice(1)) out.push(`         ${cont}`);
+
+	// Prompts are turn boundaries: rule + blank line chunk the feed visually.
+	if (entry.kind === "prompt") {
+		out.push("");
+		out.push(dim(` ${"┄".repeat(Math.max(0, width - 2))}`));
+		out.push(` ${time} ${fg(style.color, style.badge)} ${bold(textLines[0] ?? "")}`);
+		for (const cont of textLines.slice(1)) out.push(`         ${bold(cont)}`);
+		return out;
+	}
+
+	// Phases open a new chunk: breathing room above.
+	if (entry.kind === "phase") out.push("");
+
+	const paint = (s: string) =>
+		style.paint !== undefined
+			? entry.kind === "phase"
+				? bold(fg(style.paint, s))
+				: fg(style.paint, s)
+			: style.dimText
+				? dim(s)
+				: s;
+
+	out.push(` ${time} ${badge} ${paint(textLines[0] ?? "")}`);
+	for (const cont of textLines.slice(1)) out.push(`         ${paint(cont)}`);
 	if (showDetails && entry.detail) {
-		for (const d of wrap(entry.detail, width - 12)) out.push(dim(`           ${d}`));
+		const detailLines = wrap(collapse(entry.detail), width - 12);
+		detailLines.forEach((d, i) => {
+			out.push(dim(i === 0 ? `         └ ${d}` : `           ${d}`));
+		});
 	}
 	return out;
 }
 
 function renderStatusBar(state: UiState, width: number): string {
-	const spin = state.distilling ? ` ${SPINNER[state.tick % SPINNER.length]} distilling ` : "";
-	const msg = Date.now() < state.statusUntil ? ` ${state.status} ` : "";
-	const keys = " ↵ hop  f follow  i details  d raw  g distill  r redistill  q quit ";
-	const leftPart = `${spin}${msg}`;
-	return inverse(padAnsi(clip(`${leftPart}${leftPart ? "· " : ""}${keys}`, width), width));
+	const spin = state.distilling
+		? `${fg(82, SPINNER[state.tick % SPINNER.length])} distilling  `
+		: "";
+	const msg = Date.now() < state.statusUntil ? `${fg(220, state.status)}  ` : "";
+	const key = (k: string, label: string) => `${fg(45, k)}${dim(` ${label}`)}`;
+	const keys = [
+		key("↵", "hop"),
+		key("f", state.follow ? "follow✓" : "follow"),
+		key("i", state.showDetails ? "details✓" : "details"),
+		key("d", state.rawView ? "raw✓" : "raw"),
+		key("g", "distill"),
+		key("r", "redistill"),
+		key("q", "quit"),
+	].join("  ");
+	const bar = ` ${spin}${msg}${keys} `;
+	const fitted = visibleLength(bar) > width ? ` ${spin}${msg}` : bar;
+	return onBg(236, padAnsi(fitted, width));
 }
 
 // --- text utils ------------------------------------------------------------
@@ -361,7 +428,11 @@ function clip(s: string, max: number): string {
 
 function wrap(s: string, width: number): string[] {
 	if (width <= 4) return [clip(s, Math.max(1, width))];
-	const words = s.split(" ");
+	const words: string[] = [];
+	for (const word of s.split(" ")) {
+		// hard-break tokens wider than the pane (paths, URLs)
+		for (let i = 0; i < word.length; i += width) words.push(word.slice(i, i + width));
+	}
 	const lines: string[] = [];
 	let cur = "";
 	for (const word of words) {
