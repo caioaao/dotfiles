@@ -150,6 +150,34 @@ func TestParseTruncatesBudgets(t *testing.T) {
 	}
 }
 
+func TestClassifyPromptSkillInjection(t *testing.T) {
+	skill := `<skill name=\"present\" location=\"/home/u/.pi/skills/present/SKILL.md\"> # Present Turn a source doc into HTML`
+	lines := []string{
+		`{"type":"message","id":"a1","parentId":null,"timestamp":"` + ts + `","message":{"role":"user","content":"` + skill + `"}}`,
+	}
+	path, _ := writeLines(t, lines)
+	res := ParseSince(path, 0)
+	if len(res.Items) != 1 || res.Items[0].Text != "(loaded skill: present)" {
+		t.Fatalf("got %+v", res.Items)
+	}
+}
+
+func TestDoneMarkerKeepsFirstProseParagraph(t *testing.T) {
+	body := `## Heading\n\nAll wired up and tested.\n\n| a | b |\n|---|---|\n| 1 | 2 |`
+	lines := []string{
+		`{"type":"message","id":"a1","parentId":null,"timestamp":"` + ts + `","message":{"role":"assistant","content":[{"type":"text","text":"` + body + `"}],"stopReason":"stop"}}`,
+	}
+	path, _ := writeLines(t, lines)
+	res := ParseSince(path, 0)
+	if len(res.Items) != 2 {
+		t.Fatalf("items: %+v", res.Items)
+	}
+	done := res.Items[1]
+	if done.Kind != MarkerDone || done.Text != "All wired up and tested." {
+		t.Fatalf("done marker: %+v", done)
+	}
+}
+
 func TestParseSkipsGarbageLines(t *testing.T) {
 	lines := []string{
 		`not json at all`,

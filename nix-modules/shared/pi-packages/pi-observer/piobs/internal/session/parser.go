@@ -12,6 +12,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"regexp"
 	"strings"
 	"time"
 
@@ -169,7 +170,7 @@ func (p *parser) consumeMessage(raw json.RawMessage, t string, lineEnd int64) {
 	switch msg.Role {
 	case "user":
 		if txt := text.Collapse(extractText(msg.Content)); txt != "" {
-			p.items = append(p.items, &ActivityItem{Type: Prompt, T: t, Text: text.Truncate(txt, 300), UpTo: lineEnd})
+			p.items = append(p.items, &ActivityItem{Type: Prompt, T: t, Text: text.Truncate(classifyPrompt(txt), 300), UpTo: lineEnd})
 		}
 	case "bashExecution":
 		p.items = append(p.items, &ActivityItem{
@@ -224,8 +225,14 @@ func (p *parser) consumeMessage(raw json.RawMessage, t string, lineEnd int64) {
 			}
 			p.items = append(p.items, &ActivityItem{Type: Marker, T: t, Kind: MarkerError, Text: errText, UpTo: lineEnd})
 		case msg.StopReason == "stop" && txt != "":
-			// End of an agent run: the final answer, mechanically extracted.
-			p.items = append(p.items, &ActivityItem{Type: Marker, T: t, Kind: MarkerDone, Text: text.Truncate(txt, 500), UpTo: lineEnd})
+			// End of an agent run. The final answer often opens with prose
+			// and degenerates into headings/tables that collapse into noise
+			// on one line - keep the first prose paragraph only.
+			done := text.Collapse(firstProseParagraph(strings.Join(textParts, "\n\n")))
+			if done == "" {
+				done = txt
+			}
+			p.items = append(p.items, &ActivityItem{Type: Marker, T: t, Kind: MarkerDone, Text: text.Truncate(done, 500), UpTo: lineEnd})
 		}
 	case "toolResult":
 		open, ok := p.openTools[msg.ToolCallID]
@@ -241,6 +248,34 @@ func (p *parser) consumeMessage(raw json.RawMessage, t string, lineEnd int64) {
 		}
 		delete(p.openTools, msg.ToolCallID)
 	}
+}
+
+var skillRe = regexp.MustCompile(`^<skill\s+name="([^"]+)"`)
+
+// classifyPrompt collapses mechanical prompt payloads into short labels.
+// Skill injections arrive as the full SKILL.md wrapped in a <skill> tag;
+// the human only cares that a skill was loaded, not its body.
+func classifyPrompt(txt string) string {
+	if m := skillRe.FindStringSubmatch(txt); m != nil {
+		return "(loaded skill: " + m[1] + ")"
+	}
+	return txt
+}
+
+// firstProseParagraph returns the first paragraph that is not a heading,
+// table, rule, or code fence. Empty string when nothing qualifies.
+func firstProseParagraph(s string) string {
+	for para := range strings.SplitSeq(s, "\n\n") {
+		p := strings.TrimSpace(para)
+		switch {
+		case p == "":
+		case strings.HasPrefix(p, "#"), strings.HasPrefix(p, "|"),
+			strings.HasPrefix(p, "---"), strings.HasPrefix(p, "```"):
+		default:
+			return p
+		}
+	}
+	return ""
 }
 
 // extractText pulls the plain text out of a content field that is either
