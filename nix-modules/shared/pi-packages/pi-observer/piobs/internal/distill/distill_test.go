@@ -25,7 +25,7 @@ func (f *fakeLLM) complete(_ context.Context, _, prompt string) (string, error) 
 		return "", f.err
 	}
 	if len(f.responses) == 0 {
-		return `{"lines":[],"state":"s"}`, nil
+		return `{"lines":[],"doc":{"now":"s","story":""}}`, nil
 	}
 	r := f.responses[0]
 	f.responses = f.responses[1:]
@@ -88,8 +88,8 @@ func TestChunkingAndOrdering(t *testing.T) {
 	st, doc := setup(t, lines)
 
 	llm := &fakeLLM{responses: []string{
-		`{"lines":[{"kind":"phase","text":"chunk one"}],"state":"s1"}`,
-		`{"lines":[{"kind":"insight","text":"chunk two"}],"state":"s2"}`,
+		`{"lines":[{"kind":"phase","text":"chunk one"}],"doc":{"now":"s1","story":"st1"}}`,
+		`{"lines":[{"kind":"insight","text":"chunk two"}],"doc":{"now":"s2","story":"st2"}}`,
 	}}
 	d := &Distiller{st: st, llm: llm}
 	n, err := d.Session(context.Background(), doc, nil)
@@ -113,9 +113,9 @@ func TestChunkingAndOrdering(t *testing.T) {
 	if n != len(feed) {
 		t.Fatalf("n=%d, feed=%d", n, len(feed))
 	}
-	// second call's STATE must carry the first call's rolling state
-	if !strings.Contains(llm.calls[1], "STATE: s1") {
-		t.Fatalf("rolling state not threaded:\n%s", llm.calls[1])
+	// second call's DOC must carry the first call's rewritten doc
+	if !strings.Contains(llm.calls[1], `"now":"s1"`) || !strings.Contains(llm.calls[1], `"story":"st1"`) {
+		t.Fatalf("rolling doc not threaded:\n%s", llm.calls[1])
 	}
 	// feed tail of second call includes first chunk's line
 	if !strings.Contains(llm.calls[1], "chunk one") {
@@ -125,7 +125,7 @@ func TestChunkingAndOrdering(t *testing.T) {
 
 func TestEmitNothingAdvancesStateOnly(t *testing.T) {
 	st, doc := setup(t, []string{turnLine("quiet work")})
-	llm := &fakeLLM{responses: []string{`{"lines":[],"state":"remembered"}`}}
+	llm := &fakeLLM{responses: []string{`{"lines":[],"doc":{"now":"remembered","story":"the story"}}`}}
 	d := &Distiller{st: st, llm: llm}
 	n, err := d.Session(context.Background(), doc, nil)
 	if err != nil || n != 0 {
@@ -137,6 +137,9 @@ func TestEmitNothingAdvancesStateOnly(t *testing.T) {
 	wm := st.Watermark("sid")
 	if wm.UpTo == 0 || wm.State != "remembered" {
 		t.Fatalf("watermark: %+v", wm)
+	}
+	if wm.Doc == nil || wm.Doc.Story != "the story" {
+		t.Fatalf("doc not persisted: %+v", wm.Doc)
 	}
 	// second pass: nothing new, LLM not called again (the naive
 	// feed-derived watermark would re-feed this quiet region)
@@ -153,7 +156,7 @@ func TestLLMErrorKeepsWatermarkConsistent(t *testing.T) {
 	}
 	st, doc := setup(t, lines)
 	llm := &fakeLLM{
-		responses: []string{`{"lines":[{"kind":"note","text":"first"}],"state":"s1"}`},
+		responses: []string{`{"lines":[{"kind":"note","text":"first"}],"doc":{"now":"s1","story":""}}`},
 	}
 	d := &Distiller{st: st, llm: llm}
 	// first chunk ok, then fail the second
@@ -166,7 +169,7 @@ func TestLLMErrorKeepsWatermarkConsistent(t *testing.T) {
 	}
 	// rerun with a working LLM continues from the first chunk's watermark
 	llm.err = nil
-	llm.responses = []string{`{"lines":[{"kind":"note","text":"second"}],"state":"s2"}`}
+	llm.responses = []string{`{"lines":[{"kind":"note","text":"second"}],"doc":{"now":"s2","story":""}}`}
 	n, err = d.Session(context.Background(), doc, nil)
 	if err != nil || n != 1 {
 		t.Fatalf("rerun: n=%d err=%v", n, err)
@@ -186,7 +189,7 @@ func TestCancelStopsWritesBetweenChunks(t *testing.T) {
 	}
 	st, doc := setup(t, lines)
 	ctx, cancel := context.WithCancel(context.Background())
-	llm := &fakeLLM{responses: []string{`{"lines":[{"kind":"note","text":"first"}],"state":"s1"}`}}
+	llm := &fakeLLM{responses: []string{`{"lines":[{"kind":"note","text":"first"}],"doc":{"now":"s1","story":""}}`}}
 	d := &Distiller{st: st, llm: llm}
 	n, err := d.Session(ctx, doc, func(store.FeedEntry) { cancel() })
 	if err == nil || n != 1 {
@@ -198,7 +201,9 @@ func TestCancelStopsWritesBetweenChunks(t *testing.T) {
 }
 
 func TestParseResponse(t *testing.T) {
-	entries, state := parseResponse("```json\n{\"lines\":[{\"kind\":\"bogus\",\"text\":\" hi \",\"detail\":\" why \"}],\"state\":\"new\"}\n```", "old", ts)
+	prev := &store.SessionDoc{Now: "old", Story: "old story"}
+
+	entries, doc := parseResponse("```json\n{\"lines\":[{\"kind\":\"bogus\",\"text\":\" hi \",\"detail\":\" why \"}],\"doc\":{\"now\":\"new\",\"story\":\"s\"}}\n```", prev, ts)
 	if len(entries) != 1 {
 		t.Fatalf("entries: %+v", entries)
 	}
@@ -206,18 +211,56 @@ func TestParseResponse(t *testing.T) {
 	if e.Kind != store.KindNote || e.Text != "hi" || e.Detail != "why" || e.T != ts {
 		t.Fatalf("entry: %+v", e)
 	}
-	if state != "new" {
-		t.Fatalf("state: %q", state)
+	if doc == nil || doc.Now != "new" {
+		t.Fatalf("doc: %+v", doc)
 	}
 
-	entries, state = parseResponse("total garbage", "old", ts)
-	if entries != nil || state != "old" {
-		t.Fatalf("garbage handling: %+v %q", entries, state)
+	// garbage keeps the previous doc
+	entries, doc = parseResponse("total garbage", prev, ts)
+	if entries != nil || doc != prev {
+		t.Fatalf("garbage handling: %+v %+v", entries, doc)
 	}
 
-	entries, state = parseResponse(`{"lines":[{"kind":"phase","text":""}]}`, "old", ts)
-	if len(entries) != 0 || state != "old" {
-		t.Fatalf("empty-text/missing-state: %+v %q", entries, state)
+	// missing doc keeps the previous doc
+	entries, doc = parseResponse(`{"lines":[{"kind":"phase","text":""}]}`, prev, ts)
+	if len(entries) != 0 || doc != prev {
+		t.Fatalf("empty-text/missing-doc: %+v %+v", entries, doc)
+	}
+
+	// blank "now" keeps the previous doc
+	_, doc = parseResponse(`{"lines":[],"doc":{"now":"  ","story":"x"}}`, prev, ts)
+	if doc != prev {
+		t.Fatalf("blank now must keep previous doc: %+v", doc)
+	}
+}
+
+func TestSanitizeDoc(t *testing.T) {
+	long := strings.Repeat("x", 5000)
+	var items []store.DocItem
+	for i := 0; i < 20; i++ {
+		items = append(items, store.DocItem{State: "todo", Text: "item"})
+	}
+	d := sanitizeDoc(&store.SessionDoc{
+		Now:   long,
+		Story: long,
+		Sections: []store.DocSection{
+			{Kind: "plan", Items: items},
+			{Kind: "", Text: "kindless is dropped"},
+			{Kind: "empty-is-dropped"},
+			{Kind: "custom", Text: "unknown kinds survive"},
+		},
+	})
+	if n := len([]rune(d.Now)); n != docNowBudget {
+		t.Errorf("now budget: %d", n)
+	}
+	if n := len([]rune(d.Story)); n != docStoryBudget {
+		t.Errorf("story budget: %d", n)
+	}
+	if len(d.Sections) != 2 || d.Sections[0].Kind != "plan" || d.Sections[1].Kind != "custom" {
+		t.Fatalf("sections: %+v", d.Sections)
+	}
+	if len(d.Sections[0].Items) != docMaxItems {
+		t.Errorf("items: %d", len(d.Sections[0].Items))
 	}
 }
 

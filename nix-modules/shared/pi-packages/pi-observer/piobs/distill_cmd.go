@@ -27,6 +27,15 @@ func distillCmd(st *store.Store, s store.SessionInfo, fromScratch bool) error {
 		label = "feed entries"
 	}
 	fmt.Printf("\n%d %s\n", n, label)
+	if ds := st.ReadState(s.SessionID); ds != nil && ds.Doc != nil {
+		fmt.Printf("\nnow: %s\n", ds.Doc.Now)
+		if ds.Doc.Waiting != "" {
+			fmt.Printf("waiting: %s\n", ds.Doc.Waiting)
+		}
+		if ds.Doc.Story != "" {
+			fmt.Printf("so far: %s\n", ds.Doc.Story)
+		}
+	}
 	return nil
 }
 

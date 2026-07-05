@@ -1,11 +1,12 @@
 // Package distill turns raw session activity into semantic feed lines.
 //
 // Mechanical items (prompts, done, errors, compaction, branch switches)
-// bypass the LLM. Turns are batched in chunks and distilled by a small
-// model that receives its own rolling state summary + the feed tail + the
-// new delta, and returns 0..n lines plus the updated state. Emitting
-// nothing is the common, correct output - feed quality equals suppression
-// quality.
+// bypass the LLM. Turns are batched in chunks and narrated by a small
+// model that receives its own previous living doc + the feed tail + the
+// new delta, and returns the rewritten doc plus 0..n beat lines.
+// Emitting no lines is the common, correct output - ticker quality
+// equals suppression quality. The doc, by contrast, is rewritten in
+// full every pass: narration needs revision.
 //
 // Idempotency: every feed line carries upTo (session-file byte offset).
 // The watermark rule lives in store.Watermark (see CONTRACT.md).
@@ -30,27 +31,38 @@ const (
 	feedTailLines = 10
 )
 
-const systemPrompt = `You distill a coding agent's raw activity into a terse, high-signal feed for a human glancing at a monitor. The human wants the big picture: what phase the agent is in, key decisions, surprises, reversals - never mechanics.
+const systemPrompt = `You are the narrator of a live coding-agent session. You maintain a living brief - the document a colleague would want after asking "what is that agent up to?" - plus a terse beat ticker. Describe the evolution of the TASK, never the mechanics of the conversation.
 
 You receive:
-- STATE: your own rolling summary from previous calls (empty on first call)
-- FEED TAIL: recent feed lines already shown to the human
-- NEW ACTIVITY: new agent turns (reasoning excerpts, tool calls with results)
+- DOC: your own previous document (empty on first call)
+- FEED TAIL: recent beat lines already shown to the human
+- NEW ACTIVITY: new agent turns (reasoning excerpts, tool calls with results, user messages)
 
 Respond with strict JSON only, no markdown fences, no prose:
-{"lines":[{"kind":"phase|insight|backtrack|note","text":"...","detail":"..."}],"state":"..."}
+{"doc":{"now":"...","waiting":"...","sections":[{"kind":"plan","items":[{"state":"done","text":"..."}]}],"story":"..."},"lines":[{"kind":"phase|insight|backtrack|note","text":"...","detail":"..."}]}
 
-Rules for "lines":
+Rules for "doc" - rewrite the WHOLE document every time, revising freely as the story develops:
+- "now": 1-2 present-tense sentences. What the agent is doing right now and why. Specific: "Rewriting the feed renderer around zoom levels; chasing a double-render bug in the fold cache" - never "working on the task".
+- "waiting" (omit unless true): set ONLY when the agent has stopped and needs the human - asked a question, presented options, finished and awaits direction. One sentence stating exactly what it needs.
+- "sections": 0-3 sections, only kinds that genuinely fit the session right now:
+  * "plan": the agent follows a plan or slice list. items with state done|doing|todo.
+  * "hypotheses": debugging loop. items with state open|ruledout|confirmed.
+  * "findings": research/exploration. items are discovered facts.
+  * "decisions": design work. items are "chose X over Y because Z".
+  * "risks": known hazards or unresolved doubts.
+  Keep the SAME sections as the previous DOC unless the session's mode genuinely changed - stability beats novelty. Max ~7 items per section; merge or drop stale items when rewriting.
+- "story": 3-8 past-tense sentences narrating how the task evolved: the arc, dead ends acknowledged ("the trigger approach died on a deadlock"), user redirections woven in ("the user redirected toward vertical slices"). Compress older material harder on every rewrite; recent developments get the detail.
+- Complete sentences everywhere. Write to fit the budget - never rely on being cut off.
+
+Rules for "lines" (the beat ticker):
 - Emit a line ONLY when the big picture changed. An empty array is the common, correct output.
 - kind "phase": agent entered a new phase (researching X, designing Y, implementing Z, debugging W, verifying).
 - kind "insight": standalone reasoning nugget - a realization, key decision, discovered constraint.
 - kind "backtrack": agent reversed course, abandoned an approach, or discovered its assumption was wrong.
 - kind "note": anything else worth one glance.
-- "text": ONE terse line, max 12 words / 100 characters. "Exploring binary search over commit range" - never generic filler like "working on the task", never multiple sentences. Anything longer belongs in "detail". Inline markdown code spans (backticks) are welcome for identifiers, paths, and commands.
-- "detail" (optional): 1-3 sentences of genuinely interesting reasoning - why this approach, the rejected alternative, the surprise. Omit by default. "text" must stand alone without it. Never fabricate reasoning that is not in the activity. Markdown is allowed here: inline code and short lists (2-3 items) render well; avoid headings and code fences.
-- Never restate what FEED TAIL already says. Never narrate tool mechanics ("ran grep", "read file").
-
-Rules for "state": updated rolling summary, max 400 chars: current goal, chosen approach, position in the plan. Always provide it.`
+- "text": ONE terse line, max 12 words / 100 characters. Anything longer belongs in "detail". Inline markdown code spans (backticks) are welcome for identifiers, paths, and commands.
+- "detail" (optional): 1-3 sentences of genuinely interesting reasoning. Omit by default. "text" must stand alone without it. Never fabricate reasoning that is not in the activity.
+- Never restate what FEED TAIL already says. Never narrate tool mechanics ("ran grep", "read file").`
 
 type Config struct {
 	Provider  string `json:"provider"`
@@ -59,7 +71,8 @@ type Config struct {
 }
 
 func LoadConfig() Config {
-	cfg := Config{Provider: "anthropic", ModelID: "claude-haiku-4-5", MaxTokens: 1024}
+	// 2048: the doc rewrite plus beat lines routinely overflow 1024.
+	cfg := Config{Provider: "anthropic", ModelID: "claude-haiku-4-5", MaxTokens: 2048}
 	home, err := os.UserHomeDir()
 	if err != nil {
 		return cfg
@@ -117,7 +130,7 @@ func (d *Distiller) Session(ctx context.Context, doc store.SessionInfo, onEntry 
 		return 0, nil
 	}
 
-	rollingState := wm.State
+	rollingDoc := wm.Doc
 	feedTail := tailOf(d.st.ReadFeed(id))
 	count := 0
 
@@ -150,11 +163,11 @@ func (d *Distiller) Session(ctx context.Context, doc store.SessionInfo, onEntry 
 			n := min(chunkTurns, len(turnBuffer))
 			chunk := turnBuffer[:n]
 			turnBuffer = turnBuffer[n:]
-			entries, newState, err := d.distillChunk(ctx, chunk, rollingState, feedTail)
+			entries, newDoc, err := d.distillChunk(ctx, chunk, rollingDoc, feedTail)
 			if err != nil {
 				return err
 			}
-			rollingState = newState
+			rollingDoc = newDoc
 			chunkUpTo := chunk[len(chunk)-1].UpTo
 			for i := range entries {
 				entries[i].UpTo = chunkUpTo
@@ -162,7 +175,7 @@ func (d *Distiller) Session(ctx context.Context, doc store.SessionInfo, onEntry 
 			if err := emit(entries); err != nil {
 				return err
 			}
-			if err := d.st.WriteState(id, store.DistillerState{UpTo: chunkUpTo, State: rollingState}); err != nil {
+			if err := d.st.WriteState(id, stateFor(chunkUpTo, rollingDoc)); err != nil {
 				return err
 			}
 		}
@@ -183,17 +196,28 @@ func (d *Distiller) Session(ctx context.Context, doc store.SessionInfo, onEntry 
 		if err := emit([]store.FeedEntry{mechanicalEntry(item)}); err != nil {
 			return count, err
 		}
-		if err := d.st.WriteState(id, store.DistillerState{UpTo: item.UpTo, State: rollingState}); err != nil {
+		if err := d.st.WriteState(id, stateFor(item.UpTo, rollingDoc)); err != nil {
 			return count, err
 		}
 	}
 	if err := flushTurns(); err != nil {
 		return count, err
 	}
-	if err := d.st.WriteState(id, store.DistillerState{UpTo: res.UpTo, State: rollingState}); err != nil {
+	if err := d.st.WriteState(id, stateFor(res.UpTo, rollingDoc)); err != nil {
 		return count, err
 	}
 	return count, nil
+}
+
+// stateFor derives the persisted state from the rolling doc. State (the
+// short summary string) mirrors Doc.Now for backward compatibility and
+// cheap consumers (list titles).
+func stateFor(upTo int64, doc *store.SessionDoc) store.DistillerState {
+	st := store.DistillerState{UpTo: upTo, Doc: doc}
+	if doc != nil {
+		st.State = text.Truncate(doc.Now, 500)
+	}
+	return st
 }
 
 func tailOf(entries []store.FeedEntry) []store.FeedEntry {
@@ -225,23 +249,25 @@ func mechanicalEntry(item *session.ActivityItem) store.FeedEntry {
 func (d *Distiller) distillChunk(
 	ctx context.Context,
 	turns []*session.ActivityItem,
-	rollingState string,
+	rollingDoc *store.SessionDoc,
 	feedTail []store.FeedEntry,
-) ([]store.FeedEntry, string, error) {
+) ([]store.FeedEntry, *store.SessionDoc, error) {
 	var tailLines []string
 	for _, e := range feedTail {
 		tailLines = append(tailLines, fmt.Sprintf("[%s] %s: %s", hhmm(e.T), e.Kind, e.Text))
 	}
-	state := rollingState
-	if state == "" {
-		state = "(none - first call)"
+	docJSON := "(none - first call)"
+	if rollingDoc != nil {
+		if b, err := json.Marshal(rollingDoc); err == nil {
+			docJSON = string(b)
+		}
 	}
 	tail := strings.Join(tailLines, "\n")
 	if tail == "" {
 		tail = "(empty)"
 	}
 	prompt := strings.Join([]string{
-		"STATE: " + state,
+		"DOC: " + docJSON,
 		"",
 		"FEED TAIL:",
 		tail,
@@ -252,10 +278,10 @@ func (d *Distiller) distillChunk(
 
 	raw, err := d.llm.complete(ctx, systemPrompt, prompt)
 	if err != nil {
-		return nil, "", err
+		return nil, nil, err
 	}
-	entries, newState := parseResponse(raw, rollingState, turns[len(turns)-1].T)
-	return entries, newState, nil
+	entries, newDoc := parseResponse(raw, rollingDoc, turns[len(turns)-1].T)
+	return entries, newDoc, nil
 }
 
 var llmKinds = map[store.FeedKind]bool{
@@ -265,19 +291,19 @@ var llmKinds = map[store.FeedKind]bool{
 	store.KindBacktrack: true,
 }
 
-func parseResponse(raw, previousState, t string) ([]store.FeedEntry, string) {
+func parseResponse(raw string, previousDoc *store.SessionDoc, t string) ([]store.FeedEntry, *store.SessionDoc) {
 	var parsed struct {
+		Doc   *store.SessionDoc `json:"doc"`
 		Lines []struct {
 			Kind   string `json:"kind"`
 			Text   string `json:"text"`
 			Detail string `json:"detail"`
 		} `json:"lines"`
-		State *string `json:"state"`
 	}
 	if err := json.Unmarshal([]byte(stripFences(raw)), &parsed); err != nil {
-		// Unparseable output: keep state, emit nothing. Source is
+		// Unparseable output: keep the doc, emit nothing. Source is
 		// preserved; a redistill can always retry.
-		return nil, previousState
+		return nil, previousDoc
 	}
 	var entries []store.FeedEntry
 	for _, line := range parsed.Lines {
@@ -297,11 +323,56 @@ func parseResponse(raw, previousState, t string) ([]store.FeedEntry, string) {
 		}
 		entries = append(entries, entry)
 	}
-	state := previousState
-	if parsed.State != nil {
-		state = text.Truncate(*parsed.State, 500)
+	doc := previousDoc
+	if parsed.Doc != nil && strings.TrimSpace(parsed.Doc.Now) != "" {
+		doc = sanitizeDoc(parsed.Doc)
 	}
-	return entries, state
+	return entries, doc
+}
+
+// Doc budgets are corruption backstops, not layout: the prompt's
+// sentence budgets do the real work, these keep a runaway model from
+// flooding state.json.
+const (
+	docNowBudget     = 400
+	docWaitingBudget = 400
+	docStoryBudget   = 2500
+	docTextBudget    = 1500
+	docItemBudget    = 250
+	docMaxSections   = 5
+	docMaxItems      = 10
+)
+
+func sanitizeDoc(d *store.SessionDoc) *store.SessionDoc {
+	out := &store.SessionDoc{
+		Now:     text.Truncate(strings.TrimSpace(d.Now), docNowBudget),
+		Waiting: text.Truncate(strings.TrimSpace(d.Waiting), docWaitingBudget),
+		Story:   text.Truncate(strings.TrimSpace(d.Story), docStoryBudget),
+	}
+	for _, s := range d.Sections {
+		if len(out.Sections) == docMaxSections {
+			break
+		}
+		sec := store.DocSection{
+			Kind: strings.TrimSpace(s.Kind),
+			Text: text.Truncate(strings.TrimSpace(s.Text), docTextBudget),
+		}
+		for _, it := range s.Items {
+			txt := strings.TrimSpace(it.Text)
+			if txt == "" || len(sec.Items) == docMaxItems {
+				continue
+			}
+			sec.Items = append(sec.Items, store.DocItem{
+				State: strings.TrimSpace(it.State),
+				Text:  text.Truncate(txt, docItemBudget),
+			})
+		}
+		if sec.Kind == "" || (sec.Text == "" && len(sec.Items) == 0) {
+			continue
+		}
+		out.Sections = append(out.Sections, sec)
+	}
+	return out
 }
 
 var fenceRe = regexp.MustCompile("(?s)^```(?:json)?\\s*(.*?)\\s*```$")
