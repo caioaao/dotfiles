@@ -20,6 +20,12 @@ export interface RegistryDoc {
 	schemaVersion: number;
 	sessionId: string;
 	pid: number;
+	/**
+	 * Parent process pid. Subagent pi processes are direct children of
+	 * the pi that spawned them, so readers can nest sessions by matching
+	 * ppid against sibling docs' pid.
+	 */
+	ppid: number;
 	/** Process start time, epoch ms. Guards against pid reuse. */
 	pidStartedAt: number;
 	cwd: string;

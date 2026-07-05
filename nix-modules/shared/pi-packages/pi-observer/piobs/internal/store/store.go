@@ -40,6 +40,7 @@ type RegistryDoc struct {
 	SchemaVersion   int          `json:"schemaVersion"`
 	SessionID       string       `json:"sessionId"`
 	PID             int          `json:"pid"`
+	PPID            int          `json:"ppid"`         // 0 when absent (older docs)
 	PIDStartedAt    float64      `json:"pidStartedAt"` // epoch ms, may be fractional
 	Cwd             string       `json:"cwd"`
 	SessionFile     string       `json:"sessionFile"`
@@ -54,10 +55,14 @@ type RegistryDoc struct {
 }
 
 // SessionInfo is a RegistryDoc with the registry state corrected by the
-// pid identity check.
+// pid identity check and parentage resolved against sibling docs.
 type SessionInfo struct {
 	RegistryDoc
 	EffectiveState SessionState
+	// ParentID is the sessionId of the session whose pid equals this
+	// doc's ppid: subagents are direct children of the spawning pi
+	// (CONTRACT.md "Parentage"). Empty for top-level sessions.
+	ParentID string
 }
 
 type FeedKind string
@@ -169,11 +174,11 @@ func (s *Store) EnsureDirs() error {
 }
 
 // ListSessions reads every registry doc, derives effective state via the
-// pid-reuse-guarded liveness check, and sorts idle -> working -> exited
-// (idle sessions wait on the user, so they surface first), tmux-attached
-// before headless within each group, most recently updated first within
-// each subgroup. Docs with an unknown schemaVersion are rejected
-// (skipped), per contract.
+// pid-reuse-guarded liveness check, resolves parentage, and orders the
+// result: top-level sessions sort idle -> working -> exited (idle waits
+// on the user, so it surfaces first), most recently updated first within
+// each group; subagent sessions nest directly under their parent. Docs
+// with an unknown schemaVersion are rejected (skipped), per contract.
 func (s *Store) ListSessions() []SessionInfo {
 	_ = s.EnsureDirs()
 	entries, err := os.ReadDir(s.SessionsDir())
@@ -217,13 +222,74 @@ func (s *Store) ListSessions() []SessionInfo {
 		if ri != rj {
 			return ri < rj
 		}
-		// tmux-attached sessions are the user's own; headless ones are
-		// usually subagents and rank below them.
-		if ti, tj := out[i].Tmux != nil, out[j].Tmux != nil; ti != tj {
-			return ti
-		}
 		return out[i].UpdatedAt > out[j].UpdatedAt
 	})
+	return nestChildren(resolveParents(out))
+}
+
+// resolveParents fills ParentID: session A is a subagent of B when
+// A.ppid == B.pid (subagents are direct children of the spawning pi;
+// tmux is NOT a signal - children inherit the parent's TMUX_PANE).
+// When stale docs share a pid, a non-exited claimant wins.
+func resolveParents(sessions []SessionInfo) []SessionInfo {
+	byPID := map[int]string{}
+	for _, s := range sessions { // exited first, alive overwrite
+		if s.EffectiveState == Exited {
+			byPID[s.PID] = s.SessionID
+		}
+	}
+	for _, s := range sessions {
+		if s.EffectiveState != Exited {
+			byPID[s.PID] = s.SessionID
+		}
+	}
+	for i := range sessions {
+		if pid := sessions[i].PPID; pid != 0 {
+			if id, ok := byPID[pid]; ok && id != sessions[i].SessionID {
+				sessions[i].ParentID = id
+			}
+		}
+	}
+	return sessions
+}
+
+// nestChildren reorders a sorted list so each session's children follow
+// it immediately (preserving their relative sort order). Children of
+// absent parents stay top-level; a parentage cycle (pid reuse) falls
+// back to flat order rather than dropping sessions.
+func nestChildren(sessions []SessionInfo) []SessionInfo {
+	kids := map[string][]SessionInfo{}
+	var top []SessionInfo
+	ids := map[string]bool{}
+	for _, s := range sessions {
+		ids[s.SessionID] = true
+	}
+	for _, s := range sessions {
+		if s.ParentID != "" && ids[s.ParentID] {
+			kids[s.ParentID] = append(kids[s.ParentID], s)
+		} else {
+			top = append(top, s)
+		}
+	}
+	out := make([]SessionInfo, 0, len(sessions))
+	seen := map[string]bool{}
+	var walk func(SessionInfo)
+	walk = func(s SessionInfo) {
+		if seen[s.SessionID] {
+			return
+		}
+		seen[s.SessionID] = true
+		out = append(out, s)
+		for _, c := range kids[s.SessionID] {
+			walk(c)
+		}
+	}
+	for _, s := range top {
+		walk(s)
+	}
+	for _, s := range sessions { // cycle fallback: never drop a session
+		walk(s)
+	}
 	return out
 }
 

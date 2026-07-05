@@ -45,6 +45,7 @@ One JSON object. `schemaVersion` is currently **1**; readers MUST reject
 | `schemaVersion`   | number                   | `1`                                          |
 | `sessionId`       | string                   | pi session UUID                              |
 | `pid`             | number                   | pi process pid                               |
+| `ppid`            | number \| absent         | parent process pid; readers treat absent (older docs) as unknown |
 | `pidStartedAt`    | number                   | process start time, epoch ms (may be float)  |
 | `cwd`             | string                   |                                              |
 | `sessionFile`     | string \| null           | pi JSONL path; null for in-memory sessions   |
@@ -68,6 +69,15 @@ Registry `state` is a claim, not a fact - a crashed pi never writes
   (from `ps -o etime= -p <pid>`, format `[[dd-]hh:]mm:ss`) within 30s of
   `pidStartedAt`. If `etime` is unparseable, assume alive. `kill -0`
   alone would make crashed sessions immortal once the pid is recycled.
+
+### Parentage (reader-side)
+
+Subagent pi processes are spawned as direct children of the parent pi
+(`shell: false`), so session A is a **subagent of** session B when
+`A.ppid == B.pid` and `A.sessionId != B.sessionId`. `tmux` is NOT a
+subagent signal: children inherit the parent's `TMUX_PANE`. Pid reuse
+can theoretically produce a false match; the blast radius is cosmetic
+(list nesting), so no start-time guard is required.
 
 ## FeedEntry (`feed/<sessionId>.jsonl`)
 

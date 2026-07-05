@@ -77,10 +77,11 @@ func (d *sessionDelegate) Render(w io.Writer, m list.Model, index int, item list
 		edge = cyanStyle.Render("▎")
 	}
 
-	// Headless sessions (no tmux pane) are usually subagents: tag them.
+	// Subagent sessions nest under their parent in the list order
+	// (store.ListSessions); the marker draws the tree edge.
 	sub := ""
-	if s.Tmux == nil {
-		sub = dimStyle.Render("⑂ ")
+	if s.ParentID != "" {
+		sub = dimStyle.Render("└ ")
 	}
 	title := clip(text.Collapse(it.title()), width-7)
 	if exited {

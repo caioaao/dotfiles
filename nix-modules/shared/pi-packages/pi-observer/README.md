@@ -79,8 +79,9 @@ Packages (`piobs/internal/`):
   collapse to `(loaded skill: X)`, final answers keep their first prose
   paragraph.
 - `store` - the CLI side of the contract: registry read + pid-reuse-
-  guarded liveness, feed append/read, state/doc persistence, the
-  crash-safe watermark, gc.
+  guarded liveness, parentage resolution (subagents are direct child
+  processes; the list nests them under their parent), feed append/read,
+  state/doc persistence, the crash-safe watermark, gc.
 - `distill` - the narrator. Mechanical items (prompts, done, errors,
   compaction, branch switches) bypass the LLM. Turns are chunked and
   sent with the previous doc + feed tail; the model returns the
@@ -138,7 +139,7 @@ nix shell nixpkgs#go
 go test ./...
 ```
 
-Known gaps: subagent sessions cannot yet be nested under their parent
-(they inherit `TMUX_PANE`, so the tmux heuristic misfires; needs a
-`ppid` field in the registry doc). No push notifications on
-idle/error transitions yet.
+Known gaps: no push notifications on idle/error transitions yet.
+Sessions registered before the `ppid` field existed (or by an older
+extension still loaded in a running pi) show as top-level until that
+pi restarts.

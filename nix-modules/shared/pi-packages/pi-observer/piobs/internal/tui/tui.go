@@ -131,7 +131,7 @@ type model struct {
 	zoom int
 	// expandHist shows finished turns unfolded.
 	expandHist bool
-	// hideSub hides headless (tmux-less, usually subagent) sessions.
+	// hideSub hides subagent sessions (those with a resolved parent).
 	hideSub bool
 
 	status      string
@@ -371,9 +371,9 @@ func (m *model) onKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		cmd := m.rebuildItems()
 		m.refreshFeed()
 		if m.hideSub {
-			m.setStatus("headless/subagent sessions hidden", statusTTL)
+			m.setStatus("subagent sessions hidden", statusTTL)
 		} else {
-			m.setStatus("headless/subagent sessions shown", statusTTL)
+			m.setStatus("subagent sessions shown", statusTTL)
 		}
 		return m, cmd
 
@@ -471,7 +471,7 @@ func (m *model) rebuildItems() tea.Cmd {
 
 	var items []list.Item
 	for _, s := range m.sessions {
-		if m.hideSub && s.Tmux == nil {
+		if m.hideSub && s.ParentID != "" {
 			continue
 		}
 		items = append(items, sessionItem{info: s, summary: m.summaries[s.SessionID]})

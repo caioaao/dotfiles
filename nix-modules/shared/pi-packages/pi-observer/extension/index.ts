@@ -64,6 +64,7 @@ export default function (pi: ExtensionAPI) {
 				schemaVersion: 1,
 				sessionId: ctx.sessionManager.getSessionId(),
 				pid: process.pid,
+				ppid: process.ppid,
 				pidStartedAt: Date.now() - process.uptime() * 1000,
 				cwd: ctx.cwd,
 				sessionFile: ctx.sessionManager.getSessionFile() ?? null,

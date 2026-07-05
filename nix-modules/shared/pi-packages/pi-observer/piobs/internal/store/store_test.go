@@ -179,30 +179,60 @@ func TestListSessionsRejectsUnknownSchemaVersion(t *testing.T) {
 
 func TestListSessionsSortAndLiveness(t *testing.T) {
 	s := tempStore(t)
-	restore := stubAlive(map[int]bool{1: true, 2: true, 3: false})
+	restore := stubAlive(map[int]bool{1: true, 2: true, 3: false, 4: true})
 	defer restore()
 
 	writeDoc(t, s, `{"schemaVersion":1,"sessionId":"idle-new","pid":1,"state":"idle","updatedAt":"2026-01-02T00:00:00.000Z"}`, "idle-new")
 	writeDoc(t, s, `{"schemaVersion":1,"sessionId":"working","pid":2,"state":"working","updatedAt":"2026-01-01T00:00:00.000Z"}`, "working")
 	// claims working but pid is dead -> effective exited
 	writeDoc(t, s, `{"schemaVersion":1,"sessionId":"crashed","pid":3,"state":"working","updatedAt":"2026-01-03T00:00:00.000Z"}`, "crashed")
-	// tmux-attached working session ranks above headless ones despite
-	// being older (headless = usually a subagent)
-	writeDoc(t, s, `{"schemaVersion":1,"sessionId":"working-tmux","pid":2,"state":"working","tmux":{"pane":"%1"},"updatedAt":"2025-12-01T00:00:00.000Z"}`, "working-tmux")
+	// subagent (ppid = working's pid) nests right under its parent even
+	// though it is newer and idle-ranked
+	writeDoc(t, s, `{"schemaVersion":1,"sessionId":"child","pid":4,"ppid":2,"state":"idle","updatedAt":"2026-01-04T00:00:00.000Z"}`, "child")
 
 	got := s.ListSessions()
 	if len(got) != 4 {
 		t.Fatalf("got %d sessions", len(got))
 	}
-	// idle first (waiting on the user), then working, then exited
-	wantOrder := []string{"idle-new", "working-tmux", "working", "crashed"}
+	// idle first (waiting on the user), then working with its child
+	// nested beneath it, then exited
+	wantOrder := []string{"idle-new", "working", "child", "crashed"}
 	for i, id := range wantOrder {
 		if got[i].SessionID != id {
 			t.Fatalf("position %d: got %s, want %s (full: %+v)", i, got[i].SessionID, id, got)
 		}
 	}
+	if got[2].ParentID != "working" {
+		t.Fatalf("child ParentID: %q, want \"working\"", got[2].ParentID)
+	}
+	if got[1].ParentID != "" || got[0].ParentID != "" {
+		t.Fatalf("top-level sessions must have empty ParentID: %+v", got[:2])
+	}
 	if got[3].EffectiveState != Exited {
 		t.Fatalf("crashed session: effective state %s, want exited", got[3].EffectiveState)
+	}
+}
+
+// A ppid pointing outside the registry (the shell that started pi) must
+// not create parentage; a parentage cycle (pid reuse) must not drop
+// sessions.
+func TestParentageEdgeCases(t *testing.T) {
+	s := tempStore(t)
+	restore := stubAlive(map[int]bool{1: true, 2: true, 3: true})
+	defer restore()
+
+	writeDoc(t, s, `{"schemaVersion":1,"sessionId":"shell-child","pid":1,"ppid":999,"state":"idle","updatedAt":"2026-01-01T00:00:00.000Z"}`, "shell-child")
+	writeDoc(t, s, `{"schemaVersion":1,"sessionId":"a","pid":2,"ppid":3,"state":"idle","updatedAt":"2026-01-01T00:00:00.000Z"}`, "a")
+	writeDoc(t, s, `{"schemaVersion":1,"sessionId":"b","pid":3,"ppid":2,"state":"idle","updatedAt":"2026-01-01T00:00:00.000Z"}`, "b")
+
+	got := s.ListSessions()
+	if len(got) != 3 {
+		t.Fatalf("cycle dropped sessions: %+v", got)
+	}
+	for _, info := range got {
+		if info.SessionID == "shell-child" && info.ParentID != "" {
+			t.Fatalf("ppid outside registry must not resolve: %+v", info)
+		}
 	}
 }
 
