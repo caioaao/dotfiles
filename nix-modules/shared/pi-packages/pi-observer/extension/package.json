@@ -1,0 +1,13 @@
+{
+	"name": "pi-observer",
+	"private": true,
+	"version": "0.2.0",
+	"type": "module",
+	"description": "pi-observer registry extension: publishes per-session liveness docs for the piobs CLI",
+	"pi": {
+		"extensions": ["./index.ts"]
+	},
+	"engines": {
+		"node": ">=22.18"
+	}
+}

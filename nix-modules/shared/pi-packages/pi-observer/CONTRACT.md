@@ -127,5 +127,5 @@ Optional; missing file or fields fall back to defaults.
 
 ## Implementations
 
-- extension: `lib/registry.ts` (write side of `sessions/`)
+- extension: `extension/lib/registry.ts` (write side of `sessions/`)
 - CLI: `piobs/internal/store` (everything else)
