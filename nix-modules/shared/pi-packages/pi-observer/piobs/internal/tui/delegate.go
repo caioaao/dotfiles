@@ -18,16 +18,21 @@ import (
 
 type sessionItem struct {
 	info store.SessionInfo
+	// summary is the distiller's rolling state: "designing X, doing Y"
+	// beats a truncated first prompt as a list title.
+	summary string
 }
 
 func (i sessionItem) FilterValue() string {
-	return i.info.SessionName + " " + i.info.LastPrompt + " " + i.info.Cwd
+	return i.info.SessionName + " " + i.summary + " " + i.info.LastPrompt + " " + i.info.Cwd
 }
 
 func (i sessionItem) title() string {
 	switch {
 	case i.info.SessionName != "":
 		return i.info.SessionName
+	case i.summary != "":
+		return i.summary
 	case i.info.LastPrompt != "":
 		return i.info.LastPrompt
 	default:
@@ -55,12 +60,14 @@ func (d *sessionDelegate) Render(w io.Writer, m list.Model, index int, item list
 	selected := index == m.Index()
 	exited := s.EffectiveState == store.Exited
 
+	// Idle screams (waiting on the user); working stays calm (needs
+	// nothing); exited fades.
 	var marker string
 	switch s.EffectiveState {
 	case store.Working:
 		marker = d.spin.View()
 	case store.Idle:
-		marker = blueStyle.Render("●")
+		marker = idleStyle.Render("●")
 	default:
 		marker = dimStyle.Render("○")
 	}
@@ -70,11 +77,16 @@ func (d *sessionDelegate) Render(w io.Writer, m list.Model, index int, item list
 		edge = cyanStyle.Render("▎")
 	}
 
-	title := clip(text.Collapse(it.title()), width-5)
+	// Headless sessions (no tmux pane) are usually subagents: tag them.
+	sub := ""
+	if s.Tmux == nil {
+		sub = dimStyle.Render("⑂ ")
+	}
+	title := clip(text.Collapse(it.title()), width-7)
 	if exited {
 		title = dimStyle.Render(title)
 	}
-	row1 := fmt.Sprintf("%s%s %s", edge, marker, title)
+	row1 := fmt.Sprintf("%s%s %s%s", edge, marker, sub, title)
 
 	meta := fmt.Sprintf("%s · %s · %s", tildify(s.Cwd), modelShort(s.Model), age(s.UpdatedAt))
 	row2 := fmt.Sprintf("%s  %s", edge, dimStyle.Render(clip(meta, width-4)))
@@ -155,7 +167,8 @@ var (
 	dimStyle   = lipgloss.NewStyle().Faint(true)
 	greyStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("245"))
 	cyanStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("45"))
-	blueStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("75"))
+	// idle = waiting on the user: the one state that deserves loud color
+	idleStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("214"))
 	green      = lipgloss.Color("82")
 	greenStyle = lipgloss.NewStyle().Foreground(green)
 	selectedBg = lipgloss.NewStyle().Background(lipgloss.Color("237"))

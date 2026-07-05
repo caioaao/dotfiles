@@ -26,7 +26,7 @@ func (m *model) layout() {
 
 	m.list.SetSize(leftW, bodyH)
 	m.viewport.SetWidth(rightW)
-	m.viewport.SetHeight(max(0, bodyH-3))
+	m.viewport.SetHeight(max(0, bodyH-max(3, len(m.header))))
 	m.help.SetWidth(m.width)
 	m.feed.setWidth(rightW)
 }
@@ -37,16 +37,22 @@ func (m *model) leftWidth() int {
 	return max(1, min(w, m.width-6))
 }
 
-// refreshFeed re-renders the right pane content into the viewport.
+// refreshFeed rebuilds the right-pane header and re-renders the feed
+// content into the viewport.
 func (m *model) refreshFeed() {
 	if m.width == 0 {
 		return
 	}
 	doc, ok := m.selected()
 	if !ok {
+		m.header = nil
 		m.viewport.SetContent(dimStyle.Render(" select a session"))
 		return
 	}
+
+	feed := m.st.ReadFeed(doc.SessionID)
+	m.header = m.buildHeader(doc, feed)
+	m.viewport.SetHeight(max(0, m.height-1-len(m.header)))
 
 	var lines []string
 	if banner := m.banner(); banner != "" {
@@ -54,10 +60,9 @@ func (m *model) refreshFeed() {
 	}
 
 	switch {
-	case m.rawView:
+	case m.zoom == ZoomRaw:
 		lines = append(lines, m.renderRaw(doc)...)
 	default:
-		feed := m.st.ReadFeed(doc.SessionID)
 		if len(feed) == 0 {
 			lines = append(lines,
 				"",
@@ -65,7 +70,7 @@ func (m *model) refreshFeed() {
 				dimStyle.Render(" press g to distill now, or wait for activity"),
 			)
 		} else {
-			lines = append(lines, m.feed.render(doc.SessionID, feed, m.showDetails)...)
+			lines = append(lines, m.feed.render(doc.SessionID, feed, m.zoom, m.expandHist)...)
 		}
 	}
 
@@ -73,6 +78,72 @@ func (m *model) refreshFeed() {
 	if m.follow {
 		m.viewport.GotoBottom()
 	}
+}
+
+// buildHeader is the "now" block: title, meta, current phase (+age),
+// live activity, and the distiller's rolling summary. It answers "what
+// is this session doing" without reading the feed.
+func (m *model) buildHeader(doc store.SessionInfo, feed []store.FeedEntry) []string {
+	width := m.width - m.leftWidth() - 1
+
+	stateStyle := dimStyle
+	switch doc.EffectiveState {
+	case store.Working:
+		stateStyle = greenStyle
+	case store.Idle:
+		stateStyle = idleStyle
+	}
+	title := doc.SessionName
+	if title == "" {
+		title = doc.LastPrompt
+	}
+	if title == "" {
+		title = doc.SessionID
+	}
+	rawTag := ""
+	if m.zoom == ZoomRaw {
+		rawTag = " " + lipgloss.NewStyle().Foreground(lipgloss.Color("220")).Render("[raw]")
+	}
+	lines := []string{
+		" " + stateStyle.Render("●") + " " +
+			lipgloss.NewStyle().Bold(true).Render(clip(text.Collapse(title), width-12)) + rawTag,
+		"   " + dimStyle.Render(clip(fmt.Sprintf("%s · %s · %s · %s ago",
+			doc.EffectiveState, tildify(doc.Cwd), orQuestion(doc.Model), age(doc.UpdatedAt)), width-4)),
+	}
+
+	if doc.EffectiveState != store.Exited {
+		if phase := lastPhase(feed); phase != nil {
+			lines = append(lines, "   "+cyanStyle.Render(clip("▶ "+text.Collapse(phase.Text)+" · "+age(phase.T), width-4)))
+		}
+	}
+	if doc.EffectiveState == store.Working && doc.CurrentActivity != "" {
+		lines = append(lines, "   "+greenStyle.Render(clip("↳ "+text.Collapse(doc.CurrentActivity), width-4)))
+	}
+	// Rolling summary: goal, approach, position - computed by the
+	// distiller anyway, shown here instead of buried in state.json.
+	if st := m.st.ReadState(doc.SessionID); st != nil && st.State != "" {
+		summary := wrap(text.Collapse(st.State), max(10, width-6))
+		if len(summary) > 2 {
+			summary = summary[:2]
+			summary[1] = clip(summary[1]+"…", width-6)
+		}
+		for _, l := range summary {
+			lines = append(lines, "   "+dimStyle.Render(l))
+		}
+	}
+
+	lines = append(lines, dimStyle.Render(strings.Repeat("─", max(0, width))))
+	return lines
+}
+
+// lastPhase returns the most recent phase entry, or nil.
+func lastPhase(feed []store.FeedEntry) *store.FeedEntry {
+	for i := len(feed) - 1; i >= 0; i-- {
+		if feed[i].Kind == store.KindPhase {
+			return &feed[i]
+		}
+	}
+	return nil
 }
 
 // banner is the persistent distiller-misconfiguration line: unlike a
@@ -136,37 +207,10 @@ func (m *model) View() tea.View {
 }
 
 func (m *model) rightPane(width int) string {
-	doc, ok := m.selected()
-	if !ok {
+	if _, ok := m.selected(); !ok {
 		return dimStyle.Render(" no sessions yet")
 	}
-
-	stateStyle := dimStyle
-	switch doc.EffectiveState {
-	case store.Working:
-		stateStyle = greenStyle
-	case store.Idle:
-		stateStyle = blueStyle
-	}
-	title := doc.SessionName
-	if title == "" {
-		title = doc.LastPrompt
-	}
-	if title == "" {
-		title = doc.SessionID
-	}
-	rawTag := ""
-	if m.rawView {
-		rawTag = " " + lipgloss.NewStyle().Foreground(lipgloss.Color("220")).Render("[raw]")
-	}
-	header := " " + stateStyle.Render("●") + " " +
-		lipgloss.NewStyle().Bold(true).Render(clip(text.Collapse(title), width-12)) + rawTag
-	meta := fmt.Sprintf("%s · %s · %s · %s ago",
-		doc.EffectiveState, tildify(doc.Cwd), orQuestion(doc.Model), age(doc.UpdatedAt))
-	sub := "   " + dimStyle.Render(clip(meta, width-4))
-	rule := dimStyle.Render(strings.Repeat("─", max(0, width)))
-
-	return strings.Join([]string{header, sub, rule, m.viewport.View()}, "\n")
+	return strings.Join(append(append([]string{}, m.header...), m.viewport.View()), "\n")
 }
 
 func (m *model) statusBar() string {

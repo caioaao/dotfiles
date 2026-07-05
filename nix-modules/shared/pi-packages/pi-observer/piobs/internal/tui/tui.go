@@ -51,6 +51,8 @@ type sessionsLoadedMsg struct {
 	sessions []store.SessionInfo
 	// sizes maps sessionId -> current session-file size (for debounce).
 	sizes map[string]int64
+	// summaries maps sessionId -> distiller rolling state (list titles).
+	summaries map[string]string
 }
 
 type distillDoneMsg struct {
@@ -70,8 +72,9 @@ type keymap struct {
 	Hop       key.Binding
 	Filter    key.Binding
 	Follow    key.Binding
-	Details   key.Binding
-	Raw       key.Binding
+	Zoom      key.Binding
+	Expand    key.Binding
+	Subs      key.Binding
 	Distill   key.Binding
 	Redistill key.Binding
 	Quit      key.Binding
@@ -82,8 +85,9 @@ func newKeymap() keymap {
 		Hop:       key.NewBinding(key.WithKeys("enter"), key.WithHelp("↵", "hop")),
 		Filter:    key.NewBinding(key.WithKeys("/"), key.WithHelp("/", "filter")),
 		Follow:    key.NewBinding(key.WithKeys("f"), key.WithHelp("f", "follow")),
-		Details:   key.NewBinding(key.WithKeys("i"), key.WithHelp("i", "details")),
-		Raw:       key.NewBinding(key.WithKeys("d"), key.WithHelp("d", "raw")),
+		Zoom:      key.NewBinding(key.WithKeys("1", "2", "3", "4"), key.WithHelp("1-4", "zoom")),
+		Expand:    key.NewBinding(key.WithKeys("x"), key.WithHelp("x", "history")),
+		Subs:      key.NewBinding(key.WithKeys("s"), key.WithHelp("s", "subagents")),
 		Distill:   key.NewBinding(key.WithKeys("g"), key.WithHelp("g", "distill")),
 		Redistill: key.NewBinding(key.WithKeys("r"), key.WithHelp("r", "redistill")),
 		Quit:      key.NewBinding(key.WithKeys("q", "ctrl+c"), key.WithHelp("q", "quit")),
@@ -91,7 +95,7 @@ func newKeymap() keymap {
 }
 
 func (k keymap) ShortHelp() []key.Binding {
-	return []key.Binding{k.Hop, k.Filter, k.Follow, k.Details, k.Raw, k.Distill, k.Redistill, k.Quit}
+	return []key.Binding{k.Hop, k.Filter, k.Follow, k.Zoom, k.Expand, k.Subs, k.Distill, k.Redistill, k.Quit}
 }
 
 func (k keymap) FullHelp() [][]key.Binding { return [][]key.Binding{k.ShortHelp()} }
@@ -117,9 +121,13 @@ type model struct {
 	help          help.Model
 	keys          keymap
 
-	follow      bool
-	showDetails bool
-	rawView     bool
+	follow bool
+	// zoom is the feed altitude (see feedview.go Zoom* constants).
+	zoom int
+	// expandHist shows finished turns unfolded.
+	expandHist bool
+	// hideSub hides headless (tmux-less, usually subagent) sessions.
+	hideSub bool
 
 	status      string
 	statusUntil time.Time
@@ -132,6 +140,14 @@ type model struct {
 	loadingSessions  bool
 
 	sizes map[string]sizeTrack
+
+	// sessions/summaries are the last loaded snapshot; rebuildItems
+	// re-derives the visible list from them (subagent filter).
+	sessions  []store.SessionInfo
+	summaries map[string]string
+
+	// header is the right-pane header block, rebuilt by refreshFeed.
+	header []string
 
 	feed     feedView
 	rawCache rawCache
@@ -148,10 +164,10 @@ type rawCache struct {
 
 func newModel(st *store.Store) *model {
 	m := &model{
-		st:          st,
-		follow:      true,
-		showDetails: true,
-		sizes:       map[string]sizeTrack{},
+		st:     st,
+		follow: true,
+		zoom:   ZoomStory,
+		sizes:  map[string]sizeTrack{},
 		keys:        newKeymap(),
 		help:        help.New(),
 		spin:        spinner.New(spinner.WithSpinner(spinner.MiniDot), spinner.WithStyle(lipgloss.NewStyle().Foreground(green))),
@@ -206,7 +222,11 @@ func (m *model) tick() tea.Cmd {
 func (m *model) loadSessions() tea.Msg {
 	sessions := m.st.ListSessions()
 	sizes := map[string]int64{}
+	summaries := map[string]string{}
 	for _, s := range sessions {
+		if st := m.st.ReadState(s.SessionID); st != nil {
+			summaries[s.SessionID] = st.State
+		}
 		if s.SessionFile == "" {
 			continue
 		}
@@ -214,7 +234,7 @@ func (m *model) loadSessions() tea.Msg {
 			sizes[s.SessionID] = fi.Size()
 		}
 	}
-	return sessionsLoadedMsg{sessions: sessions, sizes: sizes}
+	return sessionsLoadedMsg{sessions: sessions, sizes: sizes, summaries: summaries}
 }
 
 func (m *model) selected() (store.SessionInfo, bool) {
@@ -329,15 +349,28 @@ func (m *model) onKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		m.setStatus(fmt.Sprintf("follow %s", onOff(m.follow)), statusTTL)
 		return m, nil
 
-	case key.Matches(msg, m.keys.Details):
-		m.showDetails = !m.showDetails
+	case key.Matches(msg, m.keys.Zoom):
+		m.zoom = int(msg.String()[0] - '0')
 		m.refreshFeed()
+		m.setStatus(fmt.Sprintf("zoom %d: %s", m.zoom, zoomName(m.zoom)), statusTTL)
 		return m, nil
 
-	case key.Matches(msg, m.keys.Raw):
-		m.rawView = !m.rawView
+	case key.Matches(msg, m.keys.Expand):
+		m.expandHist = !m.expandHist
 		m.refreshFeed()
+		m.setStatus(fmt.Sprintf("history %s", onOff(m.expandHist)), statusTTL)
 		return m, nil
+
+	case key.Matches(msg, m.keys.Subs):
+		m.hideSub = !m.hideSub
+		cmd := m.rebuildItems()
+		m.refreshFeed()
+		if m.hideSub {
+			m.setStatus("headless/subagent sessions hidden", statusTTL)
+		} else {
+			m.setStatus("headless/subagent sessions shown", statusTTL)
+		}
+		return m, cmd
 
 	case key.Matches(msg, m.keys.Distill):
 		return m, m.maybeDistill(true)
@@ -406,25 +439,9 @@ func (m *model) onSelectionChanged() {
 
 func (m *model) onSessionsLoaded(msg sessionsLoadedMsg) tea.Cmd {
 	m.loadingSessions = false
-	before, hadSel := m.selected()
-
-	items := make([]list.Item, len(msg.sessions))
-	for i, s := range msg.sessions {
-		items[i] = sessionItem{info: s}
-	}
-	cmd := m.list.SetItems(items)
-
-	// Keep selection stable across re-sorts. Select operates on visible
-	// items, so only remap indices when no filter is applied (SetItems
-	// refilters asynchronously; FilterMatchesMsg handles that path).
-	if hadSel && m.list.FilterState() == list.Unfiltered {
-		for i, it := range items {
-			if it.(sessionItem).info.SessionID == before.SessionID {
-				m.list.Select(i)
-				break
-			}
-		}
-	}
+	m.sessions = msg.sessions
+	m.summaries = msg.summaries
+	cmd := m.rebuildItems()
 
 	now := time.Now()
 	for id, size := range msg.sizes {
@@ -440,6 +457,34 @@ func (m *model) onSessionsLoaded(msg sessionsLoadedMsg) tea.Cmd {
 
 	m.refreshFeed()
 	return tea.Batch(cmd, m.maybeDistill(false))
+}
+
+// rebuildItems re-derives the visible list from the loaded snapshot,
+// applying the subagent filter and keeping the selection stable.
+func (m *model) rebuildItems() tea.Cmd {
+	before, hadSel := m.selected()
+
+	var items []list.Item
+	for _, s := range m.sessions {
+		if m.hideSub && s.Tmux == nil {
+			continue
+		}
+		items = append(items, sessionItem{info: s, summary: m.summaries[s.SessionID]})
+	}
+	cmd := m.list.SetItems(items)
+
+	// Keep selection stable across re-sorts. Select operates on visible
+	// items, so only remap indices when no filter is applied (SetItems
+	// refilters asynchronously; FilterMatchesMsg handles that path).
+	if hadSel && m.list.FilterState() == list.Unfiltered {
+		for i, it := range items {
+			if it.(sessionItem).info.SessionID == before.SessionID {
+				m.list.Select(i)
+				break
+			}
+		}
+	}
+	return cmd
 }
 
 // maybeDistill starts an async distill of the selected session when it
