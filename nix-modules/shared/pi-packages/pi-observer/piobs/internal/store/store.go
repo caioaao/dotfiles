@@ -37,20 +37,20 @@ type TmuxRef struct {
 // RegistryDoc mirrors CONTRACT.md's RegistryDoc. Nullable strings decode
 // as "" (JSON null leaves the zero value).
 type RegistryDoc struct {
-	SchemaVersion int          `json:"schemaVersion"`
-	SessionID     string       `json:"sessionId"`
-	PID           int          `json:"pid"`
-	PIDStartedAt  float64      `json:"pidStartedAt"` // epoch ms, may be fractional
-	Cwd           string       `json:"cwd"`
-	SessionFile   string       `json:"sessionFile"`
-	SessionName   string       `json:"sessionName"`
-	Model         string       `json:"model"`
-	Tmux          *TmuxRef     `json:"tmux"`
-	State         SessionState `json:"state"`
-	CurrentActivity string     `json:"currentActivity"`
-	StartedAt     string       `json:"startedAt"`
-	UpdatedAt     string       `json:"updatedAt"`
-	LastPrompt    string       `json:"lastPrompt"`
+	SchemaVersion   int          `json:"schemaVersion"`
+	SessionID       string       `json:"sessionId"`
+	PID             int          `json:"pid"`
+	PIDStartedAt    float64      `json:"pidStartedAt"` // epoch ms, may be fractional
+	Cwd             string       `json:"cwd"`
+	SessionFile     string       `json:"sessionFile"`
+	SessionName     string       `json:"sessionName"`
+	Model           string       `json:"model"`
+	Tmux            *TmuxRef     `json:"tmux"`
+	State           SessionState `json:"state"`
+	CurrentActivity string       `json:"currentActivity"`
+	StartedAt       string       `json:"startedAt"`
+	UpdatedAt       string       `json:"updatedAt"`
+	LastPrompt      string       `json:"lastPrompt"`
 }
 
 // SessionInfo is a RegistryDoc with the registry state corrected by the
