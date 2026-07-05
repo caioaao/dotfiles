@@ -16,7 +16,6 @@
 import { execFileSync } from "node:child_process";
 import {
 	appendFileSync,
-	existsSync,
 	mkdirSync,
 	readdirSync,
 	readFileSync,
@@ -26,32 +25,22 @@ import {
 } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
+import { DATA_DIR, SESSIONS_DIR, registryPath, type RegistryDoc, type SessionState } from "./registry.ts";
 
-export const DATA_DIR = join(homedir(), ".local", "share", "pi-observer");
-export const SESSIONS_DIR = join(DATA_DIR, "sessions");
+export {
+	briefArgs,
+	collapse,
+	DATA_DIR,
+	registryPath,
+	SESSIONS_DIR,
+	truncate,
+	writeRegistryDoc,
+	type RegistryDoc,
+	type SessionState,
+} from "./registry.ts";
+
 export const FEED_DIR = join(DATA_DIR, "feed");
 export const CONFIG_FILE = join(homedir(), ".config", "pi-observer", "config.json");
-
-export type SessionState = "working" | "idle" | "exited";
-
-export interface RegistryDoc {
-	schemaVersion: number;
-	sessionId: string;
-	pid: number;
-	/** Process start time, epoch ms. Guards against pid reuse. */
-	pidStartedAt: number;
-	cwd: string;
-	sessionFile: string | null;
-	sessionName: string | null;
-	model: string | null;
-	tmux: { pane: string } | null;
-	state: SessionState;
-	/** Live "doing X now" one-liner while a tool runs; null when idle. */
-	currentActivity: string | null;
-	startedAt: string;
-	updatedAt: string;
-	lastPrompt: string | null;
-}
 
 export type FeedKind =
 	| "phase"
@@ -82,25 +71,12 @@ export function ensureDirs(): void {
 	mkdirSync(FEED_DIR, { recursive: true });
 }
 
-export function registryPath(sessionId: string): string {
-	return join(SESSIONS_DIR, `${sessionId}.json`);
-}
-
 export function feedPath(sessionId: string): string {
 	return join(FEED_DIR, `${sessionId}.jsonl`);
 }
 
 export function statePath(sessionId: string): string {
 	return join(FEED_DIR, `${sessionId}.state.json`);
-}
-
-/** Atomic write (tmp + rename). Used by the extension for registry docs. */
-export function writeRegistryDoc(doc: RegistryDoc): void {
-	ensureDirs();
-	const path = registryPath(doc.sessionId);
-	const tmp = `${path}.tmp`;
-	writeFileSync(tmp, JSON.stringify(doc));
-	renameSync(tmp, path);
 }
 
 export function readRegistryDoc(sessionId: string): RegistryDoc | null {
@@ -247,53 +223,4 @@ export function gc(maxAgeDays = 14): number {
 	return removed;
 }
 
-// ---------------------------------------------------------------------------
-// Small shared text helpers
-
-export function truncate(s: string, n: number): string {
-	return s.length <= n ? s : s.slice(0, n - 1) + "…";
-}
-
-export function collapse(s: string): string {
-	return s.replace(/\s+/g, " ").trim();
-}
-
-/** One-line summary of a tool call's arguments. */
-export function briefArgs(toolName: string, args: Record<string, unknown> | undefined): string {
-	if (!args) return "";
-	const first = (...keys: string[]): string | undefined => {
-		for (const k of keys) {
-			const v = args[k];
-			if (typeof v === "string" && v) return v;
-		}
-		return undefined;
-	};
-	let s: string | undefined;
-	switch (toolName) {
-		case "bash":
-			s = first("command", "cmd");
-			break;
-		case "read":
-		case "write":
-		case "edit":
-			s = first("path", "file_path", "filePath");
-			break;
-		case "grep":
-		case "ffgrep":
-		case "glob":
-		case "fffind":
-		case "find":
-			s = first("pattern", "path");
-			break;
-		default:
-			s = first("path", "pattern", "command", "query", "url", "task", "prompt", "label");
-	}
-	if (s === undefined) {
-		try {
-			s = JSON.stringify(args);
-		} catch {
-			s = "";
-		}
-	}
-	return truncate(collapse(s), 100);
-}
+// Text helpers now live in ./registry.ts (re-exported above).

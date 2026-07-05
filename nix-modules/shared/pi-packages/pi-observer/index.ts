@@ -15,7 +15,7 @@
  */
 
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
-import { briefArgs, truncate, writeRegistryDoc, type RegistryDoc } from "./lib/data.ts";
+import { briefArgs, truncate, writeRegistryDoc, type RegistryDoc } from "./lib/registry.ts";
 
 const MAX_WRITE_FAILURES = 5;
 const ACTIVITY_THROTTLE_MS = 1000;
