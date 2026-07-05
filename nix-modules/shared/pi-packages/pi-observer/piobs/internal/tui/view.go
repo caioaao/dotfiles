@@ -51,7 +51,7 @@ func (m *model) refreshFeed() {
 	}
 
 	feed := m.st.ReadFeed(doc.SessionID)
-	m.header = m.buildHeader(doc, feed)
+	m.header = m.buildHeader(doc)
 	m.viewport.SetHeight(max(0, m.height-1-len(m.header)))
 
 	var lines []string
@@ -63,27 +63,44 @@ func (m *model) refreshFeed() {
 	case m.zoom == ZoomRaw:
 		lines = append(lines, m.renderRaw(doc)...)
 	default:
-		if len(feed) == 0 {
+		state := m.st.ReadState(doc.SessionID)
+		hasDoc := state != nil && state.Doc != nil
+		if hasDoc {
+			lines = append(lines, renderDoc(state.Doc, m.viewport.Width())...)
+		}
+		if !hasDoc && (len(feed) == 0 || m.zoom == ZoomBrief) {
 			lines = append(lines,
 				"",
-				dimStyle.Render(" nothing distilled yet"),
+				dimStyle.Render(" no brief yet"),
 				dimStyle.Render(" press g to distill now, or wait for activity"),
 			)
-		} else {
+		}
+		// Beats are secondary: hidden at zoom 1, ticker below the brief
+		// otherwise.
+		if m.zoom >= ZoomStory && len(feed) > 0 {
+			if hasDoc {
+				lines = append(lines, "", beatsRule(m.viewport.Width()))
+			}
 			lines = append(lines, m.feed.render(doc.SessionID, feed, m.zoom, m.expandHist)...)
 		}
 	}
 
 	m.viewport.SetContent(strings.Join(lines, "\n"))
+	// follow pins to the TOP: the doc's NOW block is the newest
+	// information, not the bottom of the ticker.
 	if m.follow {
-		m.viewport.GotoBottom()
+		m.viewport.GotoTop()
 	}
 }
 
-// buildHeader is the "now" block: title, meta, current phase (+age),
-// live activity, and the distiller's rolling summary. It answers "what
-// is this session doing" without reading the feed.
-func (m *model) buildHeader(doc store.SessionInfo, feed []store.FeedEntry) []string {
+func beatsRule(width int) string {
+	n := max(0, min(width-10, maxMeasure))
+	return dimStyle.Render(" ── beats " + strings.Repeat("─", n))
+}
+
+// buildHeader is the compact identity block: title, meta, live tool
+// activity. The narrative "now" lives in the doc, not here.
+func (m *model) buildHeader(doc store.SessionInfo) []string {
 	width := m.width - m.leftWidth() - 1
 
 	stateStyle := dimStyle
@@ -111,39 +128,12 @@ func (m *model) buildHeader(doc store.SessionInfo, feed []store.FeedEntry) []str
 			doc.EffectiveState, tildify(doc.Cwd), orQuestion(doc.Model), age(doc.UpdatedAt)), width-4)),
 	}
 
-	if doc.EffectiveState != store.Exited {
-		if phase := lastPhase(feed); phase != nil {
-			lines = append(lines, "   "+cyanStyle.Render(clip("▶ "+text.Collapse(phase.Text)+" · "+age(phase.T), width-4)))
-		}
-	}
 	if doc.EffectiveState == store.Working && doc.CurrentActivity != "" {
 		lines = append(lines, "   "+greenStyle.Render(clip("↳ "+text.Collapse(doc.CurrentActivity), width-4)))
-	}
-	// Rolling summary: goal, approach, position - computed by the
-	// distiller anyway, shown here instead of buried in state.json.
-	if st := m.st.ReadState(doc.SessionID); st != nil && st.State != "" {
-		summary := wrap(text.Collapse(st.State), max(10, width-6))
-		if len(summary) > 2 {
-			summary = summary[:2]
-			summary[1] = clip(summary[1]+"…", width-6)
-		}
-		for _, l := range summary {
-			lines = append(lines, "   "+dimStyle.Render(l))
-		}
 	}
 
 	lines = append(lines, dimStyle.Render(strings.Repeat("─", max(0, width))))
 	return lines
-}
-
-// lastPhase returns the most recent phase entry, or nil.
-func lastPhase(feed []store.FeedEntry) *store.FeedEntry {
-	for i := len(feed) - 1; i >= 0; i-- {
-		if feed[i].Kind == store.KindPhase {
-			return &feed[i]
-		}
-	}
-	return nil
 }
 
 // banner is the persistent distiller-misconfiguration line: unlike a

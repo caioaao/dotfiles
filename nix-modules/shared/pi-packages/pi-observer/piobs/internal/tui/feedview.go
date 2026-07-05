@@ -15,25 +15,25 @@ import (
 // are unscannable, and scanning is the whole point of the feed.
 const maxMeasure = 100
 
-// Zoom levels: how much altitude the feed gives up.
+// Zoom levels: how much altitude the pane gives up.
 //
-//	1 headline: prompts, phases, outcomes (whole session in one screen)
-//	2 story:    + insights, backtracks, notes (default)
-//	3 deep:     + details
-//	4 raw:      undistilled activity (handled by the view layer)
+//	1 brief: the living doc only (whole session in one screen)
+//	2 beats: doc + beat ticker, finished turns folded (default)
+//	3 deep:  + beat details
+//	4 raw:   undistilled activity (handled by the view layer)
 const (
-	ZoomHeadline = 1
-	ZoomStory    = 2
-	ZoomDeep     = 3
-	ZoomRaw      = 4
+	ZoomBrief = 1
+	ZoomStory = 2
+	ZoomDeep  = 3
+	ZoomRaw   = 4
 )
 
 func zoomName(z int) string {
 	switch z {
-	case ZoomHeadline:
-		return "headline"
+	case ZoomBrief:
+		return "brief"
 	case ZoomStory:
-		return "story"
+		return "brief+beats"
 	case ZoomDeep:
 		return "deep"
 	default:
@@ -130,19 +130,6 @@ func groupByPrompt(entries []store.FeedEntry) []group {
 	return groups
 }
 
-// visible filters kinds by zoom: headline keeps turn boundaries,
-// phases, and outcomes; story adds the rest.
-func (f *feedView) visible(k store.FeedKind) bool {
-	if f.zoom >= ZoomStory {
-		return true
-	}
-	switch k {
-	case store.KindPrompt, store.KindPhase, store.KindDone, store.KindError, store.KindBacktrack:
-		return true
-	}
-	return false
-}
-
 // render returns the terminal lines for the given feed, reusing the
 // cached render when nothing changed.
 func (f *feedView) render(sessionID string, entries []store.FeedEntry, zoom int, expandHist bool) []string {
@@ -167,9 +154,6 @@ func (f *feedView) render(sessionID string, entries []store.FeedEntry, zoom int,
 			out = append(out, f.renderEntry(*g.prompt, &lastTime)...)
 		}
 		for _, e := range g.entries {
-			if !f.visible(e.Kind) {
-				continue
-			}
 			out = append(out, f.renderEntry(e, &lastTime)...)
 		}
 	}

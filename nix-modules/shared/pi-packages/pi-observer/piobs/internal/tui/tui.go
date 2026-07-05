@@ -69,6 +69,7 @@ type statusNote struct {
 // --- keymap --------------------------------------------------------------
 
 type keymap struct {
+	Nav       key.Binding
 	Hop       key.Binding
 	Filter    key.Binding
 	Follow    key.Binding
@@ -82,6 +83,10 @@ type keymap struct {
 
 func newKeymap() keymap {
 	return keymap{
+		// Nav is help-only: the list component owns j/k. Arrows scroll
+		// the feed, so without this hint session switching is
+		// undiscoverable.
+		Nav:       key.NewBinding(key.WithKeys("j", "k"), key.WithHelp("j/k", "session")),
 		Hop:       key.NewBinding(key.WithKeys("enter"), key.WithHelp("↵", "hop")),
 		Filter:    key.NewBinding(key.WithKeys("/"), key.WithHelp("/", "filter")),
 		Follow:    key.NewBinding(key.WithKeys("f"), key.WithHelp("f", "follow")),
@@ -95,7 +100,7 @@ func newKeymap() keymap {
 }
 
 func (k keymap) ShortHelp() []key.Binding {
-	return []key.Binding{k.Hop, k.Filter, k.Follow, k.Zoom, k.Expand, k.Subs, k.Distill, k.Redistill, k.Quit}
+	return []key.Binding{k.Nav, k.Hop, k.Filter, k.Follow, k.Zoom, k.Expand, k.Subs, k.Distill, k.Redistill, k.Quit}
 }
 
 func (k keymap) FullHelp() [][]key.Binding { return [][]key.Binding{k.ShortHelp()} }
@@ -168,9 +173,9 @@ func newModel(st *store.Store) *model {
 		follow: true,
 		zoom:   ZoomStory,
 		sizes:  map[string]sizeTrack{},
-		keys:        newKeymap(),
-		help:        help.New(),
-		spin:        spinner.New(spinner.WithSpinner(spinner.MiniDot), spinner.WithStyle(lipgloss.NewStyle().Foreground(green))),
+		keys:   newKeymap(),
+		help:   help.New(),
+		spin:   spinner.New(spinner.WithSpinner(spinner.MiniDot), spinner.WithStyle(lipgloss.NewStyle().Foreground(green))),
 	}
 	d, err := distill.New(st, distill.LoadConfig())
 	if err != nil {
@@ -344,7 +349,7 @@ func (m *model) onKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	case key.Matches(msg, m.keys.Follow):
 		m.follow = !m.follow
 		if m.follow {
-			m.viewport.GotoBottom()
+			m.viewport.GotoTop()
 		}
 		m.setStatus(fmt.Sprintf("follow %s", onOff(m.follow)), statusTTL)
 		return m, nil
@@ -390,12 +395,12 @@ func (m *model) onKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		return m, m.redistill()
 	}
 
-	// Scroll keys go to the viewport; leaving the bottom disengages
-	// follow, returning to it re-engages.
+	// Scroll keys go to the viewport; leaving the top (where the brief's
+	// NOW block lives) disengages follow, returning to it re-engages.
 	var vpCmd tea.Cmd
 	m.viewport, vpCmd = m.viewport.Update(msg)
 	if vpCmd != nil || isScrollKey(msg) {
-		m.follow = m.viewport.AtBottom()
+		m.follow = m.viewport.AtTop()
 		return m, vpCmd
 	}
 
@@ -434,7 +439,7 @@ func (m *model) onSelectionChanged() {
 	}
 	m.follow = true
 	m.refreshFeed()
-	m.viewport.GotoBottom()
+	m.viewport.GotoTop()
 }
 
 func (m *model) onSessionsLoaded(msg sessionsLoadedMsg) tea.Cmd {

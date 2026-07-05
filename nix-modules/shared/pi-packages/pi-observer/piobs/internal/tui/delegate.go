@@ -99,6 +99,9 @@ func (d *sessionDelegate) Render(w io.Writer, m list.Model, index int, item list
 	rows := []string{row1, row2, row3}
 	if selected {
 		for i, r := range rows {
+			if r == "" {
+				continue // painting empty rows leaves floating bg blobs
+			}
 			rows[i] = selectedBg.Width(width).Render(r)
 		}
 	}
@@ -164,11 +167,11 @@ func tildify(path string) string {
 // --- shared styles ---------------------------------------------------------
 
 var (
-	dimStyle   = lipgloss.NewStyle().Faint(true)
-	greyStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("245"))
-	cyanStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("45"))
+	dimStyle  = lipgloss.NewStyle().Faint(true)
+	greyStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("245"))
+	cyanStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("45"))
 	// idle = waiting on the user: the one state that deserves loud color
-	idleStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("214"))
+	idleStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("214"))
 	green      = lipgloss.Color("82")
 	greenStyle = lipgloss.NewStyle().Foreground(green)
 	selectedBg = lipgloss.NewStyle().Background(lipgloss.Color("237"))
