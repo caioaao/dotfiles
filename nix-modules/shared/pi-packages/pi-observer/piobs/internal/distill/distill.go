@@ -39,9 +39,10 @@ You receive:
 - NEW ACTIVITY: new agent turns (reasoning excerpts, tool calls with results, user messages)
 
 Respond with strict JSON only, no markdown fences, no prose:
-{"doc":{"now":"...","waiting":"...","sections":[{"kind":"plan","items":[{"state":"done","text":"..."}]}],"story":"..."},"lines":[{"kind":"phase|insight|backtrack|note","text":"...","detail":"..."}]}
+{"doc":{"title":"...","now":"...","waiting":"...","sections":[{"kind":"plan","items":[{"state":"done","text":"..."}]}],"story":"..."},"lines":[{"kind":"phase|insight|backtrack|note","text":"...","detail":"..."}]}
 
 Rules for "doc" - rewrite the WHOLE document every time, revising freely as the story develops:
+- "title": 3-8 words naming the TASK the session is about ("ledger-link SQL migration"), never the current activity and never conversation mechanics. Keep the SAME title as the previous DOC unless the task genuinely pivoted - stability beats novelty.
 - "now": 1-2 present-tense sentences. What the agent is doing right now and why. Specific: "Rewriting the feed renderer around zoom levels; chasing a double-render bug in the fold cache" - never "working on the task".
 - "waiting" (omit unless true): set ONLY when the agent has stopped and needs the human - asked a question, presented options, finished and awaits direction. One sentence stating exactly what it needs.
 - "sections": 0-3 sections, only kinds that genuinely fit the session right now:
@@ -210,8 +211,9 @@ func (d *Distiller) Session(ctx context.Context, doc store.SessionInfo, onEntry 
 }
 
 // stateFor derives the persisted state from the rolling doc. State (the
-// short summary string) mirrors Doc.Now for backward compatibility and
-// cheap consumers (list titles).
+// short summary string) mirrors Doc.Now for backward compatibility;
+// list titles now come from Doc.Title, with State as the legacy
+// fallback.
 func stateFor(upTo int64, doc *store.SessionDoc) store.DistillerState {
 	st := store.DistillerState{UpTo: upTo, Doc: doc}
 	if doc != nil {
@@ -334,6 +336,7 @@ func parseResponse(raw string, previousDoc *store.SessionDoc, t string) ([]store
 // sentence budgets do the real work, these keep a runaway model from
 // flooding state.json.
 const (
+	docTitleBudget   = 80
 	docNowBudget     = 400
 	docWaitingBudget = 400
 	docStoryBudget   = 2500
@@ -345,6 +348,7 @@ const (
 
 func sanitizeDoc(d *store.SessionDoc) *store.SessionDoc {
 	out := &store.SessionDoc{
+		Title:   text.Truncate(strings.TrimSpace(d.Title), docTitleBudget),
 		Now:     text.Truncate(strings.TrimSpace(d.Now), docNowBudget),
 		Waiting: text.Truncate(strings.TrimSpace(d.Waiting), docWaitingBudget),
 		Story:   text.Truncate(strings.TrimSpace(d.Story), docStoryBudget),

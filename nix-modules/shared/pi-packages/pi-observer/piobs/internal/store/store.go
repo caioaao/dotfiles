@@ -102,6 +102,9 @@ type DistillerState struct {
 // doc each pass - narration needs revision, which append-only feed
 // lines cannot express.
 type SessionDoc struct {
+	// Title: 3-8 words naming the task (not the current activity),
+	// stable across rewrites. List/header identity line.
+	Title string `json:"title,omitempty"`
 	// Now: 1-2 present-tense sentences - what the agent is doing and why.
 	Now string `json:"now"`
 	// Waiting: set only when the agent stopped and needs the human.

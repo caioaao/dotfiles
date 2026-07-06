@@ -241,6 +241,7 @@ func TestSanitizeDoc(t *testing.T) {
 		items = append(items, store.DocItem{State: "todo", Text: "item"})
 	}
 	d := sanitizeDoc(&store.SessionDoc{
+		Title: long,
 		Now:   long,
 		Story: long,
 		Sections: []store.DocSection{
@@ -250,6 +251,9 @@ func TestSanitizeDoc(t *testing.T) {
 			{Kind: "custom", Text: "unknown kinds survive"},
 		},
 	})
+	if n := len([]rune(d.Title)); n != docTitleBudget {
+		t.Errorf("title budget: %d", n)
+	}
 	if n := len([]rune(d.Now)); n != docNowBudget {
 		t.Errorf("now budget: %d", n)
 	}

@@ -106,13 +106,14 @@ so feeds stay greppable and byte-compatible across implementations.
 
 ### SessionDoc
 
-The narrator's document. Fixed skeleton (`now`, `waiting`, `story`),
+The narrator's document. Fixed skeleton (`title`, `now`, `waiting`, `story`),
 adaptive middle (`sections`). Unlike the append-only feed, the doc is
 **rewritten** each pass - narration needs revision. Readers MUST
 tolerate a missing `doc` (older state files).
 
 | field      | type                 | notes                                                     |
 | ---------- | -------------------- | --------------------------------------------------------- |
+| `title`    | string \| absent     | 3-8 words naming the task, stable across rewrites. <= 80 chars; readers fall back to `now` when absent (older docs) |
 | `now`      | string               | 1-2 present-tense sentences; what + why. <= 400 chars     |
 | `waiting`  | string \| absent     | set only when the agent needs the human. <= 400 chars     |
 | `sections` | DocSection[] \| absent | 0-5 sections. Writers SHOULD emit <= 3                  |
