@@ -58,6 +58,9 @@ func (m *model) refreshFeed() {
 	if banner := m.banner(); banner != "" {
 		lines = append(lines, banner)
 	}
+	if notice := m.autoDistillNotice(doc); notice != "" {
+		lines = append(lines, notice)
+	}
 
 	switch {
 	case m.zoom == ZoomRaw:
@@ -134,6 +137,41 @@ func (m *model) buildHeader(doc store.SessionInfo) []string {
 
 	lines = append(lines, dimStyle.Render(strings.Repeat("─", max(0, width))))
 	return lines
+}
+
+// autoDistillNotice explains why the selected session has pending bytes
+// but is not being distilled automatically (rotten, or backlog over the
+// cap). Persistent like the banner: a silent skip would read as a hang.
+func (m *model) autoDistillNotice(doc store.SessionInfo) string {
+	if m.distiller == nil {
+		return "" // the banner already explains everything
+	}
+	if m.distilling {
+		return "" // a (forced) distill is chewing the backlog right now
+	}
+	behind := m.sizes[doc.SessionID].size - m.st.Watermark(doc.SessionID).UpTo
+	if behind <= 0 {
+		return ""
+	}
+	warn := lipgloss.NewStyle().Foreground(lipgloss.Color("220"))
+	switch {
+	case rotten(doc):
+		return warn.Render(fmt.Sprintf(" ⚠ dead %s: auto-distill off - press g to distill", age(doc.UpdatedAt)))
+	case behind > autoBacklogMax:
+		return warn.Render(fmt.Sprintf(" ⚠ backlog %s: auto-distill off - press g to catch up", humanBytes(behind)))
+	}
+	return ""
+}
+
+func humanBytes(n int64) string {
+	switch {
+	case n >= 1<<20:
+		return fmt.Sprintf("%.1fMB", float64(n)/(1<<20))
+	case n >= 1<<10:
+		return fmt.Sprintf("%dKB", n/(1<<10))
+	default:
+		return fmt.Sprintf("%dB", n)
+	}
 }
 
 // banner is the persistent distiller-misconfiguration line: unlike a

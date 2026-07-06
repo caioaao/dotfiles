@@ -47,6 +47,13 @@ sort first and get the loud color. Working sessions need nothing and
 stay calm. Suppression is a feature: an empty beat list is the common,
 correct distiller output.
 
+**Narration is opt-in for the past.** Auto-distill covers the living
+present: the selected session, small deltas. Rotten sessions (exited
+for 5+ minutes) and oversized backlogs (> 200 KiB behind) are
+archaeology - the pane says so ("auto-distill off - press g") instead
+of silently burning tokens narrating history nobody asked to read.
+Failed distills back off for 30s rather than retrying every tick.
+
 **Everything is reversible.** Pi's session files are the read-only
 source of truth. Feed, state, and doc can all be rebuilt from scratch
 (`piobs redistill`); the observer never writes into pi's data.

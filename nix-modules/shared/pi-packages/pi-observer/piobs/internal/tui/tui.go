@@ -33,6 +33,16 @@ const (
 	debounce     = 2500 * time.Millisecond
 	statusTTL    = 4 * time.Second
 	errStatusTTL = 8 * time.Second
+
+	// Auto-distill policy: narrating history costs real tokens, so it
+	// only happens when someone plausibly wants it. Rotten sessions
+	// (exited > rottenAfter) and oversized backlogs are archaeology -
+	// distilling them is opt-in ('g'), announced by a pane notice.
+	rottenAfter    = 5 * time.Minute
+	autoBacklogMax = int64(200 << 10)
+	// errBackoff throttles retries after a failed distill; without it a
+	// persistent API error is re-hit every tick.
+	errBackoff = 30 * time.Second
 )
 
 // Run starts the TUI and blocks until quit.
@@ -138,7 +148,10 @@ type model struct {
 	statusUntil time.Time
 
 	distilling bool
-	cancel     context.CancelFunc
+	// backoffUntil pauses auto-distill after a failure (rate limit,
+	// overload); force ('g') bypasses it.
+	backoffUntil time.Time
+	cancel       context.CancelFunc
 	// pendingRedistill queues a clear+force-distill requested while a
 	// distill was in flight (which had to be cancelled first).
 	pendingRedistill bool
@@ -283,7 +296,8 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.cancel = nil
 		}
 		if msg.err != nil && !isCanceled(msg.err) {
-			m.setStatus(fmt.Sprintf("distill failed: %v", msg.err), errStatusTTL)
+			m.backoffUntil = time.Now().Add(errBackoff)
+			m.setStatus(fmt.Sprintf("distill failed (retry in %s): %v", errBackoff, msg.err), errStatusTTL)
 		}
 		if sel, ok := m.selected(); ok && sel.SessionID == msg.sessionID {
 			m.refreshFeed()
@@ -496,6 +510,9 @@ func (m *model) rebuildItems() tea.Cmd {
 // maybeDistill starts an async distill of the selected session when it
 // has pending bytes and either settled (no growth for 2.5s), stopped
 // working, or was forced. Single-flight: one distill at a time.
+// Auto (non-forced) distill additionally skips rotten sessions and
+// oversized backlogs (see the policy consts); the feed pane shows a
+// notice explaining the skip.
 func (m *model) maybeDistill(force bool) tea.Cmd {
 	if m.distiller == nil || m.distilling {
 		return nil
@@ -509,8 +526,14 @@ func (m *model) maybeDistill(force bool) tea.Cmd {
 		return nil
 	}
 	if !force {
+		if time.Now().Before(m.backoffUntil) {
+			return nil
+		}
 		wm := m.st.Watermark(doc.SessionID)
 		if tr.size <= wm.UpTo {
+			return nil
+		}
+		if rotten(doc) || tr.size-wm.UpTo > autoBacklogMax {
 			return nil
 		}
 		settled := doc.EffectiveState != store.Working || time.Since(tr.changedAt) > debounce
@@ -527,6 +550,21 @@ func (m *model) maybeDistill(force bool) tea.Cmd {
 		n, err := d.Session(ctx, doc, nil)
 		return distillDoneMsg{sessionID: doc.SessionID, n: n, err: err}
 	}
+}
+
+// rotten: exited long enough that nobody is coming back for it soon.
+// A just-exited session still auto-distills (its ending is exactly what
+// the human wants to read); an unparseable updatedAt counts as ancient,
+// matching gc.
+func rotten(s store.SessionInfo) bool {
+	if s.EffectiveState != store.Exited {
+		return false
+	}
+	t, err := time.Parse(time.RFC3339, s.UpdatedAt)
+	if err != nil {
+		return true
+	}
+	return time.Since(t) > rottenAfter
 }
 
 func isCanceled(err error) bool {
