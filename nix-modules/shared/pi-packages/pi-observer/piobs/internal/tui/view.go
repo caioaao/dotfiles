@@ -101,8 +101,9 @@ func beatsRule(width int) string {
 	return dimStyle.Render(" ── beats " + strings.Repeat("─", n))
 }
 
-// buildHeader is the compact identity block: title, meta, live tool
-// activity. The narrative "now" lives in the doc, not here.
+// buildHeader is the compact meta block: state, cwd, model, age, live
+// tool activity. Identity (the title) lives in the list; the narrative
+// "now" lives in the doc. Repeating a title here bought nothing.
 func (m *model) buildHeader(doc store.SessionInfo) []string {
 	width := m.width - m.leftWidth() - 1
 
@@ -113,22 +114,14 @@ func (m *model) buildHeader(doc store.SessionInfo) []string {
 	case store.Idle:
 		stateStyle = idleStyle
 	}
-	title := doc.SessionName
-	if title == "" {
-		title = doc.LastPrompt
-	}
-	if title == "" {
-		title = doc.SessionID
-	}
 	rawTag := ""
 	if m.zoom == ZoomRaw {
 		rawTag = " " + lipgloss.NewStyle().Foreground(lipgloss.Color("220")).Render("[raw]")
 	}
 	lines := []string{
 		" " + stateStyle.Render("●") + " " +
-			lipgloss.NewStyle().Bold(true).Render(clip(text.Collapse(title), width-12)) + rawTag,
-		"   " + dimStyle.Render(clip(fmt.Sprintf("%s · %s · %s · %s ago",
-			doc.EffectiveState, tildify(doc.Cwd), orQuestion(doc.Model), age(doc.UpdatedAt)), width-4)),
+			dimStyle.Render(clip(fmt.Sprintf("%s · %s · %s · %s ago",
+				doc.EffectiveState, tildify(doc.Cwd), orQuestion(doc.Model), age(doc.UpdatedAt)), width-10)) + rawTag,
 	}
 
 	if doc.EffectiveState == store.Working && doc.CurrentActivity != "" {
