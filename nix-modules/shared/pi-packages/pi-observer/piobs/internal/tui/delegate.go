@@ -18,25 +18,26 @@ import (
 
 type sessionItem struct {
 	info store.SessionInfo
-	// summary is the distiller's rolling state: "designing X, doing Y"
-	// beats a truncated first prompt as a list title.
-	summary string
+	// title is the distilled task title (doc.title, or doc.now for
+	// legacy docs). Session identity, not status.
+	title string
 }
 
 func (i sessionItem) FilterValue() string {
-	return i.info.SessionName + " " + i.summary + " " + i.info.LastPrompt + " " + i.info.Cwd
+	return i.info.SessionName + " " + i.title + " " + i.info.LastPrompt + " " + i.info.Cwd
 }
 
-func (i sessionItem) title() string {
+// titleLine picks the identity line: explicit session name beats the
+// distilled title. No prompt fallback - a context-free "drive it to
+// completion" reads worse than an honest placeholder.
+func (i sessionItem) titleLine() string {
 	switch {
 	case i.info.SessionName != "":
 		return i.info.SessionName
-	case i.summary != "":
-		return i.summary
-	case i.info.LastPrompt != "":
-		return i.info.LastPrompt
+	case i.title != "":
+		return i.title
 	default:
-		return "(no prompt yet)"
+		return "(no title yet)"
 	}
 }
 
@@ -83,7 +84,7 @@ func (d *sessionDelegate) Render(w io.Writer, m list.Model, index int, item list
 	if s.ParentID != "" {
 		sub = dimStyle.Render("└ ")
 	}
-	title := clip(text.Collapse(it.title()), width-7)
+	title := clip(text.Collapse(it.titleLine()), width-7)
 	if exited {
 		title = dimStyle.Render(title)
 	}

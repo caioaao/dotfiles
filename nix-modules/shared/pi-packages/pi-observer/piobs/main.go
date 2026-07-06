@@ -82,9 +82,16 @@ func findSession(st *store.Store, args []string) (store.SessionInfo, error) {
 
 func list(st *store.Store) error {
 	for _, s := range st.ListSessions() {
+		// same chain as the TUI list: explicit name > distilled title
+		// (doc.now for legacy docs). No prompt fallback.
 		title := s.SessionName
 		if title == "" {
-			title = s.LastPrompt
+			if state := st.ReadState(s.SessionID); state != nil {
+				title = state.State
+				if state.Doc != nil && state.Doc.Title != "" {
+					title = state.Doc.Title
+				}
+			}
 		}
 		fmt.Printf("%-7s  %s  %-40s  %-30s  %s\n",
 			s.EffectiveState,

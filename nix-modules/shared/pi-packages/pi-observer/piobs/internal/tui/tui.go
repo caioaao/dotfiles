@@ -61,8 +61,9 @@ type sessionsLoadedMsg struct {
 	sessions []store.SessionInfo
 	// sizes maps sessionId -> current session-file size (for debounce).
 	sizes map[string]int64
-	// summaries maps sessionId -> distiller rolling state (list titles).
-	summaries map[string]string
+	// titles maps sessionId -> distilled task title (doc.title; docs
+	// written before titles existed fall back to doc.now).
+	titles map[string]string
 }
 
 type distillDoneMsg struct {
@@ -159,10 +160,10 @@ type model struct {
 
 	sizes map[string]sizeTrack
 
-	// sessions/summaries are the last loaded snapshot; rebuildItems
+	// sessions/titles are the last loaded snapshot; rebuildItems
 	// re-derives the visible list from them (subagent filter).
-	sessions  []store.SessionInfo
-	summaries map[string]string
+	sessions []store.SessionInfo
+	titles   map[string]string
 
 	// header is the right-pane header block, rebuilt by refreshFeed.
 	header []string
@@ -241,10 +242,14 @@ func (m *model) tick() tea.Cmd {
 func (m *model) loadSessions() tea.Msg {
 	sessions := m.st.ListSessions()
 	sizes := map[string]int64{}
-	summaries := map[string]string{}
+	titles := map[string]string{}
 	for _, s := range sessions {
 		if st := m.st.ReadState(s.SessionID); st != nil {
-			summaries[s.SessionID] = st.State
+			// legacy docs predate doc.title; doc.now beats nothing
+			titles[s.SessionID] = st.State
+			if st.Doc != nil && st.Doc.Title != "" {
+				titles[s.SessionID] = st.Doc.Title
+			}
 		}
 		if s.SessionFile == "" {
 			continue
@@ -253,7 +258,7 @@ func (m *model) loadSessions() tea.Msg {
 			sizes[s.SessionID] = fi.Size()
 		}
 	}
-	return sessionsLoadedMsg{sessions: sessions, sizes: sizes, summaries: summaries}
+	return sessionsLoadedMsg{sessions: sessions, sizes: sizes, titles: titles}
 }
 
 func (m *model) selected() (store.SessionInfo, bool) {
@@ -460,7 +465,7 @@ func (m *model) onSelectionChanged() {
 func (m *model) onSessionsLoaded(msg sessionsLoadedMsg) tea.Cmd {
 	m.loadingSessions = false
 	m.sessions = msg.sessions
-	m.summaries = msg.summaries
+	m.titles = msg.titles
 	cmd := m.rebuildItems()
 
 	now := time.Now()
@@ -489,7 +494,7 @@ func (m *model) rebuildItems() tea.Cmd {
 		if m.hideSub && s.ParentID != "" {
 			continue
 		}
-		items = append(items, sessionItem{info: s, summary: m.summaries[s.SessionID]})
+		items = append(items, sessionItem{info: s, title: m.titles[s.SessionID]})
 	}
 	cmd := m.list.SetItems(items)
 

@@ -97,7 +97,9 @@ Packages (`piobs/internal/`):
 - `tui` - Bubble Tea app. `docview` renders the brief with the fixed
   skeleton; `feedview` renders beats with turn folding (finished turns
   collapse to prompt + outcome) and zoom levels; the session list
-  (`delegate`) sorts idle-first and titles items by `doc.now`.
+  (`delegate`) sorts idle-first and titles items by `doc.title` - a
+  distilled, stable task name (session name wins when set; no prompt
+  fallback, a context-free prompt is worse than a placeholder).
 
 TUI keys: `j/k` switch session, `enter` hops to the tmux pane, `1-4`
 zoom (brief / brief+beats / +details / raw), `x` unfolds history, `s`
