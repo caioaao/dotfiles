@@ -169,13 +169,14 @@ type rawCache struct {
 
 func newModel(st *store.Store) *model {
 	m := &model{
-		st:     st,
-		follow: true,
-		zoom:   ZoomStory,
-		sizes:  map[string]sizeTrack{},
-		keys:   newKeymap(),
-		help:   help.New(),
-		spin:   spinner.New(spinner.WithSpinner(spinner.MiniDot), spinner.WithStyle(lipgloss.NewStyle().Foreground(green))),
+		st:      st,
+		follow:  true,
+		hideSub: true,
+		zoom:    ZoomStory,
+		sizes:   map[string]sizeTrack{},
+		keys:    newKeymap(),
+		help:    help.New(),
+		spin:    spinner.New(spinner.WithSpinner(spinner.MiniDot), spinner.WithStyle(lipgloss.NewStyle().Foreground(green))),
 	}
 	d, err := distill.New(st, distill.LoadConfig())
 	if err != nil {

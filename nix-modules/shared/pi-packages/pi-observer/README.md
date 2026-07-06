@@ -94,7 +94,7 @@ Packages (`piobs/internal/`):
 
 TUI keys: `j/k` switch session, `enter` hops to the tmux pane, `1-4`
 zoom (brief / brief+beats / +details / raw), `x` unfolds history, `s`
-hides headless sessions, `g`/`r` distill/redistill, `f` pins the view
+shows subagent sessions (hidden by default), `g`/`r` distill/redistill, `f` pins the view
 to the top (where NOW lives).
 
 ### Distillation pipeline
