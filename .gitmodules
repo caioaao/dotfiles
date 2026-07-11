@@ -1,3 +1,4 @@
 [submodule "stow-modules/pi/.pi/agent/skills/pi-skills"]
 	path = stow-modules/pi/.pi/agent/skills/pi-skills
 	url = https://github.com/badlogic/pi-skills
+	ignore = untracked
