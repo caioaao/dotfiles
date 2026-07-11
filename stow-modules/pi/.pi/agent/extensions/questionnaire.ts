@@ -6,7 +6,16 @@
  */
 
 import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
-import { Editor, type EditorTheme, Key, matchesKey, Text, truncateToWidth } from "@mariozechner/pi-tui";
+import {
+	Editor,
+	type EditorTheme,
+	Key,
+	matchesKey,
+	Text,
+	truncateToWidth,
+	visibleWidth,
+	wrapTextWithAnsi,
+} from "@mariozechner/pi-tui";
 import { Type } from "@sinclair/typebox";
 
 // Types
@@ -265,6 +274,13 @@ export default function questionnaire(pi: ExtensionAPI) {
 					// Helper to add truncated line
 					const add = (s: string) => lines.push(truncateToWidth(s, width));
 
+					// Helper to add wrapped lines with hanging indent
+					const addWrapped = (s: string, firstPrefix: string, contPrefix: string = firstPrefix) => {
+						const avail = Math.max(1, width - Math.max(visibleWidth(firstPrefix), visibleWidth(contPrefix)));
+						const wrapped = wrapTextWithAnsi(s, avail);
+						wrapped.forEach((line, i) => add((i === 0 ? firstPrefix : contPrefix) + line));
+					};
+
 					add(theme.fg("accent", "─".repeat(width)));
 
 					// Tab bar (multi-question only)
@@ -299,21 +315,22 @@ export default function questionnaire(pi: ExtensionAPI) {
 							const isOther = opt.isOther === true;
 							const prefix = selected ? theme.fg("accent", "> ") : "  ";
 							const color = selected ? "accent" : "text";
+							const contIndent = " ".repeat(`${i + 1}. `.length + 2);
 							// Mark "Type something" differently when in input mode
 							if (isOther && inputMode) {
-								add(prefix + theme.fg("accent", `${i + 1}. ${opt.label} ✎`));
+								addWrapped(theme.fg("accent", `${i + 1}. ${opt.label} ✎`), prefix, contIndent);
 							} else {
-								add(prefix + theme.fg(color, `${i + 1}. ${opt.label}`));
+								addWrapped(theme.fg(color, `${i + 1}. ${opt.label}`), prefix, contIndent);
 							}
 							if (opt.description) {
-								add(`     ${theme.fg("muted", opt.description)}`);
+								addWrapped(theme.fg("muted", opt.description), "     ");
 							}
 						}
 					}
 
 					// Content
 					if (inputMode && q) {
-						add(theme.fg("text", ` ${q.prompt}`));
+						addWrapped(theme.fg("text", q.prompt), " ");
 						lines.push("");
 						// Show options for reference
 						renderOptions();
@@ -345,7 +362,7 @@ export default function questionnaire(pi: ExtensionAPI) {
 							add(theme.fg("warning", ` Unanswered: ${missing}`));
 						}
 					} else if (q) {
-						add(theme.fg("text", ` ${q.prompt}`));
+						addWrapped(theme.fg("text", q.prompt), " ");
 						lines.push("");
 						renderOptions();
 					}
