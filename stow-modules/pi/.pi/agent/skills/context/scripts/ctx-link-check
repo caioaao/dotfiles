@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+# Report dead bundle-relative markdown links and orphan docs in the bundle.
+set -euo pipefail
+
+bundle="$XDG_STATE_HOME/agent-context"
+[ -d "$bundle" ] || { echo "bundle not found at $bundle" >&2; exit 1; }
+cd "$bundle"
+
+status=0
+
+# Dead links: markdown links whose target (bundle-relative or doc-relative) is missing.
+declare -A linked
+while IFS= read -r file; do
+  while IFS= read -r target; do
+    [ -z "$target" ] && continue
+    case "$target" in
+      http://*|https://*|mailto:*|\#*) continue ;;
+    esac
+    target="${target%%#*}"
+    [ -z "$target" ] && continue
+    if [ "${target#/}" != "$target" ]; then
+      resolved=".${target}"
+    else
+      resolved="$(dirname "$file")/$target"
+    fi
+    if [ -e "$resolved" ]; then
+      linked["$(cd "$(dirname "$resolved")" && pwd)/$(basename "$resolved")"]=1
+    else
+      echo "dead link: $file -> $target"
+      status=1
+    fi
+  done < <(grep -o '](\([^)]*\))' "$file" | sed 's/^](//; s/)$//')
+done < <(find . -name '*.md' -not -path './.git/*')
+
+# Orphans: md files (besides root index/AGENTS) with no inbound link.
+while IFS= read -r file; do
+  case "$file" in
+    ./index.md|./AGENTS.md) continue ;;
+  esac
+  abs="$(cd "$(dirname "$file")" && pwd)/$(basename "$file")"
+  if [ -z "${linked[$abs]:-}" ]; then
+    echo "orphan doc: $file"
+    status=1
+  fi
+done < <(find . -name '*.md' -not -path './.git/*')
+
+[ $status -eq 0 ] && echo "ok: no dead links or orphans"
+exit $status

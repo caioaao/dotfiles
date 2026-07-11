@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# Stage all bundle changes and commit.
+set -euo pipefail
+
+bundle="$XDG_STATE_HOME/agent-context"
+[ -d "$bundle/.git" ] || { echo "bundle repo not found at $bundle" >&2; exit 1; }
+
+msg="${1:-Update context}"
+git -C "$bundle" add -A
+git -C "$bundle" diff --cached --quiet && { echo "nothing to commit"; exit 0; }
+git -C "$bundle" commit -qm "$msg"
+git -C "$bundle" log --oneline -1

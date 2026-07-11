@@ -1,6 +1,6 @@
 ---
 name: present
-description: Turn source material (a doc, or something discussed in the session) into a self-contained, offline HTML presentation at .local/present/<slug>.html and open it in the browser. Use when asked to present, visualize, or make a shareable one-pager from existing material. Token-heavy - delegates itself to a subagent when one is available.
+description: Turn source material (a doc, or something discussed in the session) into a self-contained, offline HTML presentation at $XDG_CACHE_HOME/agent-context/present/<slug>.html and open it in the browser. Use when asked to present, visualize, or make a shareable one-pager from existing material. Token-heavy - delegates itself to a subagent when one is available.
 ---
 
 # Present
@@ -42,7 +42,7 @@ You are re-presenting substance, not transcribing into slides. Reorder, group, s
 ## Delivery contract
 
 - **Strong default: one self-contained, offline HTML file.** Opens via `file://` with zero external dependencies - no CDN, no remote scripts or styles, no web fonts, no remote images. Inline everything; prefer system font stacks and hand-built SVG/CSS over any asset.
-- **Always: write to `.local/present/<slug>.html`** (`<slug>` derived from the source; `mkdir -p` the dir first). `.local/` is gitignored throwaway. Re-running on the same source refreshes that snapshot in place - report whether you created or refreshed it so the overwrite is never silent. Only when a *different* source would collide on the same slug, suffix the name instead and say so.
+- **Always: write to `$XDG_CACHE_HOME/agent-context/present/<slug>.html`** (`<slug>` derived from the source; `mkdir -p` the dir first). This is an ephemeral cache outside any repo - wipeable, never committed. Re-running on the same source refreshes that snapshot in place - report whether you created or refreshed it so the overwrite is never silent. Only when a *different* source would collide on the same slug, suffix the name instead and say so.
 - **Always: the file is a generated snapshot.** Never hand-edit it; when the source changes, re-run this skill.
 
 Precedence: the two `Always` rules hold no matter what. The `Strong default` yields only to a strong reason (stated in your final summary) or explicit caller steering. Within what these leave open, the intent governs content and form; lesser defaults fill the rest.
