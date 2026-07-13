@@ -3,8 +3,8 @@
  * bundle at $XDG_STATE_HOME/agent-context).
  *
  * Contributions:
- *   - Prompt templates (ctx-bootstrap, ctx-load, ctx-next, ctx-plan) via
- *     `resources_discover`.
+ *   - Prompt templates (ctx-bootstrap, ctx-load, ctx-next, ctx-plan) and the
+ *     `context` skill (bundled under skills/) via `resources_discover`.
  *   - Short system prompt block pointing at the bundle + skill via
  *     `before_agent_start` (appended, chained per turn - no accumulation).
  *
@@ -28,6 +28,7 @@ Authority order: repo ADRs/specs > Linear > bundle.`;
 export default function (pi: ExtensionAPI) {
 	pi.on("resources_discover", () => ({
 		promptPaths: [path.join(EXTENSION_DIR, "prompts")],
+		skillPaths: [path.join(EXTENSION_DIR, "skills")],
 	}));
 
 	pi.on("before_agent_start", (event) => ({
