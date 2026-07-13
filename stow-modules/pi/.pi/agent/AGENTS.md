@@ -51,7 +51,6 @@ You must have a heightened radar for "complecting" (braiding or entangling thing
 ### Multi-session work
 - State lives on disk (scratch files, working tree, stacked branches), not in context.
 - Write plans, slices, audits, and follow-up prompts to the user's designated scratch dir - not inline in chat.
-- Box-local cross-session context bundle lives at `$XDG_STATE_HOME/agent-context` (git-tracked, OKF). Load the `context` skill to read or maintain it.
 - Before declaring a phase done, emit a brief completed/pending checklist for handoff.
 
 # Prose
