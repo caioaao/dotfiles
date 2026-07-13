@@ -1,5 +1,5 @@
 {
-  "lastChangelogVersion": "0.80.2",
+  "lastChangelogVersion": "0.80.6",
   "packages": [
     "/run/current-system/sw/share/pi/packages/pi-fff",
     "/run/current-system/sw/share/pi/packages/pi-observer",

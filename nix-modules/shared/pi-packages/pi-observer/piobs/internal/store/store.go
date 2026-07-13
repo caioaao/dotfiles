@@ -178,8 +178,8 @@ func (s *Store) EnsureDirs() error {
 
 // ListSessions reads every registry doc, derives effective state via the
 // pid-reuse-guarded liveness check, resolves parentage, and orders the
-// result: top-level sessions sort idle -> working -> exited (idle waits
-// on the user, so it surfaces first), most recently updated first within
+// result: top-level sessions sort working -> idle -> exited (sessions
+// in progress surface first), most recently updated first within
 // each group; subagent sessions nest directly under their parent. Docs
 // with an unknown schemaVersion are rejected (skipped), per contract.
 func (s *Store) ListSessions() []SessionInfo {
@@ -212,9 +212,9 @@ func (s *Store) ListSessions() []SessionInfo {
 	}
 	rank := func(st SessionState) int {
 		switch st {
-		case Idle:
-			return 0
 		case Working:
+			return 0
+		case Idle:
 			return 1
 		default:
 			return 2

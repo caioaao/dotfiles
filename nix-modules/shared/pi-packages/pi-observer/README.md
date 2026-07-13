@@ -97,7 +97,7 @@ Packages (`piobs/internal/`):
 - `tui` - Bubble Tea app. `docview` renders the brief with the fixed
   skeleton; `feedview` renders beats with turn folding (finished turns
   collapse to prompt + outcome) and zoom levels; the session list
-  (`delegate`) sorts idle-first and titles items by `doc.title` - a
+  (`delegate`) sorts working-first and titles items by `doc.title` - a
   distilled, stable task name (session name wins when set; no prompt
   fallback, a context-free prompt is worse than a placeholder).
 

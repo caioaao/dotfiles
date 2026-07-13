@@ -194,19 +194,19 @@ func TestListSessionsSortAndLiveness(t *testing.T) {
 	if len(got) != 4 {
 		t.Fatalf("got %d sessions", len(got))
 	}
-	// idle first (waiting on the user), then working with its child
-	// nested beneath it, then exited
-	wantOrder := []string{"idle-new", "working", "child", "crashed"}
+	// working first (in progress) with its child nested beneath it,
+	// then idle, then exited
+	wantOrder := []string{"working", "child", "idle-new", "crashed"}
 	for i, id := range wantOrder {
 		if got[i].SessionID != id {
 			t.Fatalf("position %d: got %s, want %s (full: %+v)", i, got[i].SessionID, id, got)
 		}
 	}
-	if got[2].ParentID != "working" {
-		t.Fatalf("child ParentID: %q, want \"working\"", got[2].ParentID)
+	if got[1].ParentID != "working" {
+		t.Fatalf("child ParentID: %q, want \"working\"", got[1].ParentID)
 	}
-	if got[1].ParentID != "" || got[0].ParentID != "" {
-		t.Fatalf("top-level sessions must have empty ParentID: %+v", got[:2])
+	if got[0].ParentID != "" || got[2].ParentID != "" {
+		t.Fatalf("top-level sessions must have empty ParentID: %+v", got)
 	}
 	if got[3].EffectiveState != Exited {
 		t.Fatalf("crashed session: effective state %s, want exited", got[3].EffectiveState)
