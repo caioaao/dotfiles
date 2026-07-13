@@ -41,40 +41,58 @@
           neovim = unstable.neovim;
           pi = pi.packages.${final.system}.default;
         };
+
+      # Builder functions for each box. A downstream flake (e.g. the private
+      # config that imports this one) calls these and appends its own
+      # `modules` for config it doesn't want landing in this public repo.
+      # Each builder closes over this flake's inputs and the unstable
+      # overlay. Relative module paths resolve against this flake's source
+      # even when called from another flake.
+      mkNixos = { modules ? [], specialArgs ? {}, system ? linuxSystem }:
+        nixpkgs.lib.nixosSystem {
+          inherit system specialArgs;
+          modules = [
+            { nixpkgs.overlays = [ unstableOverlay ]; }
+            ./nix-modules/nixos/configuration.nix
+            ./nix-modules/shared/configuration.nix
+          ] ++ modules;
+        };
+
+      mkNixosCloud = { modules ? [], specialArgs ? {}, system ? linuxSystem }:
+        nixpkgs.lib.nixosSystem {
+          inherit system specialArgs;
+          modules = [
+            { nixpkgs.overlays = [ unstableOverlay ]; }
+            ./nix-modules/nixos-cloud/configuration.nix
+            ./nix-modules/shared/configuration.nix
+          ] ++ modules;
+        };
+
+      mkDarwin = { modules ? [], specialArgs ? {}, system ? macSystem }:
+        nix-darwin.lib.darwinSystem {
+          inherit system specialArgs;
+          modules = [
+            determinate.darwinModules.default
+            ({ ... }: { determinateNix.enable = true; })
+            { nixpkgs.overlays = [ unstableOverlay ]; }
+            nix-homebrew.darwinModules.nix-homebrew
+            ./nix-modules/darwin/configuration.nix
+            ./nix-modules/shared/configuration.nix
+          ] ++ modules;
+        };
+
+      lib = { inherit mkNixos mkNixosCloud mkDarwin; };
     in {
+      inherit lib;
+
       # ---------- NixOS ----------
-      nixosConfigurations."nixos" = nixpkgs.lib.nixosSystem {
-        system = linuxSystem;
-        modules = [
-          { nixpkgs.overlays = [ unstableOverlay ]; }
-          ./nix-modules/nixos/configuration.nix
-          ./nix-modules/shared/configuration.nix
-        ];
-      };
+      nixosConfigurations."nixos" = mkNixos {};
 
       # ---------- NixOS (cloud dev) ----------
-      nixosConfigurations."nixos-cloud" = nixpkgs.lib.nixosSystem {
-        system = linuxSystem;
-        modules = [
-          { nixpkgs.overlays = [ unstableOverlay ]; }
-          ./nix-modules/nixos-cloud/configuration.nix
-          ./nix-modules/shared/configuration.nix
-        ];
-      };
+      nixosConfigurations."nixos-cloud" = mkNixosCloud {};
 
       # ---------- darwin ----------
-      darwinConfigurations."darwin" = nix-darwin.lib.darwinSystem {
-        system = macSystem;
-        modules = [
-	  determinate.darwinModules.default
-        ({ ... }: { determinateNix.enable = true; })
-
-          { nixpkgs.overlays = [ unstableOverlay ]; }
-          nix-homebrew.darwinModules.nix-homebrew
-          ./nix-modules/darwin/configuration.nix
-          ./nix-modules/shared/configuration.nix
-        ];
-      };
+      darwinConfigurations."darwin" = mkDarwin {};
     };
 }
 
