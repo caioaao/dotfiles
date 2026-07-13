@@ -37,6 +37,7 @@
           };
         in {
           claude-code = unstable.claude-code;
+          oh-my-posh = unstable.oh-my-posh;
           neovim = unstable.neovim;
           pi = pi.packages.${final.system}.default;
         };
