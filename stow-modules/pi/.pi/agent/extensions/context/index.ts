@@ -3,7 +3,7 @@
  * bundle at $XDG_STATE_HOME/agent-context).
  *
  * Contributions:
- *   - Prompt templates (ctx-bootstrap, ctx-load, ctx-next, ctx-plan) and the
+ *   - Prompt templates (ctx-bootstrap, ctx-for, ctx-plan) and the
  *     `context` skill (bundled under skills/) via `resources_discover`.
  *   - Short system prompt block pointing at the bundle + skill via
  *     `before_agent_start` (appended, chained per turn - no accumulation).
