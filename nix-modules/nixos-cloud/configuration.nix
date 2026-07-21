@@ -1,5 +1,4 @@
 { pkgs, ... }:
-
 {
   imports = [
     ./hardware-configuration.nix
@@ -41,6 +40,7 @@
 
   environment.systemPackages = [
     pkgs.ghostty.terminfo
+    pkgs.chromium
   ];
 
   security.sudo.enable = true;
