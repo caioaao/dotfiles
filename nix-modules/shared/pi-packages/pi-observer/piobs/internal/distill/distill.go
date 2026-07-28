@@ -39,19 +39,11 @@ You receive:
 - NEW ACTIVITY: new agent turns (reasoning excerpts, tool calls with results, user messages)
 
 Respond with strict JSON only, no markdown fences, no prose:
-{"doc":{"title":"...","now":"...","waiting":"...","sections":[{"kind":"plan","items":[{"state":"done","text":"..."}]}],"story":"..."},"lines":[{"kind":"phase|insight|backtrack|note","text":"...","detail":"..."}]}
+{"doc":{"title":"...","now":"...","story":"..."},"lines":[{"kind":"phase|insight|backtrack|note","text":"...","detail":"..."}]}
 
 Rules for "doc" - rewrite the WHOLE document every time, revising freely as the story develops:
 - "title": 3-8 words naming the TASK the session is about ("ledger-link SQL migration"), never the current activity and never conversation mechanics. Keep the SAME title as the previous DOC unless the task genuinely pivoted - stability beats novelty.
-- "now": 1-2 present-tense sentences. What the agent is doing right now and why. Specific: "Rewriting the feed renderer around zoom levels; chasing a double-render bug in the fold cache" - never "working on the task".
-- "waiting" (omit unless true): set ONLY when the agent has stopped and needs the human - asked a question, presented options, finished and awaits direction. One sentence stating exactly what it needs.
-- "sections": 0-3 sections, only kinds that genuinely fit the session right now:
-  * "plan": the agent follows a plan or slice list. items with state done|doing|todo.
-  * "hypotheses": debugging loop. items with state open|ruledout|confirmed.
-  * "findings": research/exploration. items are discovered facts.
-  * "decisions": design work. items are "chose X over Y because Z".
-  * "risks": known hazards or unresolved doubts.
-  Keep the SAME sections as the previous DOC unless the session's mode genuinely changed - stability beats novelty. Max ~7 items per section; merge or drop stale items when rewriting.
+- "now": 1-2 present-tense sentences. What the agent is doing right now and why. Specific: "Rewriting the feed renderer around zoom levels; chasing a double-render bug in the fold cache" - never "working on the task". If the agent has stopped and needs the human (asked a question, presented options, awaits direction), say so here.
 - "story": 3-8 past-tense sentences narrating how the task evolved: the arc, dead ends acknowledged ("the trigger approach died on a deadlock"), user redirections woven in ("the user redirected toward vertical slices"). Compress older material harder on every rewrite; recent developments get the detail.
 - Complete sentences everywhere. Write to fit the budget - never rely on being cut off.
 
@@ -336,47 +328,17 @@ func parseResponse(raw string, previousDoc *store.SessionDoc, t string) ([]store
 // sentence budgets do the real work, these keep a runaway model from
 // flooding state.json.
 const (
-	docTitleBudget   = 80
-	docNowBudget     = 400
-	docWaitingBudget = 400
-	docStoryBudget   = 2500
-	docTextBudget    = 1500
-	docItemBudget    = 250
-	docMaxSections   = 5
-	docMaxItems      = 10
+	docTitleBudget = 80
+	docNowBudget   = 400
+	docStoryBudget = 2500
 )
 
 func sanitizeDoc(d *store.SessionDoc) *store.SessionDoc {
-	out := &store.SessionDoc{
-		Title:   text.Truncate(strings.TrimSpace(d.Title), docTitleBudget),
-		Now:     text.Truncate(strings.TrimSpace(d.Now), docNowBudget),
-		Waiting: text.Truncate(strings.TrimSpace(d.Waiting), docWaitingBudget),
-		Story:   text.Truncate(strings.TrimSpace(d.Story), docStoryBudget),
+	return &store.SessionDoc{
+		Title: text.Truncate(strings.TrimSpace(d.Title), docTitleBudget),
+		Now:   text.Truncate(strings.TrimSpace(d.Now), docNowBudget),
+		Story: text.Truncate(strings.TrimSpace(d.Story), docStoryBudget),
 	}
-	for _, s := range d.Sections {
-		if len(out.Sections) == docMaxSections {
-			break
-		}
-		sec := store.DocSection{
-			Kind: strings.TrimSpace(s.Kind),
-			Text: text.Truncate(strings.TrimSpace(s.Text), docTextBudget),
-		}
-		for _, it := range s.Items {
-			txt := strings.TrimSpace(it.Text)
-			if txt == "" || len(sec.Items) == docMaxItems {
-				continue
-			}
-			sec.Items = append(sec.Items, store.DocItem{
-				State: strings.TrimSpace(it.State),
-				Text:  text.Truncate(txt, docItemBudget),
-			})
-		}
-		if sec.Kind == "" || (sec.Text == "" && len(sec.Items) == 0) {
-			continue
-		}
-		out.Sections = append(out.Sections, sec)
-	}
-	return out
 }
 
 var fenceRe = regexp.MustCompile("(?s)^```(?:json)?\\s*(.*?)\\s*```$")

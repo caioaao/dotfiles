@@ -30,12 +30,12 @@ rewrites in full on every pass. The append-only feed still exists
 underneath - as the crash-safe substrate, the beat ticker, and the
 rebuild source - but it is secondary.
 
-**Fixed skeleton, adaptive organs.** Sessions differ in shape:
-implementation has a plan, debugging has hypotheses, research has
-findings. The model chooses *which sections exist*; it never chooses
-the layout. NOW is always first, WAITING always second and loud, SO FAR
-always last. Spatial stability is what makes a pane glanceable - a
-dashboard that reorganizes itself must be read instead of glanced at.
+**Fixed skeleton, no organs.** The brief is exactly two blocks: NOW
+first, SO FAR last. Earlier versions had an adaptive middle (plan,
+hypotheses, findings) and a WAITING block; both proved worse than
+nothing - plans go stale between rewrites and stale structure reads as
+lies. Spatial stability is what makes a pane glanceable - a dashboard
+that reorganizes itself must be read instead of glanced at.
 
 **Write to fit, never truncate to fit.** The model gets sentence
 budgets ("1-2 sentences", "3-8 sentences") and writes complete
@@ -94,8 +94,8 @@ Packages (`piobs/internal/`):
   sent with the previous doc + feed tail; the model returns the
   rewritten doc plus 0..n beat lines. Unparseable output keeps the old
   doc and emits nothing - a redistill can always retry.
-- `tui` - Bubble Tea app. `docview` renders the brief with the fixed
-  skeleton; `feedview` renders beats with turn folding (finished turns
+- `tui` - Bubble Tea app. `docview` renders the brief (NOW + SO FAR);
+  `feedview` renders beats with turn folding (finished turns
   collapse to prompt + outcome) and zoom levels; the session list
   (`delegate`) sorts working-first and titles items by `doc.title` - a
   distilled, stable task name (session name wins when set; no prompt
@@ -123,9 +123,8 @@ re-feeding quiet regions or duplicating lines.
 ## Spec
 
 The full wire format lives in [CONTRACT.md](./CONTRACT.md): registry
-doc schema, feed entry kinds, `SessionDoc` (now / waiting / sections /
-story, budgets, the open-enum rules), the watermark rule, and gc
-ownership. Any schema change edits both implementations and that file.
+doc schema, feed entry kinds, `SessionDoc` (title / now / story,
+budgets), the watermark rule, and gc ownership. Any schema change edits both implementations and that file.
 
 Distiller config (optional): `~/.config/pi-observer/config.json` with
 `provider` (only `anthropic`; needs `ANTHROPIC_API_KEY`), `modelId`

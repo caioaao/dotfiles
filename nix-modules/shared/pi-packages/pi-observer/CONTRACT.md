@@ -106,36 +106,17 @@ so feeds stay greppable and byte-compatible across implementations.
 
 ### SessionDoc
 
-The narrator's document. Fixed skeleton (`title`, `now`, `waiting`, `story`),
-adaptive middle (`sections`). Unlike the append-only feed, the doc is
-**rewritten** each pass - narration needs revision. Readers MUST
-tolerate a missing `doc` (older state files).
+The narrator's document: `title`, `now`, `story`. Unlike the
+append-only feed, the doc is **rewritten** each pass - narration needs
+revision. Readers MUST tolerate a missing `doc` (older state files) and
+MUST ignore unknown fields (older docs carried `waiting` and
+`sections`; writers drop them on the next rewrite).
 
-| field      | type                 | notes                                                     |
-| ---------- | -------------------- | --------------------------------------------------------- |
-| `title`    | string \| absent     | 3-8 words naming the task, stable across rewrites. <= 80 chars; readers fall back to `now` when absent (older docs) |
-| `now`      | string               | 1-2 present-tense sentences; what + why. <= 400 chars     |
-| `waiting`  | string \| absent     | set only when the agent needs the human. <= 400 chars     |
-| `sections` | DocSection[] \| absent | 0-5 sections. Writers SHOULD emit <= 3                  |
-| `story`    | string               | past-tense narrative of the task's evolution. <= 2500 chars |
-
-### DocSection
-
-| field   | type              | notes                                             |
-| ------- | ----------------- | -------------------------------------------------- |
-| `kind`  | string            | `plan` \| `hypotheses` \| `findings` \| `decisions` \| `risks`; open enum |
-| `text`  | string \| absent  | prose body, <= 1500 chars                          |
-| `items` | DocItem[] \| absent | <= 10 items                                       |
-
-Readers MUST render unknown `kind` values as a titled prose section
-instead of dropping them (mirror of the feed's unknown-kind rule).
-
-### DocItem
-
-| field   | type             | notes                                                        |
-| ------- | ---------------- | ------------------------------------------------------------ |
-| `state` | string \| absent | `plan`: done\|doing\|todo; `hypotheses`: open\|ruledout\|confirmed; unknown/absent renders as a plain bullet |
-| `text`  | string           | <= 250 chars                                                 |
+| field   | type             | notes                                                     |
+| ------- | ---------------- | --------------------------------------------------------- |
+| `title` | string \| absent | 3-8 words naming the task, stable across rewrites. <= 80 chars; readers fall back to `now` when absent (older docs) |
+| `now`   | string           | 1-2 present-tense sentences; what + why. <= 400 chars     |
+| `story` | string           | past-tense narrative of the task's evolution. <= 2500 chars |
 
 ## Watermark rule (crash-safe, exact)
 

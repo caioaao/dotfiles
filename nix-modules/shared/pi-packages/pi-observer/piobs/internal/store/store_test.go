@@ -73,12 +73,8 @@ func TestWatermarkFeedAheadOfState(t *testing.T) {
 func TestStateDocRoundTrip(t *testing.T) {
 	s := tempStore(t)
 	in := DistillerState{UpTo: 7, State: "now line", Doc: &SessionDoc{
-		Now:     "now line",
-		Waiting: "needs a decision",
-		Sections: []DocSection{
-			{Kind: SectionPlan, Items: []DocItem{{State: "done", Text: "a"}, {State: "todo", Text: "b"}}},
-			{Kind: "custom", Text: "unknown kind survives round trip"},
-		},
+		Title: "the task",
+		Now:   "now line",
 		Story: "the arc so far",
 	}}
 	if err := s.WriteState("sid", in); err != nil {
@@ -88,9 +84,7 @@ func TestStateDocRoundTrip(t *testing.T) {
 	if out == nil || out.Doc == nil {
 		t.Fatal("state or doc missing after round trip")
 	}
-	if out.Doc.Waiting != in.Doc.Waiting || out.Doc.Story != in.Doc.Story ||
-		len(out.Doc.Sections) != 2 || out.Doc.Sections[1].Kind != "custom" ||
-		out.Doc.Sections[0].Items[1].State != "todo" {
+	if out.Doc.Title != in.Doc.Title || out.Doc.Now != in.Doc.Now || out.Doc.Story != in.Doc.Story {
 		t.Fatalf("round trip mangled doc: %+v", out.Doc)
 	}
 }

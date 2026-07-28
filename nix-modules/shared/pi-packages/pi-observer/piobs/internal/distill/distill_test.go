@@ -236,20 +236,10 @@ func TestParseResponse(t *testing.T) {
 
 func TestSanitizeDoc(t *testing.T) {
 	long := strings.Repeat("x", 5000)
-	var items []store.DocItem
-	for i := 0; i < 20; i++ {
-		items = append(items, store.DocItem{State: "todo", Text: "item"})
-	}
 	d := sanitizeDoc(&store.SessionDoc{
 		Title: long,
 		Now:   long,
 		Story: long,
-		Sections: []store.DocSection{
-			{Kind: "plan", Items: items},
-			{Kind: "", Text: "kindless is dropped"},
-			{Kind: "empty-is-dropped"},
-			{Kind: "custom", Text: "unknown kinds survive"},
-		},
 	})
 	if n := len([]rune(d.Title)); n != docTitleBudget {
 		t.Errorf("title budget: %d", n)
@@ -259,12 +249,6 @@ func TestSanitizeDoc(t *testing.T) {
 	}
 	if n := len([]rune(d.Story)); n != docStoryBudget {
 		t.Errorf("story budget: %d", n)
-	}
-	if len(d.Sections) != 2 || d.Sections[0].Kind != "plan" || d.Sections[1].Kind != "custom" {
-		t.Fatalf("sections: %+v", d.Sections)
-	}
-	if len(d.Sections[0].Items) != docMaxItems {
-		t.Errorf("items: %d", len(d.Sections[0].Items))
 	}
 }
 
