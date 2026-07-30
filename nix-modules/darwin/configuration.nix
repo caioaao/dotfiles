@@ -1,6 +1,8 @@
 { pkgs, ... }:
 
-{
+let
+  humanlayer-cli = pkgs.callPackage ./humanlayer-cli.nix { };
+in {
   # Set your user and shell
   users.users.caio = {
     name = "caio";
@@ -15,6 +17,8 @@
     trust.formulae = [ "withgraphite/tap/graphite" ];
     trust.taps = [ "humanlayer/humanlayer" ];
   };
+
+  environment.systemPackages = [ humanlayer-cli ];
 
   system.primaryUser = "caio";
   system.keyboard = {
