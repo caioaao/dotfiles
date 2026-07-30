@@ -13,6 +13,7 @@
     user = "caio";
     autoMigrate = true;
     trust.formulae = [ "withgraphite/tap/graphite" ];
+    trust.taps = [ "humanlayer/humanlayer" ];
   };
 
   system.primaryUser = "caio";
@@ -25,6 +26,7 @@
     enable = true;
     taps = [
       "withgraphite/tap"
+      "humanlayer/humanlayer"
     ];
     brews = [
       "nss"
@@ -32,6 +34,7 @@
     ];
     casks = [
       "ghostty"
+      "humanlayer/humanlayer/humanlayer"
       "tailscale-app"
     ];
   };
