@@ -8,8 +8,6 @@
 !statusline-command.sh
 
 # Allow managed directories (recursively)
-!agents/
-!agents/**
 !commands/
 !commands/**
 !hooks/
