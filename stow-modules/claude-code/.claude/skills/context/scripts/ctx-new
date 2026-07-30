@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+# Scaffold a new project dir in the agent context bundle.
+set -euo pipefail
+
+[ $# -eq 1 ] || { echo "usage: ctx-new <project>" >&2; exit 1; }
+project="$1"
+bundle="$XDG_STATE_HOME/agent-context"
+
+[ -d "$bundle" ] || { echo "bundle not found at $bundle" >&2; exit 1; }
+dir="$bundle/$project"
+[ -e "$dir" ] && { echo "project '$project' already exists" >&2; exit 1; }
+
+mkdir -p "$dir"
+cat > "$dir/context.md" <<EOF
+---
+title: $project
+description: TODO one-line intent
+---
+
+# $project
+
+TODO: intent, where it applies (repo paths, branches), current state.
+EOF
+
+printf -- '- [%s](/%s/context.md) - TODO one-line intent\n' "$project" "$project" >> "$bundle/index.md"
+echo "scaffolded $dir/context.md and appended index entry (edit descriptions)"
