@@ -15,7 +15,10 @@ in {
     user = "caio";
     autoMigrate = true;
     trust.formulae = [ "withgraphite/tap/graphite" ];
-    trust.taps = [ "humanlayer/humanlayer" ];
+    trust.taps = [
+      "humanlayer/humanlayer"
+      "datadog-labs/pack"
+    ];
   };
 
   environment.systemPackages = [ humanlayer-cli ];
@@ -31,10 +34,12 @@ in {
     taps = [
       "withgraphite/tap"
       "humanlayer/humanlayer"
+      "datadog-labs/pack"
     ];
     brews = [
       "nss"
       "withgraphite/tap/graphite"
+      "datadog-labs/pack/pup"
     ];
     casks = [
       "ghostty"
