@@ -7,11 +7,11 @@
   environment.systemPackages = [
     (pkgs.appimageTools.wrapType2 rec {
       pname = "anytype";
-      version = "0.54.1";
+      version = "0.56.1";
 
       src = pkgs.fetchurl {
         url = "https://anytype-release.fra1.cdn.digitaloceanspaces.com/Anytype-${version}.AppImage";
-        hash = "sha256-TWXxZ4eYowVjNMu7OQB56JiB0CZYEcggyIHqH057oL4=";
+        hash = "sha256-9dRvFBIMNxgK8p3aURUNXoGIMNgZ1pY9Jo7jsC/ZmT0=";
       };
 
       extraInstallCommands = let
