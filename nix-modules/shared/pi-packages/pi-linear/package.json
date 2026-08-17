@@ -1,0 +1,19 @@
+{
+	"name": "pi-linear",
+	"private": true,
+	"version": "0.1.0",
+	"type": "module",
+	"description": "pi extension: raw Linear GraphQL access (query, mutate, schema) plus the skill that teaches the agent to write the operations",
+	"keywords": ["pi-package"],
+	"scripts": {
+		"test": "node --test lib/operation.test.ts",
+		"validate-snippets": "node scripts/validate-snippets.mjs"
+	},
+	"pi": {
+		"extensions": ["./index.ts"],
+		"skills": ["./skills"]
+	},
+	"engines": {
+		"node": ">=22.18"
+	}
+}

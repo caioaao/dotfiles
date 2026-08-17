@@ -15,7 +15,7 @@ symlinkJoin {
   name = "pi-packages";
   paths = [
     (callPackage ./pi-fff/package.nix { inherit buildPiPackage; })
-    (callPackage ./pi-linear-tools/package.nix { inherit buildPiPackage; })
+    (callPackage ./pi-linear/package.nix { inherit buildPiPackage; })
     (callPackage ./pi-observer/extension/package.nix { inherit buildPiPackage; })
   ];
 }
