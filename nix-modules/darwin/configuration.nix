@@ -42,6 +42,7 @@ in {
       "datadog-labs/pack/pup"
     ];
     casks = [
+      "anytype"
       "ghostty"
       "humanlayer/humanlayer/humanlayer"
       "tailscale-app"
