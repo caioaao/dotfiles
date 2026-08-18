@@ -73,8 +73,9 @@ settings = "prefix+shift+s"
 detach = "prefix+d"
 reload_config = "prefix+shift+r"
 # open_notification_target = "prefix+o"
-# workspace_picker = "prefix+w"
-# goto = "prefix+g"
+# Navigate mode is index/arrow driven; hws (below) takes prefix+w instead.
+workspace_picker = ""
+# goto = "prefix+g"     # session navigator: workspaces + tabs + panes
 # new_workspace = "prefix+shift+n"
 # new_worktree = "prefix+shift+g"
 # open_worktree = ""    # optional, unset by default
@@ -139,6 +140,16 @@ toggle_sidebar = "prefix+b"
 # command = "lazygit"
 # width = "80%"
 # height = "80%"
+
+# tmux parity: bind w display-popup -E "tms --sessions"
+# hws is defined in nix-modules/shared/herdr/.
+[[keys.command]]
+key = "prefix+w"
+type = "popup"
+command = "hws"
+description = "switch workspace"
+width = "60%"
+height = "40%"
 
 # Legacy indexed shortcut config is still parsed for compatibility.
 # Prefer switch_tab, switch_workspace, and focus_agent for new configs.

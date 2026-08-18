@@ -23,6 +23,7 @@ let
   piobs = pkgs.callPackage ./pi-packages/pi-observer/piobs/package.nix { };
 in {
   imports = [
+    ./herdr/default.nix
     ./tmux/default.nix
     ./tsserve-file/default.nix
     ./zsh/default.nix
