@@ -20,9 +20,15 @@
     # https://mariozechner.at/posts/2026-04-08-ive-sold-out/.
     pi.url = "path:./nix-modules/shared/pi";
     pi.inputs.nixpkgs.follows = "nixpkgs";
+
+    # herdr - terminal workspace manager. Not in nixpkgs; upstream flake only.
+    # Follows nixpkgs-unstable because that is the channel upstream builds
+    # against; pinning it to our stable nixpkgs risks build-dep drift.
+    herdr.url = "github:herdrdev/herdr/1147e60bc0a4";
+    herdr.inputs.nixpkgs.follows = "nixpkgs-unstable";
   };
 
-  outputs = { nixpkgs, nixpkgs-unstable, nix-darwin, nix-homebrew, determinate, pi, ... }:
+  outputs = { nixpkgs, nixpkgs-unstable, nix-darwin, nix-homebrew, determinate, pi, herdr, ... }:
     let
       # Pick the CPU/OS for each machine
       linuxSystem = "x86_64-linux";
@@ -40,6 +46,9 @@
           oh-my-posh = unstable.oh-my-posh;
           neovim = unstable.neovim;
           pi = pi.packages.${final.system}.default;
+          # Upstream also ships overlays.default, but it composes rust-overlay
+          # into the package set. Take just the package instead.
+          herdr = herdr.packages.${final.system}.default;
         };
 
       # Builder functions for each box. A downstream flake (e.g. the private

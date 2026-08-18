@@ -54,6 +54,7 @@ in {
     piobs
     github-cli
     gum
+    herdr
     just
     jq
     mise

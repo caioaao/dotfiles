@@ -137,6 +137,28 @@
         "url": "https://flakehub.com/f/cachix/git-hooks.nix/0.1.941"
       }
     },
+    "herdr": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs-unstable"
+        ],
+        "rust-overlay": "rust-overlay"
+      },
+      "locked": {
+        "lastModified": 1786976289,
+        "narHash": "sha256-2wEVbIjV6WIoEPoFPkDHlya7M6rOWZddySP4TWdVfiA=",
+        "owner": "herdrdev",
+        "repo": "herdr",
+        "rev": "1147e60bc0a43c727563bee457394af0ca0a5e8b",
+        "type": "github"
+      },
+      "original": {
+        "owner": "herdrdev",
+        "ref": "1147e60bc0a4",
+        "repo": "herdr",
+        "type": "github"
+      }
+    },
     "nix": {
       "inputs": {
         "flake-parts": "flake-parts",
@@ -308,11 +330,33 @@
     "root": {
       "inputs": {
         "determinate": "determinate",
+        "herdr": "herdr",
         "nix-darwin": "nix-darwin",
         "nix-homebrew": "nix-homebrew",
         "nixpkgs": "nixpkgs_3",
         "nixpkgs-unstable": "nixpkgs-unstable",
         "pi": "pi"
+      }
+    },
+    "rust-overlay": {
+      "inputs": {
+        "nixpkgs": [
+          "herdr",
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1783577481,
+        "narHash": "sha256-EWMxOWrJ031f8f/lrcEmhTRs4npw1/5N3Hcjin846c8=",
+        "owner": "oxalica",
+        "repo": "rust-overlay",
+        "rev": "4cdea398dc491b082dccdce0fad1ed0b75fa3394",
+        "type": "github"
+      },
+      "original": {
+        "owner": "oxalica",
+        "repo": "rust-overlay",
+        "type": "github"
       }
     }
   },
