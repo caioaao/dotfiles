@@ -60,6 +60,24 @@
     isNormalUser = true;
     extraGroups = [ "wheel" ];
     shell = pkgs.zsh;
+    openssh.authorizedKeys.keys = [
+      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINtnL8tBTR9Sx+QSfVMy26nxFiK8l+OZohXreGZyMfny"
+    ];
+  };
+
+  services.openssh = {
+    enable = true;
+    openFirewall = false;
+    settings.PasswordAuthentication = false;
+  };
+
+  # Only allow SSH through Tailscale
+  networking.firewall = {
+    enable = true;
+    allowedTCPPorts = [];
+    interfaces."tailscale0" = {
+      allowedTCPPorts = [ 22 ];
+    };
   };
 
   nixpkgs.config.allowUnfree = true;
@@ -115,9 +133,6 @@
   };
 
   # List services that you want to enable:
-
-  # Enable the OpenSSH daemon.
-  # services.openssh.enable = true;
 
   ### fingerprint sensor
   services.fprintd = {
