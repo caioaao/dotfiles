@@ -13,6 +13,7 @@
       ./anytype.nix
       ./paper.nix
       ../nixos-shared/tailscale.nix
+      ../nixos-shared/resolved.nix
     ];
 
   # Use Grub while I test it alongside Fedora
