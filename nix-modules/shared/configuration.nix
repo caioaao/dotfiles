@@ -18,9 +18,6 @@ let
   # ~/.pi/agent/settings.json via /run/current-system/sw/share/pi/packages/.
   pi-packages = pkgs.callPackage ./pi-packages { };
 
-  # Observer TUI for pi sessions; plain Go binary, deliberately not a
-  # pi package (see pi-packages/pi-observer/CONTRACT.md).
-  piobs = pkgs.callPackage ./pi-packages/pi-observer/piobs/package.nix { };
 in {
   imports = [
     ./herdr/default.nix
@@ -52,7 +49,6 @@ in {
     git-lfs
     pi
     pi-packages
-    piobs
     github-cli
     gum
     herdr
