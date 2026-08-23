@@ -46,6 +46,16 @@
           oh-my-posh = unstable.oh-my-posh;
           neovim = unstable.neovim;
           quickshell = unstable.quickshell;
+          # Hyprland 0.56.2 (nixos-25.11 stable ships 0.52.2). The whole
+          # hyprland ecosystem must stay on one channel: the portal is built
+          # against hyprland itself, and nwg-displays >= 0.4.3 is required to
+          # export monitors as lua (0.3.x writes hyprlang only).
+          hyprland = unstable.hyprland;
+          xdg-desktop-portal-hyprland = unstable.xdg-desktop-portal-hyprland;
+          hyprlock = unstable.hyprlock;
+          hypridle = unstable.hypridle;
+          hyprpaper = unstable.hyprpaper;
+          nwg-displays = unstable.nwg-displays;
           pi = pi.packages.${final.system}.default;
           # Upstream also ships overlays.default, but it composes rust-overlay
           # into the package set. Take just the package instead.
