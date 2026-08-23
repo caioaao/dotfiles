@@ -23,6 +23,7 @@
 
   environment.systemPackages = with pkgs; [
     waybar
+    quickshell
     fuzzel
     mako
     hyprlock

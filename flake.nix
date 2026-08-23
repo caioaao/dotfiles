@@ -45,6 +45,7 @@
           claude-code = unstable.claude-code;
           oh-my-posh = unstable.oh-my-posh;
           neovim = unstable.neovim;
+          quickshell = unstable.quickshell;
           pi = pi.packages.${final.system}.default;
           # Upstream also ships overlays.default, but it composes rust-overlay
           # into the package set. Take just the package instead.
