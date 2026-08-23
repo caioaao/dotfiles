@@ -24,7 +24,7 @@
     # herdr - terminal workspace manager. Not in nixpkgs; upstream flake only.
     # Follows nixpkgs-unstable because that is the channel upstream builds
     # against; pinning it to our stable nixpkgs risks build-dep drift.
-    herdr.url = "github:herdrdev/herdr/1147e60bc0a4";
+    herdr.url = "github:herdrdev/herdr/v0.8.2";
     herdr.inputs.nixpkgs.follows = "nixpkgs-unstable";
   };
 
