@@ -23,6 +23,12 @@
   boot.loader.grub.useOSProber = true;
   boot.loader.efi.canTouchEfiVariables = true;
 
+  # Fonts
+  fonts.packages = with pkgs; [
+    noto-fonts
+    nerd-fonts.symbols-only
+  ];
+
   # networking.hostName = "nixos"; # Define your hostname.
   # Pick only one of the below networking options.
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
