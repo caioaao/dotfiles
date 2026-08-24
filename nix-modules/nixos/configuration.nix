@@ -27,6 +27,7 @@
   fonts.packages = with pkgs; [
     noto-fonts
     nerd-fonts.symbols-only
+    nerd-fonts.jetbrains-mono
   ];
 
   # networking.hostName = "nixos"; # Define your hostname.
