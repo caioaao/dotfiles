@@ -22,10 +22,7 @@
   security.pam.services.hyprlock.fprintAuth = true;
 
   environment.systemPackages = with pkgs; [
-    waybar
     quickshell
-    fuzzel
-    mako
     hyprlock
     hypridle
     hyprpaper
