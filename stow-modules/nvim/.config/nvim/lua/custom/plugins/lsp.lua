@@ -158,5 +158,15 @@ return {
 
 		-- some servers can't be managed by mason, due to not having prebuilt binaries or exotic build dependencies
 		vim.lsp.enable("nixd")
+
+		-- Quint language server. Install with: npm i -g @informalsystems/quint-language-server
+		-- Syntax highlighting comes from the classic Vim syntax file in syntax/quint.vim
+		vim.lsp.config("quint", {
+			cmd = { "quint-language-server", "--stdio" },
+			filetypes = { "quint" },
+			root_markers = { ".git" },
+			capabilities = capabilities,
+		})
+		vim.lsp.enable("quint")
 	end,
 }
