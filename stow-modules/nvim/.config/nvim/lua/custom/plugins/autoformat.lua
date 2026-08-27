@@ -15,16 +15,15 @@ return {
 	opts = {
 		notify_on_error = false,
 		default_format_opts = {
-			lsp_format = "fallback",
+			lsp_format = "prefer",
 		},
 		format_on_save = function(bufnr)
-			-- Opt-in: specify filetypes to autoformat on save
-			local enabled_filetypes = { lua = true }
-			if enabled_filetypes[vim.bo[bufnr].filetype] then
-				return { timeout_ms = 500 }
-			else
+			-- Opt-out: filetypes listed here are never autoformatted on save
+			local disabled_filetypes = {}
+			if disabled_filetypes[vim.bo[bufnr].filetype] then
 				return nil
 			end
+			return { timeout_ms = 500 }
 		end,
 		formatters_by_ft = {
 			lua = { "stylua" },
