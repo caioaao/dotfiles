@@ -1,53 +1,76 @@
 ---
 name: present
-description: Turn source material (a doc, or something discussed in the session) into a self-contained, offline HTML presentation at $XDG_CACHE_HOME/agent-context/present/<slug>.html and open it in the browser. Use when asked to present, visualize, or make a shareable one-pager from existing material. Token-heavy - delegates itself to a subagent when one is available.
+description: Turn source material (files, or something discussed in the session) into a self-contained, offline HTML presentation and open it in the browser. Use when asked to present, visualize, or make a shareable one-pager from existing material.
 ---
 
 # Present
 
-Turn a source doc into an offline HTML page that gets its point across better than the source does.
+Turn source material into an offline HTML page that serves its reader better than the sources do.
 
-## Resolve the source
+Two roles share this file. The **orchestrator** is whoever the caller invoked: it resolves the sources and hands off, keeping the heavy work out of its context. The **executor** reads the sources and builds the page. If you have no `subagent` tool, play both roles in order.
 
-The source is whatever the caller wants presented - your judgment. It may be a file they named, a doc the conversation is centered on, or material that exists only in the session (a concept discussed, findings, a design). Anything else the caller said is steering. Ask only if genuinely unclear, then stop.
+## Orchestrator
 
-If the source is a file, resolve it to an absolute path. If the material lives only in the conversation, the subagent cannot see it - inline it in the task, faithfully and complete. Don't trim to save space; subagent tasks handle large payloads fine.
+### Resolve the sources
 
-## Delegate first (context hygiene)
+The sources are whatever the caller wants presented - your judgment. One file or several, a doc the conversation centers on, or material that exists only in the session (a concept discussed, findings, a design), in any mix. Anything else the caller said is steering: a form ("slides"), an audience, an outline, an emphasis. Ask only if genuinely unclear, then stop.
 
-Reading the source end-to-end and authoring HTML burns a lot of context. If you have the `subagent` tool, do NOT do this inline. Instead:
+Resolve files to absolute paths. Material that lives only in the conversation is invisible to the executor: inline it in the task, faithfully and complete. Don't trim to save space; subagent tasks handle large payloads fine. When several sources go in, say how they relate if the caller did; otherwise leave that to the executor.
 
-1. Spawn a subagent with a task like:
-   > Read `~/.pi/agent/skills/present/SKILL.md` and follow it exactly. Source: `<absolute path, or the material itself, inlined>`. Work from `<cwd>`. Extra steering: `<caller steering, if any>`.
-2. Relay the subagent's report (created/refreshed, `file://` URL, chosen angle) to the user verbatim.
+### Hand off
 
-If you don't have the `subagent` tool (e.g. you *are* the subagent), follow the rest of this file yourself.
+Spawn one subagent with a task shaped like:
 
-## Intent
+> You are the executor for the `present` skill. Read `<absolute path you loaded this file from; your skill listing has it>` and follow its Executor section. Do not delegate. Sources: `<absolute paths, and/or the material itself, inlined>`. Working directory: `<cwd>`. Caller steering: `<steering, or "none">`.
 
-**One intent, unchanging: present this material more engagingly and clearly than the source, optimizing for getting the point across to whoever opens the file.** This is the north star for *what to present and how to shape it*. The delivery contract below is a separate concern - see Precedence for how they interact.
+Relay the executor's report to the user verbatim.
 
-Read the source end-to-end first. Then judge - yourself - what the reader must walk away with and the form that delivers it best. The source could be anything; don't pattern-match on its label or shape. Find the through-line, the parts that carry the weight, the parts that are noise.
+## Executor
 
-Judgment to make (questions, not a checklist):
-- What's the one thing the reader must get? What path gets them there fastest?
+### Intent
+
+Present this material more clearly and engagingly than the sources do, so whoever opens the file gets what they came for. Read every source end-to-end. The material could be anything; don't pattern-match on its label.
+
+Two questions decide the design. Settle both before writing any markup.
+
+**What shape is the material?** Content has a shape, and the shape dictates what a good page looks like. Recognize it instead of compressing everything to one takeaway:
+
+- *A point* - one concept, one finding. Lead with it; one visual anchor.
+- *A map* - parts and their relations. Overview first, then each part; one diagram with a consistent legend; navigation that works.
+- *A ladder* - ideas that build on each other. Keep the order; recap each rung before the next; show progress.
+- *A fork* - alternatives. Lay out the trade-off space (matrix, side by side), then the recommendation.
+- *A timeline* - ordered events or phases. Timeline, swimlanes, phase markers.
+- *A delta* - before and after. Side by side; highlight only what changed.
+- *A list* - independent findings, audit items, triage. Group by theme; make severity visible; each item stands alone.
+- *Numbers* - benchmarks, metrics. Hand-built SVG charts; keep the data inspectable.
+- *A reference* - cheat sheet, API surface, glossary. Dense, scannable, indexed; no takeaway needed.
+- *An argument* - RFC, proposal. Problem, proposal, evidence, ask; the spine stays intact.
+- *A synthesis* - several sources into one view. Mark provenance; surface where sources agree, contradict, or leave gaps.
+
+Shapes nest. A design doc is often an argument whose evidence is a fork and whose context is a map; a tangle of concepts is usually a map whose nodes are each a ladder. Pick the outer shape, then a shape per section. For composite material, write the outline first; the structure is the hard part.
+
+**How will the reader use it?** Skim for the answer, study in order, navigate a territory, look something up, or present it aloud. Form follows use: a skimmer gets the bottom line first and short chunks; a studier gets sequence and recaps; a navigator gets an overview and a table of contents; a looker-upper gets density and an index; a presenter gets slides. Absent steering, assume a read-on-screen page in whatever mode the shape implies.
+
+With those settled, judge:
 - What deserves emphasis, what collapses to a glance, what gets cut?
-- Where does a visual (e.g. a diagram or a comparison) land the point better than prose? Build it only when it earns its place.
-- Absent caller steering, assume a read-on-screen scrolling page; adjust if the material clearly wants otherwise.
+- Where does a visual land the point better than prose? Build it only when it earns its place. Interaction (a state machine to click through, a parameter to tweak) only when doing beats seeing.
 
-Design for a reader whose attention wanders. Lead with the bottom line, not buildup. Keep chunks short and self-contained so losing focus mid-read costs nothing to re-enter. Give strong visual anchors - clear headings, highlights, whitespace - so the eye lands on the load-bearing bits without hunting, and make it obvious where the reader is and how much is left. Hold attention with purposeful contrast, not decoration.
+Design for a reader whose attention wanders: short self-contained chunks, strong visual anchors so the eye lands on the load-bearing bits without hunting. Distinctive is welcome; decorative is not.
 
-You are re-presenting substance, not transcribing into slides. Reorder, group, summarize, and visualize freely - stay faithful to the source's meaning, invent no facts. Aim so a reader who never saw the source grasps the main point in under a minute.
+Reorder, group, summarize, and visualize freely. Stay faithful to the sources' meaning and invent no facts. The test: within a minute, a reader who never saw the sources knows what this is and where to go. For a point that is the takeaway itself; for a map, the overview; for a ladder, the path ahead; for a reference, the index.
 
-## Delivery contract
+### Delivery contract
 
-- **Strong default: one self-contained, offline HTML file.** Opens via `file://` with zero external dependencies - no CDN, no remote scripts or styles, no web fonts, no remote images. Inline everything; prefer system font stacks and hand-built SVG/CSS over any asset.
-- **Always: write to `$XDG_CACHE_HOME/agent-context/present/<slug>.html`** (`<slug>` derived from the source; `mkdir -p` the dir first). This is an ephemeral cache outside any repo - wipeable, never committed. Re-running on the same source refreshes that snapshot in place - report whether you created or refreshed it so the overwrite is never silent. Only when a *different* source would collide on the same slug, suffix the name instead and say so.
-- **Always: the file is a generated snapshot.** Never hand-edit it; when the source changes, re-run this skill.
+Hard rules:
+- Write under `${XDG_CACHE_HOME:-$HOME/.cache}/agent-context/present/` (`mkdir -p` it first), named `<slug>.<ext>`. Slug from the file name for a single file; from the theme for several files or session material. This is an ephemeral cache outside any repo: wipeable, never committed, never hand-edited. When the sources change, re-run this skill.
+- The file's first line (after any doctype) is one comment naming every source: `<!-- present source: /abs/path -->`, files as absolute paths, session material as `session - <short label>`, several separated by `; `. Before writing, look for an existing file at the target path. Absent: you are creating. Present with the same marker: you are refreshing in place. Present with a different marker: suffix the slug and say so in the report.
 
-Precedence: the two `Always` rules hold no matter what. The `Strong default` yields only to a strong reason (stated in your final summary) or explicit caller steering. Within what these leave open, the intent governs content and form; lesser defaults fill the rest.
+Default:
+- One self-contained, offline HTML file, `<slug>.html`. Opens via `file://` with no network dependencies: no CDN, no remote scripts, styles, fonts, or images. Inline everything; prefer system font stacks and hand-built SVG/CSS over any asset. Slides and interactive pages still fit in one file.
 
-## Open it
+Precedence: hard rules hold. The default yields only to a strong reason (stated in your report) or explicit caller steering. Within what those leave open, the intent governs.
+
+### Open it
 
 After writing the file, open it in the default browser:
 
@@ -58,12 +81,21 @@ case "$(uname -s)" in
 esac
 ```
 
-Skip only if the caller said not to open, or the environment clearly has no GUI (e.g. SSH session, Linux without `DISPLAY`/`WAYLAND_DISPLAY`). Say so when you skip.
+Skip only if the caller said not to open, or the environment clearly has no GUI (SSH session, Linux without `DISPLAY`/`WAYLAND_DISPLAY`). Say so when you skip.
 
-## Report
+### Verify and report
 
-Before reporting done: unless you deliberately broke the strong default (and said why), verify the artifact stands alone - no `http(s)://` in any `src`, `href`, or `url(...)`, and no web fonts. Then report:
-- created or refreshed
-- the full absolute `file://` URL (copy-paste-ready, never a relative path)
-- whether it was opened automatically
-- one line on the angle you chose and why
+Unless you deliberately departed from the default (and say why), prove the artifact stands alone:
+
+```bash
+grep -nE '(src|href|srcset|url\(|@import)[^>;]*(https?:)?//' "<absolute path>" | grep -v 'w3.org'
+```
+
+Empty output is the pass; it also covers protocol-relative URLs and web fonts. Claim the check only if you ran it.
+
+Then report:
+- created, refreshed, or suffixed (and why, if suffixed)
+- the full absolute `file://` URL, copy-paste-ready
+- whether it opened automatically
+- the verification result
+- one line on the shape and reader mode you chose and why
