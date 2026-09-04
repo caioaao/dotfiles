@@ -79,8 +79,9 @@
       bind H previous-window
       bind L next-window
 
-      # Renumber windows automatically when closing one
-      set -g renumber-windows on
+      # Start window and pane numbering at 1 (0 is far from the other digits)
+      set -g base-index 1
+      setw -g pane-base-index 1
 
       # ===============================
       # Session Management (TMS)
