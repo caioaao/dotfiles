@@ -32,7 +32,7 @@
       # System and Performance
       # ===============================
       # Reload tmux configuration
-      bind r source-file /etc/tmux.conf
+      bind r source-file /etc/tmux.conf \; display-message "Config reloaded"
 
       # Enable clipboard passthrough and mouse support
       set -g set-clipboard on
