@@ -20,7 +20,7 @@ import * as os from "node:os";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 import type { AgentToolResult } from "@mariozechner/pi-agent-core";
-import type { Message } from "@mariozechner/pi-ai";
+import type { Message, Usage } from "@mariozechner/pi-ai";
 import { type ExtensionAPI, getMarkdownTheme } from "@mariozechner/pi-coding-agent";
 import { Container, Markdown, Spacer, Text } from "@mariozechner/pi-tui";
 import { Type } from "@sinclair/typebox";
@@ -78,29 +78,58 @@ function formatTokens(count: number): string {
 	return `${(count / 1000000).toFixed(1)}M`;
 }
 
+// Usage accounting uses pi's own `Usage` shape so it can be returned on the tool
+// result as-is. Pi persists `AgentToolResult.usage` on the toolResult message and
+// folds it into the footer / `/session` totals (see "Usage accounting" in the
+// extensions docs). Display-only stats (turns, last context size) live beside it on
+// SingleResult, not inside it, so nothing non-standard leaks into the session file.
+function emptyUsage(): Usage {
+	return {
+		input: 0,
+		output: 0,
+		cacheRead: 0,
+		cacheWrite: 0,
+		totalTokens: 0,
+		cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 },
+	};
+}
+
+// `from` comes off the wire (child's JSON events), so tolerate missing fields.
+function addUsage(into: Usage, from: Partial<Usage> | undefined): void {
+	if (!from) return;
+	into.input += from.input || 0;
+	into.output += from.output || 0;
+	into.cacheRead += from.cacheRead || 0;
+	into.cacheWrite += from.cacheWrite || 0;
+	into.totalTokens += from.totalTokens || 0;
+	into.cost.input += from.cost?.input || 0;
+	into.cost.output += from.cost?.output || 0;
+	into.cost.cacheRead += from.cost?.cacheRead || 0;
+	into.cost.cacheWrite += from.cost?.cacheWrite || 0;
+	into.cost.total += from.cost?.total || 0;
+}
+
+function sumUsage(results: { usage: Usage }[]): Usage {
+	const total = emptyUsage();
+	for (const r of results) addUsage(total, r.usage);
+	return total;
+}
+
 function formatUsageStats(
-	usage: {
-		input: number;
-		output: number;
-		cacheRead: number;
-		cacheWrite: number;
-		cost: number;
-		contextTokens?: number;
-		turns?: number;
-	},
-	model?: string,
+	usage: Usage,
+	extra: { turns?: number; contextTokens?: number; model?: string } = {},
 ): string {
 	const parts: string[] = [];
-	if (usage.turns) parts.push(`${usage.turns} turn${usage.turns > 1 ? "s" : ""}`);
+	if (extra.turns) parts.push(`${extra.turns} turn${extra.turns > 1 ? "s" : ""}`);
 	if (usage.input) parts.push(`↑${formatTokens(usage.input)}`);
 	if (usage.output) parts.push(`↓${formatTokens(usage.output)}`);
 	if (usage.cacheRead) parts.push(`R${formatTokens(usage.cacheRead)}`);
 	if (usage.cacheWrite) parts.push(`W${formatTokens(usage.cacheWrite)}`);
-	if (usage.cost) parts.push(`$${usage.cost.toFixed(4)}`);
-	if (usage.contextTokens && usage.contextTokens > 0) {
-		parts.push(`ctx:${formatTokens(usage.contextTokens)}`);
+	if (usage.cost.total) parts.push(`$${usage.cost.total.toFixed(4)}`);
+	if (extra.contextTokens && extra.contextTokens > 0) {
+		parts.push(`ctx:${formatTokens(extra.contextTokens)}`);
 	}
-	if (model) parts.push(model);
+	if (extra.model) parts.push(extra.model);
 	return parts.join(" ");
 }
 
@@ -172,23 +201,18 @@ function formatToolCall(
 	}
 }
 
-interface UsageStats {
-	input: number;
-	output: number;
-	cacheRead: number;
-	cacheWrite: number;
-	cost: number;
-	contextTokens: number;
-	turns: number;
-}
-
 interface SingleResult {
 	task: string;
 	label?: string;
 	exitCode: number;
 	messages: Message[];
 	stderr: string;
-	usage: UsageStats;
+	/** Summed across the child's assistant turns; bubbled up to the parent session's totals. */
+	usage: Usage;
+	/** Display only. */
+	turns: number;
+	/** Display only: context size of the child's last turn (not a sum). */
+	contextTokens: number;
 	model?: string;
 	stopReason?: string;
 	errorMessage?: string;
@@ -207,6 +231,15 @@ function previewText(s: string, n: number): string {
 
 function displayLabel(r: { label?: string; task: string }): string {
 	return r.label?.trim() ? r.label : previewText(r.task, 50) || "(empty task)";
+}
+
+function formatResultUsage(r: SingleResult): string {
+	return formatUsageStats(r.usage, { turns: r.turns, contextTokens: r.contextTokens, model: r.model });
+}
+
+function formatTotalUsage(results: SingleResult[]): string {
+	const turns = results.reduce((n, r) => n + r.turns, 0);
+	return formatUsageStats(sumUsage(results), { turns });
 }
 
 function getFinalOutput(messages: Message[]): string {
@@ -303,7 +336,9 @@ async function runSingleAgent(
 		exitCode: 0,
 		messages: [],
 		stderr: "",
-		usage: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, cost: 0, contextTokens: 0, turns: 0 },
+		usage: emptyUsage(),
+		turns: 0,
+		contextTokens: 0,
 		model,
 		step,
 	};
@@ -345,15 +380,10 @@ async function runSingleAgent(
 				currentResult.messages.push(msg);
 
 				if (msg.role === "assistant") {
-					currentResult.usage.turns++;
-					const usage = msg.usage;
-					if (usage) {
-						currentResult.usage.input += usage.input || 0;
-						currentResult.usage.output += usage.output || 0;
-						currentResult.usage.cacheRead += usage.cacheRead || 0;
-						currentResult.usage.cacheWrite += usage.cacheWrite || 0;
-						currentResult.usage.cost += usage.cost?.total || 0;
-						currentResult.usage.contextTokens = usage.totalTokens || 0;
+					currentResult.turns++;
+					if (msg.usage) {
+						addUsage(currentResult.usage, msg.usage);
+						currentResult.contextTokens = msg.usage.totalTokens || 0;
 					}
 					if (!currentResult.model && msg.model) currentResult.model = msg.model;
 					if (msg.stopReason) currentResult.stopReason = msg.stopReason;
@@ -605,6 +635,7 @@ export default function (pi: ExtensionAPI) {
 								{ type: "text", text: `Chain stopped at step ${i + 1} (${displayLabel(result)}): ${errorMsg}` },
 							],
 							details: makeDetails("chain")(results),
+							usage: sumUsage(results),
 							isError: true,
 						};
 					}
@@ -613,6 +644,7 @@ export default function (pi: ExtensionAPI) {
 				return {
 					content: [{ type: "text", text: getFinalOutput(results[results.length - 1].messages) || "(no output)" }],
 					details: makeDetails("chain")(results),
+					usage: sumUsage(results),
 				};
 			}
 
@@ -640,7 +672,9 @@ export default function (pi: ExtensionAPI) {
 						exitCode: -1, // -1 = still running
 						messages: [],
 						stderr: "",
-						usage: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, cost: 0, contextTokens: 0, turns: 0 },
+						usage: emptyUsage(),
+						turns: 0,
+						contextTokens: 0,
 					};
 				}
 
@@ -694,6 +728,7 @@ export default function (pi: ExtensionAPI) {
 						},
 					],
 					details: makeDetails("parallel")(results),
+					usage: sumUsage(results),
 				};
 			}
 
@@ -717,12 +752,14 @@ export default function (pi: ExtensionAPI) {
 					return {
 						content: [{ type: "text", text: `Subagent ${result.stopReason || "failed"}: ${errorMsg}` }],
 						details: makeDetails("single")([result]),
+						usage: result.usage,
 						isError: true,
 					};
 				}
 				return {
 					content: [{ type: "text", text: getFinalOutput(result.messages) || "(no output)" }],
 					details: makeDetails("single")([result]),
+					usage: result.usage,
 				};
 			}
 
@@ -827,7 +864,7 @@ export default function (pi: ExtensionAPI) {
 							container.addChild(new Markdown(finalOutput.trim(), 0, 0, mdTheme));
 						}
 					}
-					const usageStr = formatUsageStats(r.usage, r.model);
+					const usageStr = formatResultUsage(r);
 					if (usageStr) {
 						container.addChild(new Spacer(1));
 						container.addChild(new Text(theme.fg("dim", usageStr), 0, 0));
@@ -843,23 +880,10 @@ export default function (pi: ExtensionAPI) {
 					text += `\n${renderDisplayItems(displayItems, COLLAPSED_ITEM_COUNT)}`;
 					if (displayItems.length > COLLAPSED_ITEM_COUNT) text += `\n${theme.fg("muted", "(Ctrl+O to expand)")}`;
 				}
-				const usageStr = formatUsageStats(r.usage, r.model);
+				const usageStr = formatResultUsage(r);
 				if (usageStr) text += `\n${theme.fg("dim", usageStr)}`;
 				return new Text(text, 0, 0);
 			}
-
-			const aggregateUsage = (results: SingleResult[]) => {
-				const total = { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, cost: 0, turns: 0 };
-				for (const r of results) {
-					total.input += r.usage.input;
-					total.output += r.usage.output;
-					total.cacheRead += r.usage.cacheRead;
-					total.cacheWrite += r.usage.cacheWrite;
-					total.cost += r.usage.cost;
-					total.turns += r.usage.turns;
-				}
-				return total;
-			};
 
 			if (details.mode === "chain") {
 				const successCount = details.results.filter((r) => r.exitCode === 0).length;
@@ -912,11 +936,11 @@ export default function (pi: ExtensionAPI) {
 							container.addChild(new Markdown(finalOutput.trim(), 0, 0, mdTheme));
 						}
 
-						const stepUsage = formatUsageStats(r.usage, r.model);
+						const stepUsage = formatResultUsage(r);
 						if (stepUsage) container.addChild(new Text(theme.fg("dim", stepUsage), 0, 0));
 					}
 
-					const usageStr = formatUsageStats(aggregateUsage(details.results));
+					const usageStr = formatTotalUsage(details.results);
 					if (usageStr) {
 						container.addChild(new Spacer(1));
 						container.addChild(new Text(theme.fg("dim", `Total: ${usageStr}`), 0, 0));
@@ -937,7 +961,7 @@ export default function (pi: ExtensionAPI) {
 					if (displayItems.length === 0) text += `\n${theme.fg("muted", "(no output)")}`;
 					else text += `\n${renderDisplayItems(displayItems, 5)}`;
 				}
-				const usageStr = formatUsageStats(aggregateUsage(details.results));
+				const usageStr = formatTotalUsage(details.results);
 				if (usageStr) text += `\n\n${theme.fg("dim", `Total: ${usageStr}`)}`;
 				text += `\n${theme.fg("muted", "(Ctrl+O to expand)")}`;
 				return new Text(text, 0, 0);
@@ -997,11 +1021,11 @@ export default function (pi: ExtensionAPI) {
 							container.addChild(new Markdown(finalOutput.trim(), 0, 0, mdTheme));
 						}
 
-						const taskUsage = formatUsageStats(r.usage, r.model);
+						const taskUsage = formatResultUsage(r);
 						if (taskUsage) container.addChild(new Text(theme.fg("dim", taskUsage), 0, 0));
 					}
 
-					const usageStr = formatUsageStats(aggregateUsage(details.results));
+					const usageStr = formatTotalUsage(details.results);
 					if (usageStr) {
 						container.addChild(new Spacer(1));
 						container.addChild(new Text(theme.fg("dim", `Total: ${usageStr}`), 0, 0));
@@ -1025,7 +1049,7 @@ export default function (pi: ExtensionAPI) {
 					else text += `\n${renderDisplayItems(displayItems, 5)}`;
 				}
 				if (!isRunning) {
-					const usageStr = formatUsageStats(aggregateUsage(details.results));
+					const usageStr = formatTotalUsage(details.results);
 					if (usageStr) text += `\n\n${theme.fg("dim", `Total: ${usageStr}`)}`;
 				}
 				if (!expanded) text += `\n${theme.fg("muted", "(Ctrl+O to expand)")}`;
