@@ -47,6 +47,15 @@ in
         mv "$out/bin/${pname}" "$out/bin/.${pname}-wrapped"
         cat > "$out/bin/${pname}" <<'WRAPPER'
 #!/bin/sh
+# Chromium/ICU reads a single readlink(/etc/localtime) and parses the path
+# for "zoneinfo/". The FHS sandbox remaps /etc/localtime -> /.host-etc/localtime,
+# so ICU can't derive the zone name and falls back to Etc/Unknown (UTC).
+# Derive TZ from the host (this wrapper runs outside the sandbox) so Helium
+# shows correct local time.
+if [ -z "''${TZ:-}" ]; then
+  tz=$(readlink -f /etc/localtime 2>/dev/null)
+  case "$tz" in *zoneinfo/*) export TZ="''${tz#*zoneinfo/}" ;; esac
+fi
 CDM_DIR="$HOME/.config/net.imput.helium/WidevineCdm"
 mkdir -p "$CDM_DIR"
 cat > "$CDM_DIR/latest-component-updated-widevine-cdm" <<HINT
