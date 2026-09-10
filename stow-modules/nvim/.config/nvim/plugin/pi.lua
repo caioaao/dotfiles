@@ -14,6 +14,9 @@ local function location(opts)
 	if file == "" then
 		return nil, "current buffer has no file name"
 	end
+	if opts.range == 0 then
+		return file
+	end
 	if opts.line1 == opts.line2 then
 		return string.format("%s:%d", file, opts.line1)
 	end
