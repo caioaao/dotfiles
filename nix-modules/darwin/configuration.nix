@@ -3,6 +3,7 @@
 let
   humanlayer-cli = pkgs.callPackage ./humanlayer-cli.nix { };
   notion-cli = pkgs.callPackage ./notion-cli.nix { };
+  namespace-devbox = pkgs.callPackage ./namespace-devbox.nix { };
 in {
   # Set your user and shell
   users.users.caio = {
@@ -22,7 +23,7 @@ in {
     ];
   };
 
-  environment.systemPackages = [ humanlayer-cli notion-cli ];
+  environment.systemPackages = [ humanlayer-cli notion-cli namespace-devbox ];
 
   system.primaryUser = "caio";
   system.keyboard = {
