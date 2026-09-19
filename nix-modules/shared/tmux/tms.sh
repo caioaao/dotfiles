@@ -6,12 +6,15 @@ export PROJECTS_DIR="${PROJECTS_DIR:-$HOME/reps}"
 
 function select_path {
 	local path
-	path="$(realpath "$1")"
+	path="$(realpath "$1")" || return
 	echo "${path#"$PROJECTS_DIR/"}"
 }
 
 function fzf_project {
-	select_path "$(fd -H -I -t f -t d -d 4 '^\.git$' "${PROJECTS_DIR}" --exec dirname | sort -u | fzf)"
+	local project
+	project="$(fd -H -I -t f -t d -d 4 '^\.git$' "${PROJECTS_DIR}" --exec dirname | sort -u | fzf)" || return
+	[[ -n "$project" ]] || return 1
+	select_path "$project"
 }
 
 function fzf_session {
@@ -24,34 +27,72 @@ function fzf_session {
 	fi
 }
 
+function usage_error {
+	printf '%s\n' "$1" 'Usage: tms [-d] [--new | --sessions] [--] [project]' >&2
+	exit 2
+}
 
-case "${1:-}" in
+detached=false
+mode=''
+operands=()
+while (( $# > 0 )); do
+	case "$1" in
+		-d)
+			detached=true
+			;;
+		--new|--sessions)
+			[[ -z "$mode" ]] || usage_error 'Select only one of --new or --sessions.'
+			mode=$1
+			;;
+		--)
+			shift
+			operands+=("$@")
+			break
+			;;
+		-*)
+			usage_error "Unknown option: $1"
+			;;
+		*)
+			operands+=("$1")
+			;;
+	esac
+	shift
+done
+(( ${#operands[@]} <= 1 )) || usage_error 'Expected at most one project.'
+
+case "$mode" in
 	--new)
-		selected="${2:-$(fzf_project)}"
+		selected="${operands[0]:-$(fzf_project)}"
 		;;
-	--sessions|'')
-		selected="${2:-$(fzf_session)}"
+	--sessions)
+		selected="${operands[0]:-$(fzf_session)}"
 		;;
 	*)
-		selected=$(select_path "$1")
+		if (( ${#operands[@]} > 0 )); then
+			selected=$(select_path "${operands[0]}")
+		else
+			selected=$(fzf_session)
+		fi
 		;;
 esac
 
 [[ -z "$selected"  ]] && {
-	echo 'No project selected. Exiting'
+	echo 'No project selected. Exiting' >&2
 	exit 1
 }
 
 session_name=${selected//\./__}
 
-tmux has-session -t "$session_name" || {
+tmux has-session -t "=$session_name" 2>/dev/null || {
 	path=$PROJECTS_DIR/$selected
 	tmux new -d -c "$path" -s "$session_name" nvim
-	tmux new-window -c "$path" -d
+	tmux new-window -t "=$session_name:" -c "$path" -d
 }
 
-if [ -z "${TMUX:-}" ]; then
-	tmux attach -t "$session_name"
+if "$detached"; then
+	printf '%s\n' "$session_name"
+elif [ -z "${TMUX:-}" ]; then
+	tmux attach -t "=$session_name"
 else
-	tmux switch-client -t "$session_name"
+	tmux switch-client -t "=$session_name"
 fi
