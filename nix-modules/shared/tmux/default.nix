@@ -15,6 +15,16 @@
       text = builtins.readFile ./tms.sh;
     })
 
+    # Jump to a Pi pane in the current tmux session
+    (pkgs.writeShellApplication {
+      name = "tpi";
+      runtimeInputs = [
+        pkgs.fzf
+        pkgs.tmux
+      ];
+      text = builtins.readFile ./tpi.sh;
+    })
+
   ];
 
   programs.tmux = {
@@ -88,6 +98,9 @@
       # ===============================
       bind W display-popup -E "tms --new"
       bind w display-popup -E "tms --sessions"
+
+      # Pi pane picker
+      bind a display-popup -w 90% -h 80% -E "tpi"
 
       # ===============================
       # Copy Mode Configuration
