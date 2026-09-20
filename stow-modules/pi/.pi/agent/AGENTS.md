@@ -67,6 +67,22 @@ You must have a heightened radar for "complecting" (braiding or entangling thing
 - Prefer LLM models of the same family as you, unless instructed otherwise
 - Always pick the latest model version, unless there's a strong reason not to
 
+## Personal engineering workflow: liveflow-io/accounting
+
+When a Git remote identifies `github.com/liveflow-io/accounting` (SSH or HTTPS),
+including in worktrees, use `~/.pi/agent/repos/liveflow-io/accounting/` as the
+personal engineering-skill configuration directory. Before issue operations,
+read its `issue-tracker.md`; before triage, also read `triage-labels.md`; before
+domain exploration or modeling, read `domain.md`.
+
+For these workflows, those files replace the skills' expected
+`docs/agents/issue-tracker.md`, `docs/agents/triage-labels.md`, and
+`docs/agents/domain.md`. Keep this configuration outside the checkout rather
+than adding personal policy to repository instructions. Repository coding and
+safety rules still apply. This routing does not apply to other repositories.
+When delegating one of these workflows, pass the applicable configuration
+paths and repository scope explicitly to the subagent.
+
 ## Review your work
 
 Load the `fresh-eyes` skill before presenting designs, plans, or non-trivial
