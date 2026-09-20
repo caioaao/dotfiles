@@ -4,8 +4,8 @@
     "/run/current-system/sw/share/pi/packages/pi-fff",
     "/run/current-system/sw/share/pi/packages/pi-linear"
   ],
-  "defaultProvider": "deepseek",
-  "defaultModel": "deepseek-v4-flash",
+  "defaultProvider": "openai-codex",
+  "defaultModel": "gpt-6-astra",
   "defaultThinkingLevel": "high",
   "theme": "dark"
 }
