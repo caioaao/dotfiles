@@ -15,10 +15,10 @@
 # The CLI binary is still `pi`; only the scope/owner changed.
 
 let
-  version = "0.85.1";
+  version = "0.87.0";
   tarball = fetchurl {
     url = "https://registry.npmjs.org/@earendil-works/pi-coding-agent/-/pi-coding-agent-${version}.tgz";
-    hash = "sha256-H0mHKWSb3OZH0RYJk7TZK/PGFMyBkhO+4vkd008qevQ=";
+    hash = "sha256-mmczwOajHVkrU9xg30PdDCb6eTzPI4TtEj/BewRIhmo=";
   };
   srcWithLock = runCommand "pi-${version}-src" {} ''
     mkdir -p $out
@@ -31,7 +31,7 @@ buildNpmPackage {
   pname = "pi";
   inherit version;
   src = srcWithLock;
-  npmDepsHash = "sha256-6JUjmWyCogZGgg2qvmpHPSO+mp4eoYWaKtOJ/08YJa8=";
+  npmDepsHash = "sha256-0MBX7yrBZlPSNvCA+KQ+UnEdj96gzl3Jmr39WZHxAUo=";
   makeCacheWritable = true;
   dontNpmBuild = true;
   npmFlags = [ "--legacy-peer-deps" ];
