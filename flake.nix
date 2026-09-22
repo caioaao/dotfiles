@@ -26,9 +26,16 @@
     # against; pinning it to our stable nixpkgs risks build-dep drift.
     herdr.url = "github:herdrdev/herdr/v0.8.2";
     herdr.inputs.nixpkgs.follows = "nixpkgs-unstable";
+
+    # oh-my-pi (omp) - coding agent. Not in nixpkgs; upstream flake only.
+    # Deliberately keep upstream's own locked inputs (bun2nix, rust-overlay,
+    # nixpkgs): the omp build is sensitive to their exact versions, so
+    # following our nixpkgs risks build-dep drift. Costs a second nixpkgs in
+    # the lockfile, which is the safer trade.
+    oh-my-pi.url = "github:can1357/oh-my-pi/v18.2.10";
   };
 
-  outputs = { nixpkgs, nixpkgs-unstable, nix-darwin, nix-homebrew, determinate, pi, herdr, ... }:
+  outputs = { nixpkgs, nixpkgs-unstable, nix-darwin, nix-homebrew, determinate, pi, herdr, oh-my-pi, ... }:
     let
       # Pick the CPU/OS for each machine
       linuxSystem = "x86_64-linux";
@@ -60,6 +67,10 @@
           # Upstream also ships overlays.default, but it composes rust-overlay
           # into the package set. Take just the package instead.
           herdr = herdr.packages.${final.system}.default;
+
+          # Upstream also ships nixosModules/homeManagerModules, which we don't
+          # need for a plain CLI install. Take just the package.
+          omp = oh-my-pi.packages.${final.system}.default;
         };
 
       # Builder functions for each box. A downstream flake (e.g. the private

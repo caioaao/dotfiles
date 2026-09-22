@@ -57,6 +57,7 @@ in {
     mise
     neovim
     nodejs
+    omp
     tree-sitter
     nixd
     oh-my-posh
