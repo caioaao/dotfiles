@@ -19,11 +19,23 @@ bootstrap:
 	just stow mise true
 	just stow claude-code true
 	just bootstrap-pi
+	just bootstrap-omp
 	just setup-dev-secrets
 
 bootstrap-pi:
 	mkdir -p $HOME/.pi/agent/{skills,extensions/subagent,prompts}
 	just stow pi true 
+
+bootstrap-omp: xdg-base-dirs
+	# PI_CONFIG_DIR relocates omp's config root to ~/.config/omp; pre-create the
+	# agent dir so stow links files individually instead of symlinking the whole
+	# directory (omp writes config.yml.lock next to config.yml).
+	mkdir -p $HOME/.config/omp/agent
+	# omp only splits runtime state (DBs, sessions, logs, caches) out of the
+	# config root when these already exist; otherwise it writes them next to
+	# config.yml. See docs: config-usage.md -> Profiles.
+	mkdir -p $XDG_DATA_HOME/omp $XDG_STATE_HOME/omp $XDG_CACHE_HOME/omp
+	just stow omp true
 
 stow module adopt="false": xdg-base-dirs
 	#!/usr/bin/env bash

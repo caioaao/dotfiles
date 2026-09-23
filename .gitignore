@@ -22,6 +22,12 @@ stow-modules/pi/.pi/agent/trust.json
 !/.pi/prompts/
 !/.pi/settings.json
 
+# omp runtime data (DBs, sessions, logs, caches) lives in the XDG roots
+# ($XDG_{DATA,STATE,CACHE}_HOME/omp), not next to config - see
+# stow-modules/omp/.config/zsh/zshenv.d/10-omp.sh. config.yml.lock is the one
+# file omp still writes into the config root.
+stow-modules/omp/.config/omp/agent/config.yml.lock
+
 # Machine-specific git config (not tracked)
 stow-modules/git/.config/git/config.local
 /.local/

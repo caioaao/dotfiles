@@ -1,0 +1,10 @@
+modelRoles:
+  default: fireworks/deepseek-v4.1-flash
+composer:
+  shape: box
+theme:
+  dark: titanium
+  light: light
+setupVersion: 2
+dev:
+  autoqaConsent: denied
