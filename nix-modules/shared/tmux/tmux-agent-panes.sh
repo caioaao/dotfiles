@@ -2,15 +2,12 @@
 
 set -euo pipefail
 
-# @pi_status is published per pane by Pi's tmux-window-name extension.
+# Agent panes advertise themselves through the tmux agent protocol:
+# @agent_name (marker), @agent_status, @agent_session.
+# See docs/tmux-agent-protocol.md.
 candidates=$(tmux list-panes -s \
-	-f '#{&&:#{@pi_status},#{!=:#{pane_dead},1}}' \
-	-F $'#{session_id}:#{window_id}.#{pane_id}\t#{window_name}\t#{?#{==:#{@pi_status},busy},Working,Ready}\t(window #{window_index}, pane #{pane_index})')
-
-if [[ -z "$candidates" ]]; then
-	printf '%s\n' 'No Pi panes found.' >&2
-	exit 0
-fi
+	-f '#{&&:#{@agent_name},#{!=:#{pane_dead},1}}' \
+	-F $'#{session_id}:#{window_id}.#{pane_id}\t#{@agent_name}\t#{@agent_status}\t#{?#{@agent_session},#{@agent_session},-}\t(window #{window_index}, pane #{pane_index})')
 
 if selected=$(printf '%s\n' "$candidates" | fzf \
 	--no-multi \
@@ -18,7 +15,7 @@ if selected=$(printf '%s\n' "$candidates" | fzf \
 	--with-nth=2.. \
 	--preview='tmux capture-pane -p -e -t {1} -S -80' \
 	--preview-window='right,65%,wrap,follow' \
-	--prompt='Pi conversation> '); then
+	--prompt='Agent> '); then
 	target=${selected%%$'\t'*}
 else
 	status=$?

@@ -15,14 +15,14 @@
       text = builtins.readFile ./tms.sh;
     })
 
-    # Jump to a Pi pane in the current tmux session
+    # Jump to an agent pane in the current tmux session
     (pkgs.writeShellApplication {
-      name = "tpi";
+      name = "tmux-agent-panes";
       runtimeInputs = [
         pkgs.fzf
         pkgs.tmux
       ];
-      text = builtins.readFile ./tpi.sh;
+      text = builtins.readFile ./tmux-agent-panes.sh;
     })
 
   ];
@@ -99,8 +99,8 @@
       bind W display-popup -E "tms --new"
       bind w display-popup -E "tms --sessions"
 
-      # Pi pane picker
-      bind a display-popup -w 90% -h 80% -E "tpi"
+      # Agent pane picker (any pane publishing the tmux agent protocol)
+      bind a display-popup -w 90% -h 80% -E "tmux-agent-panes"
 
       # ===============================
       # Copy Mode Configuration
