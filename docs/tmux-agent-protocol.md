@@ -59,13 +59,30 @@ Rules:
 
 - **`tmux-agent-panes`** - lists every pane with `@agent_name` set, showing name, status,
   session, and location, and switches to the selection.
+- **Window pill** - the tmux status bar appends `@agent_status` to each window's pill
+  (catppuccin, rounded style), beside the window name and number. The format expands
+  per window against that window's active pane, so the status shows while the agent
+  pane is active; panes without an agent render unchanged. `working` is decorated
+  into the 8-dot braille rotation the pill's animation clock cycles, via the global
+  `@agent_spinner` option; unknown tokens render verbatim. See the window text
+  settings in `nix-modules/shared/tmux/default.nix`.
+- **`tmux-agent-spinner`** - the pill's animation clock. tmux only re-expands a
+  status format when something redraws it, and its fastest in-server timer
+  (`status-interval`) is one second, so this helper cycles `@agent_spinner` from
+  outside the server while any pane reports `working` and idles otherwise. Started
+  once per server from `tmux.conf`.
 
-Nothing in the tmux config is agent-aware: window names are managed manually,
-and agents never install global options.
+Agents still install no global options and window names remain manually managed:
+the status pill only reads the pane option, it does not own it.
 
-## Reference publisher
+## Reference publishers
 
-`~/.pi/agent/extensions/tmux-agent.ts` implements the protocol for pi: it sets
-the options on `session_start`, tracks `agent_start` / `agent_end` /
-`session_info_changed`, and clears them on `session_shutdown`. Agents without
-an extension host can publish from lifecycle hooks using the commands above.
+- `~/.pi/agent/extensions/tmux-agent.ts` implements the protocol for pi: it sets
+  the options on `session_start`, tracks `agent_start` / `agent_end` /
+  `session_info_changed`, and clears them on `session_shutdown`.
+- `~/.config/omp/agent/extensions/tmux-agent.ts` does the same for omp. omp has
+  no `session_info_changed` event, so it refreshes the session label on
+  `agent_start` instead, which also picks up the auto-generated session title.
+
+Agents without an extension host can publish from lifecycle hooks using the
+commands above.

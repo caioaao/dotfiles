@@ -25,6 +25,17 @@
       text = builtins.readFile ./tmux-agent-panes.sh;
     })
 
+    # Animate the working-agent indicator in the window pill
+    (pkgs.writeShellApplication {
+      name = "tmux-agent-spinner";
+      runtimeInputs = [
+        pkgs.coreutils
+        pkgs.tmux
+        pkgs.util-linux
+      ];
+      text = builtins.readFile ./tmux-agent-spinner.sh;
+    })
+
   ];
 
   programs.tmux = {
@@ -122,8 +133,31 @@
 
       # Window name rendering fix
       # See: https://github.com/catppuccin/tmux/issues/431
-      set -g @catppuccin_window_text "#W"
-      set -g @catppuccin_window_current_text " #W"
+      # Append the agent protocol status to the window pill, alongside the
+      # name (#W) and number (#I, rendered separately by catppuccin). The
+      # format expands per window against its active pane, so a pane that
+      # publishes @agent_status (see docs/tmux-agent-protocol.md) shows it
+      # while active; panes without an agent render unchanged.
+      #
+      # `working` renders as the live spinner frame rather than the word: the
+      # pill is a status light, and tmux-agent-spinner keeps @agent_spinner
+      # cycling for as long as any pane is working. Other tokens render
+      # verbatim, as the protocol requires.
+      #
+      # The frames are the 8-dot braille rotation, not the 6-dot one agent TUIs
+      # spin in their own UI. Ghostty renders braille as a full-cell 2x4 sprite
+      # (it draws them for seamless progress bars), so a 6-dot frame lights only
+      # the top three of four dot rows and sits a dot row high next to the
+      # x-height window name - and bobs a row as the frames rotate. Every 8-dot
+      # frame fills all four rows with the same ink box, centered in the cell.
+      set -g @agent_spinner "⣾"
+      set -g @catppuccin_window_text " #{?#{@agent_status},#{?#{==:#{@agent_status},working},#{@agent_spinner} ,},}#W"
+      set -g @catppuccin_window_current_text " #{?#{@agent_status},#{?#{==:#{@agent_status},working},#{@agent_spinner} ,},}#W"
+
+      # The pill's animation clock. tmux only re-expands a status format when
+      # something redraws it and has no timer faster than status-interval, so
+      # a helper owns the frame; see nix-modules/shared/tmux/tmux-agent-spinner.sh.
+      run-shell -b "tmux-agent-spinner"
 
       # ===============================
       # Plugin Initialization
