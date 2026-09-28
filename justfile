@@ -20,11 +20,20 @@ bootstrap:
 	just stow claude-code true
 	just bootstrap-pi
 	just bootstrap-omp
+	just bootstrap-agents
 	just setup-dev-secrets
 
 bootstrap-pi:
 	mkdir -p $HOME/.pi/agent/{skills,extensions/subagent,prompts}
 	just stow pi true 
+
+bootstrap-agents:
+	# ~/.agents/skills is a shared cross-harness skill store; other skills there
+	# are installed by their own tooling, so pre-create the directory to keep
+	# stow linking the linear skill individually instead of symlinking the whole
+	# ~/.agents tree (which would hide the unmanaged skills).
+	mkdir -p $HOME/.agents/skills
+	just stow agents true
 
 bootstrap-omp: xdg-base-dirs
 	# PI_CONFIG_DIR relocates omp's config root to ~/.config/omp; pre-create the
