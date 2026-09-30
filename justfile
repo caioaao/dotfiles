@@ -40,6 +40,10 @@ bootstrap-omp: xdg-base-dirs
 	# agent dir so stow links files individually instead of symlinking the whole
 	# directory (omp writes config.yml.lock next to config.yml).
 	mkdir -p $HOME/.config/omp/agent
+	# Writes to mcp.json go through write-temp + rename(2), which replaces the
+	# stow symlink with a regular file; re-run this recipe (or `just stow omp
+	# true`) after an omp-side `/mcp` mutation to re-adopt it. config.yml is
+	# written in place, so its symlink survives normal settings changes.
 	# omp only splits runtime state (DBs, sessions, logs, caches) out of the
 	# config root when these already exist; otherwise it writes them next to
 	# config.yml. See docs: config-usage.md -> Profiles.
