@@ -1,5 +1,6 @@
 modelRoles:
   default: fireworks/deepseek-v4.1-flash
+defaultThinkingLevel: auto
 composer:
   shape: box
 theme:
