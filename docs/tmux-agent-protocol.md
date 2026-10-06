@@ -83,6 +83,9 @@ the status pill only reads the pane option, it does not own it.
 - `~/.config/omp/agent/extensions/tmux-agent.ts` does the same for omp. omp has
   no `session_info_changed` event, so it refreshes the session label on
   `agent_start` instead, which also picks up the auto-generated session title.
+  omp runs subagents in-process with the extension rebound to each, all sharing
+  the parent's `$TMUX_PANE`; only the UI session (`ctx.hasUI`) publishes, so
+  subagents cannot overwrite the parent's status or unset its options.
 
 Agents without an extension host can publish from lifecycle hooks using the
 commands above.

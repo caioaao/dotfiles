@@ -12,6 +12,12 @@
  * The protocol is defined in docs/tmux-agent-protocol.md. This extension only
  * owns the data and installs no global tmux options. All three options are
  * cleared when the session shuts down. No-op outside tmux.
+ *
+ * omp hosts subagents in the same process and rebinds this extension to each
+ * of them, so every subagent sees the parent's TMUX_PANE. Only the session
+ * with a UI (the one the user drives) publishes; subagents run headless
+ * (ctx.hasUI false) and would otherwise overwrite the parent's status and
+ * clear its options when they shut down.
  */
 
 import { execFile } from "node:child_process";
@@ -37,9 +43,14 @@ function publish(option: string, value: string) {
 	tmuxFire("refresh-client", "-S");
 }
 
+// The session that owns the pane: inside tmux and the one the user drives.
+function ownsPane(ctx: { hasUI: boolean }) {
+	return inTmux && ctx.hasUI;
+}
+
 export default function (pi: ExtensionAPI) {
 	pi.on("session_start", (_event, ctx) => {
-		if (!inTmux) return;
+		if (!ownsPane(ctx)) return;
 		// Prefer the user-assigned session name, fall back to the session id.
 		const session = ctx.sessionManager.getSessionName() ?? ctx.sessionManager.getSessionId();
 		publish("@agent_name", AGENT_NAME);
@@ -51,17 +62,19 @@ export default function (pi: ExtensionAPI) {
 	// turn starts, which also picks up the auto-generated session title set
 	// after the first input.
 	pi.on("agent_start", (_event, ctx) => {
+		if (!ownsPane(ctx)) return;
 		const session = ctx.sessionManager.getSessionName() ?? ctx.sessionManager.getSessionId();
 		publish("@agent_session", session);
 		publish("@agent_status", "working");
 	});
 
-	pi.on("agent_end", () => {
+	pi.on("agent_end", (_event, ctx) => {
+		if (!ownsPane(ctx)) return;
 		publish("@agent_status", "idle");
 	});
 
-	pi.on("session_shutdown", () => {
-		if (!inTmux) return;
+	pi.on("session_shutdown", (_event, ctx) => {
+		if (!ownsPane(ctx)) return;
 		for (const option of OPTIONS) {
 			tmuxFire("set-option", "-p", "-t", pane!, "-u", option);
 		}
