@@ -32,7 +32,7 @@
     # nixpkgs): the omp build is sensitive to their exact versions, so
     # following our nixpkgs risks build-dep drift. Costs a second nixpkgs in
     # the lockfile, which is the safer trade.
-    oh-my-pi.url = "github:can1357/oh-my-pi/v18.4.4";
+    oh-my-pi.url = "github:can1357/oh-my-pi/v18.8.0";
   };
 
   outputs = { nixpkgs, nixpkgs-unstable, nix-darwin, nix-homebrew, determinate, pi, herdr, oh-my-pi, ... }:
