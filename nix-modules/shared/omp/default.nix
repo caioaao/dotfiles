@@ -1,6 +1,10 @@
 # omp (oh-my-pi) packages linked under /run/current-system/sw/share/omp; the
 # stowed config.yml lists each directory under `extensions:`.
 #
+# wayfinder-loop: TypeScript extension adding `/wayfind <map>`, which runs the
+# wayfinder skill over a map one ticket per fresh session (see its header).
+# omp loads the .ts source directly with Bun, so the package is the file.
+#
 # caioaao-extra: MCP servers, declared per box. Box modules add entries to
 # programs.omp.mcpServers (attrsets merge across modules, so a downstream
 # private flake can append its own). The result is an omp extension package
@@ -34,6 +38,8 @@ in
     environment.systemPackages = [
       (pkgs.writeTextDir "share/omp/caioaao-extra/mcp.json"
         (builtins.toJSON { mcpServers = config.programs.omp.mcpServers; }))
+      (pkgs.writeTextDir "share/omp/wayfinder-loop/index.ts"
+        (builtins.readFile ./wayfinder-loop/index.ts))
     ];
   };
 }

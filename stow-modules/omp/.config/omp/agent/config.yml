@@ -1,5 +1,5 @@
 modelRoles:
-  default: fireworks/deepseek-v4.1-flash
+  default: anthropic/claude-opus-5-5
 defaultThinkingLevel: auto
 composer:
   shape: box
@@ -13,3 +13,4 @@ dev:
 # programs.omp.mcpServers, and the /wayfind loop extension.
 extensions:
   - /run/current-system/sw/share/omp/caioaao-extra
+  - /run/current-system/sw/share/omp/wayfinder-loop
