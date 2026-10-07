@@ -8,7 +8,7 @@ Three modes. Pick by who the caller is, not by convenience.
 | OAuth 2.0 access token | `Authorization: Bearer <token>` | 24 h, refresh token alongside | Apps acting for other users |
 | Client credentials token | `Authorization: Bearer <token>` | 30 days, no refresh token | CI and scheduled server-to-server runs |
 
-`skill://linear/scripts/linear-gql.sh` sends `LINEAR_API_KEY` verbatim as the `Authorization` value, so a personal key works as-is; for OAuth export the full header value instead: `LINEAR_API_KEY="Bearer <token>"`.
+`~/.agents/skills/linear/scripts/linear-gql.sh` sends `LINEAR_API_KEY` verbatim as the `Authorization` value, so a personal key works as-is; for OAuth export the full header value instead: `LINEAR_API_KEY="Bearer <token>"`.
 
 Keys are created at <https://linear.app/settings/account/security>; OAuth apps at <https://linear.app/settings/api/applications/new>.
 

@@ -12,13 +12,26 @@ Endpoint, auth, the request loop, and one reference file per branch. Every Graph
 Use the wrapper — it handles JSON encoding, auth, and the error exit code:
 
 ```bash
-skill://linear/scripts/linear-gql.sh -q '{ viewer { id name email } }'
-skill://linear/scripts/linear-gql.sh < query.graphql          # or stdin
-skill://linear/scripts/linear-gql.sh -q 'query($n:Int!){ issues(first:$n){ nodes { identifier } } }' -v '{"n":10}'
-skill://linear/scripts/linear-gql.sh -H -q '{ viewer { id } }' # + rate-limit headers
+~/.agents/skills/linear/scripts/linear-gql.sh -q '{ viewer { id name email } }'
+~/.agents/skills/linear/scripts/linear-gql.sh < query.graphql          # or stdin
+~/.agents/skills/linear/scripts/linear-gql.sh -q 'query($n:Int!){ issues(first:$n){ nodes { identifier } } }' -v '{"n":10}'
+~/.agents/skills/linear/scripts/linear-gql.sh -H -q '{ viewer { id } }' # + rate-limit headers
+~/.agents/skills/linear/scripts/linear-gql.sh -r '.data.issue.description' -q '{ issue(id:"FLOW-1411"){ description } }'  # raw Markdown
 ```
 
-The wrapper lives in the skill directory, not in your repo: `skill://linear/scripts/linear-gql.sh` is resolved by `bash` to `~/.agents/skills/linear/scripts/linear-gql.sh`. Do not look for a `.agents/skills/...` path under your cwd — there is none. If the internal URL does not resolve, invoke the absolute path `~/.agents/skills/linear/scripts/linear-gql.sh` instead. Needs `LINEAR_API_KEY` — a personal key as-is, or a full header value like `Bearer <token>` — plus `curl` and `jq`; exits 1 when the response carries `errors`.
+The wrapper lives in the skill directory, not in your repo: always invoke it by the absolute path `~/.agents/skills/linear/scripts/linear-gql.sh` (inside quotes, write `"$HOME/.agents/..."`). Do not look for a `.agents/skills/...` path under your cwd — there is none. Do not execute `skill://linear/scripts/linear-gql.sh`: `read` resolves that URL, but `bash` refuses to run a virtual path (exit 126). Needs `LINEAR_API_KEY` — a personal key as-is, or a full header value like `Bearer <token>` — plus `curl` and `jq`; exits 1 when the response carries `errors`.
+
+**Print Markdown fields with `-r`.** `description`, `body` and `content` arrive as one JSON string with escaped `\n`s, so the default pretty-printed body puts a whole document on a single line, and agent tool output cuts long lines (omp at 768 bytes). The text comes back truncated and you end up fetching it twice. Whenever a selection includes one of these fields, pass `-r FILTER`: the wrapper checks `errors` first, then prints `jq -r FILTER` of the response, so strings come out as raw Markdown and objects as pretty JSON. Delete the Markdown fields from the structured part and print them after it, in the same request:
+
+```bash
+~/.agents/skills/linear/scripts/linear-gql.sh -q '{ issue(id:"FLOW-1411"){
+    identifier title state { name } children(first:50){ nodes { identifier title } }
+    description comments(first:50){ nodes { createdAt user { name } body } } } }' \
+  -r '.data.issue | del(.description, .comments), .description,
+      (.comments.nodes | sort_by(.createdAt)[] | "--- \(.user.name) \(.createdAt)\n\(.body)")'
+```
+
+Use `-r` rather than piping into `jq`: a pipe drops the wrapper's exit status and turns an `errors` response into `null`. With `-r`, an `errors` response prints the full body to stderr and exits 1.
 
 Raw contract, for language clients, Postman, or a `PUT` upload:
 

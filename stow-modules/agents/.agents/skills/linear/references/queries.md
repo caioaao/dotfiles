@@ -20,7 +20,7 @@ Forward pagination (`first`/`after`) is the documented path; the schema also acc
 ## Pagination loop
 
 ```bash
-S='skill://linear/scripts/linear-gql.sh'   # or ~/.agents/skills/linear/scripts/linear-gql.sh
+S="$HOME/.agents/skills/linear/scripts/linear-gql.sh"
 after=null
 while :; do
   page=$($S -q 'query($after:String){ issues(first:50, after:$after, orderBy:updatedAt) {
@@ -90,7 +90,7 @@ Three options, in order of usefulness:
 
 ## Markdown in text fields
 
-`description`, `body`, `content` are Markdown. A resource URL becomes a mention; a fenced block becomes a collapsible section:
+`description`, `body`, `content` are Markdown. Read them through the wrapper's `-r` flag ([SKILL.md §1](../SKILL.md#1-send-a-request)); in the default pretty JSON each one is a single line that tool output truncates. A resource URL becomes a mention; a fenced block becomes a collapsible section:
 
 ```md
 https://linear.app/liveflow/profiles/someuser what do you think of

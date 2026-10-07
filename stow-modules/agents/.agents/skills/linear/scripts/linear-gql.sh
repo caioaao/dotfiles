@@ -6,11 +6,16 @@
 #   linear-gql.sh < query.graphql                        # document on stdin
 #   linear-gql.sh -q 'query($t:String!){...}' -v '{"t":"ASYS"}'
 #   linear-gql.sh -H -q '{ viewer { id } }'              # also print rate-limit headers
+#   linear-gql.sh -r '.data.issue.description' -q '{ issue(id:"FLOW-1") { description } }'
+#                                                        # print `jq -r FILTER` of the body
 #
 # Requires: LINEAR_API_KEY (personal API key, or a full header value such as
 # "Bearer <oauth-token>"), curl, jq.
 # Exit status: 0 when the response has no `errors` array, 1 otherwise.
-# Always prints the body; callers MUST inspect `errors` before trusting `data`.
+# Without -r, always prints the body; callers MUST inspect `errors` before
+# trusting `data`. With -r, a response carrying `errors` prints the body to
+# stderr instead of applying FILTER, so Markdown fields (description, body,
+# content) can be printed raw without hiding failures behind `null`.
 
 set -euo pipefail
 
@@ -22,12 +27,14 @@ fi
 query=""
 variables="{}"
 show_headers=0
+raw_filter=""
 
 while [ $# -gt 0 ]; do
   case "$1" in
     -q) query="$2"; shift 2 ;;
     -v) variables="$2"; shift 2 ;;
     -H) show_headers=1; shift ;;
+    -r) raw_filter="$2"; shift 2 ;;
     *) echo "unknown argument: $1" >&2; exit 2 ;;
   esac
 done
@@ -54,8 +61,17 @@ else
     --data-binary "$payload")"
 fi
 
-printf '%s' "$response" | jq .
-
 if printf '%s' "$response" | jq -e 'has("errors")' >/dev/null 2>&1; then
+  if [ -n "$raw_filter" ]; then
+    printf '%s' "$response" | jq . >&2
+  else
+    printf '%s' "$response" | jq .
+  fi
   exit 1
+fi
+
+if [ -n "$raw_filter" ]; then
+  printf '%s' "$response" | jq -r "$raw_filter"
+else
+  printf '%s' "$response" | jq .
 fi
