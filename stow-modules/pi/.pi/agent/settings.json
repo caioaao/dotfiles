@@ -2,7 +2,8 @@
   "lastChangelogVersion": "0.87.0",
   "packages": [
     "/run/current-system/sw/share/pi/packages/pi-fff",
-    "/run/current-system/sw/share/pi/packages/pi-linear"
+    "/run/current-system/sw/share/pi/packages/pi-linear",
+    "/run/current-system/sw/share/omp/mattpocock-skills"
   ],
   "defaultProvider": "openai-codex",
   "defaultModel": "gpt-6-astra",

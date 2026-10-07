@@ -5,6 +5,12 @@
 # wayfinder skill over a map one ticket per fresh session (see its header).
 # omp loads the .ts source directly with Bun, so the package is the file.
 #
+# mattpocock-skills: skills vendored from github.com/mattpocock/skills,
+# shipped as an extension package whose sibling `skills/` omp discovers
+# (omp-plugins provider). pi reads the same directory as a package
+# (conventional `skills/`), listed in the stowed ~/.pi/agent/settings.json.
+# Update by copying upstream skills/<category>/<name>/ over skills/<name>/.
+#
 # caioaao-extra: MCP servers, declared per box. Box modules add entries to
 # programs.omp.mcpServers (attrsets merge across modules, so a downstream
 # private flake can append its own). The result is an omp extension package
@@ -62,6 +68,10 @@ in
         (builtins.toJSON { mcpServers = config.programs.omp.mcpServers; }))
       (pkgs.writeTextDir "share/omp/wayfinder-loop/index.ts"
         (builtins.readFile ./wayfinder-loop/index.ts))
+      (pkgs.runCommand "omp-mattpocock-skills" { } ''
+        mkdir -p $out/share/omp
+        cp -r ${./mattpocock-skills} $out/share/omp/mattpocock-skills
+      '')
     ];
 
     # Fallback for boxes that don't pick their own
