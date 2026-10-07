@@ -22,6 +22,7 @@ in {
   imports = [
     ./herdr/default.nix
     ./tmux/default.nix
+    ./omp/default.nix
     ./tsserve-file/default.nix
     ./zsh/default.nix
   ];

@@ -25,6 +25,19 @@ in {
 
   environment.systemPackages = [ humanlayer-cli notion-cli namespace-devbox ];
 
+  # omp MCP servers for this box; see nix-modules/shared/omp.
+  # TablePlus.app is installed outside nix; tableplus-mcp ships inside it.
+  programs.omp.mcpServers = {
+    tableplus = {
+      type = "stdio";
+      command = "/Applications/TablePlus.app/Contents/MacOS/tableplus-mcp";
+    };
+    datadog = {
+      type = "http";
+      url = "https://mcp.datadoghq.com/v1/mcp";
+    };
+  };
+
   system.primaryUser = "caio";
   system.keyboard = {
     enableKeyMapping = true;
