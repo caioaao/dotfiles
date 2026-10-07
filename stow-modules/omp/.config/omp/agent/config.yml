@@ -1,5 +1,5 @@
-modelRoles:
-  default: anthropic/claude-opus-5-5
+# modelRoles is set per box (programs.omp.settings -> PI_CONFIG_FILES
+# overlay), which overrides anything omp writes here.
 defaultThinkingLevel: auto
 composer:
   shape: box

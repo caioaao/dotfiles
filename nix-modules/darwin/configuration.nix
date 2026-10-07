@@ -38,6 +38,9 @@ in {
     };
   };
 
+  # omp settings overlay for this box; see nix-modules/shared/omp.
+  programs.omp.settings.modelRoles.default = "anthropic/claude-opus-5-5";
+
   system.primaryUser = "caio";
   system.keyboard = {
     enableKeyMapping = true;

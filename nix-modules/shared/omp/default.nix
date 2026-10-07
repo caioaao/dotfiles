@@ -22,24 +22,49 @@
 # Reference binaries by store path ("${pkgs.foo}/bin/foo") so the dependency
 # ships with the config. omp expands ${VAR} at load time; escape it in Nix
 # strings as "\${VAR}" or ''${VAR}.
+#
+# config.yml: per-box settings overlay. Box modules set programs.omp.settings
+# (e.g. modelRoles.default); the result lands at
+# /run/current-system/sw/share/omp/config.yml and PI_CONFIG_FILES points omp
+# at it. Overlays sit above the stowed global config.yml (deep merge: objects
+# merge per key, scalars/arrays replace), so any key set here is nix-owned:
+# /model or /settings still persist to config.yml, but the overlay wins on the
+# next start. The file always exists while this module is imported (an empty
+# mapping when nothing is set) - omp hard-fails on a missing overlay.
+# Verify the effective value with `omp config get modelRoles`.
 { config, lib, pkgs, ... }:
 let
   json = pkgs.formats.json { };
 in
 {
-  options.programs.omp.mcpServers = lib.mkOption {
-    type = lib.types.attrsOf json.type;
-    default = { };
-    description = "MCP servers exposed to omp through the caioaao-extra extension package.";
+  options.programs.omp = {
+    mcpServers = lib.mkOption {
+      type = lib.types.attrsOf json.type;
+      default = { };
+      description = "MCP servers exposed to omp through the caioaao-extra extension package.";
+    };
+
+    settings = lib.mkOption {
+      type = json.type;
+      default = { };
+      description = "Per-box omp settings, loaded as a PI_CONFIG_FILES overlay above the stowed config.yml.";
+    };
   };
 
   config = {
     environment.pathsToLink = [ "/share/omp" ];
+    environment.variables.PI_CONFIG_FILES = "/run/current-system/sw/share/omp/config.yml";
     environment.systemPackages = [
+      # JSON is valid YAML; omp parses overlays as config.yml.
+      (pkgs.writeTextDir "share/omp/config.yml"
+        (builtins.toJSON config.programs.omp.settings))
       (pkgs.writeTextDir "share/omp/caioaao-extra/mcp.json"
         (builtins.toJSON { mcpServers = config.programs.omp.mcpServers; }))
       (pkgs.writeTextDir "share/omp/wayfinder-loop/index.ts"
         (builtins.readFile ./wayfinder-loop/index.ts))
     ];
+
+    # Fallback for boxes that don't pick their own
+    programs.omp.settings.modelRoles.default = lib.mkDefault "anthropic/claude-opus-5-5";
   };
 }
