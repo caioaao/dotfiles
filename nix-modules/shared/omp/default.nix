@@ -10,6 +10,8 @@
 # (omp-plugins provider). pi reads the same directory as a package
 # (conventional `skills/`), listed in the stowed ~/.pi/agent/settings.json.
 # Update by copying upstream skills/<category>/<name>/ over skills/<name>/.
+# Local patches to re-apply after an update: grilling/SKILL.md (max 4
+# questions per round; ask via the harness's structured question tool).
 #
 # caioaao-extra: MCP servers, declared per box. Box modules add entries to
 # programs.omp.mcpServers (attrsets merge across modules, so a downstream
