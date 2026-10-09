@@ -33,3 +33,4 @@ Aim for simplicity. Which means having one role, one task, one concern, or one c
 
 **Avoid Complecting**
 You must have a heightened radar for "complecting" (braiding or entangling things together). When components start to depend on or make assumptions about each other's inner workings, you must call it out.
+
