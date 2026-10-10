@@ -118,6 +118,7 @@
     ghostty
     keyd
     yubioath-flutter
+    python3
   ];
 
   # Set up keyboard options by device
