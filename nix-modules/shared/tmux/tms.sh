@@ -28,17 +28,29 @@ function fzf_session {
 }
 
 function usage_error {
-	printf '%s\n' "$1" 'Usage: tms [-d] [--new | --sessions] [--] [project]' >&2
+	printf '%s\n' "$1" 'Usage: tms [-d] [-n name] [-c cmd] [--new | --sessions] [--] [project]' >&2
 	exit 2
 }
 
 detached=false
 mode=''
+cmd=''
+name=''
 operands=()
 while (( $# > 0 )); do
 	case "$1" in
 		-d)
 			detached=true
+			;;
+		-c|--cmd)
+			(( $# >= 2 )) || usage_error "$1 requires an argument."
+			cmd=$2
+			shift
+			;;
+		-n|--name)
+			(( $# >= 2 )) || usage_error "$1 requires an argument."
+			name=$2
+			shift
 			;;
 		--new|--sessions)
 			[[ -z "$mode" ]] || usage_error 'Select only one of --new or --sessions.'
@@ -81,13 +93,20 @@ esac
 	exit 1
 }
 
-session_name=${selected//\./__}
+session_name=${name:-$selected}
+session_name=${session_name//\./__}
 
-tmux has-session -t "=$session_name" 2>/dev/null || {
+if ! tmux has-session -t "=$session_name" 2>/dev/null; then
 	path=$PROJECTS_DIR/$selected
-	tmux new -d -c "$path" -s "$session_name" nvim
-	tmux new-window -t "=$session_name:" -c "$path" -d
-}
+	if [[ -n "$cmd" ]]; then
+		tmux new -d -c "$path" -s "$session_name" "$cmd"
+	else
+		tmux new -d -c "$path" -s "$session_name" nvim
+		tmux new-window -t "=$session_name:" -c "$path" -d
+	fi
+elif [[ -n "$cmd" ]]; then
+	printf 'tms: session %s exists; ignoring --cmd\n' "$session_name" >&2
+fi
 
 if "$detached"; then
 	printf '%s\n' "$session_name"

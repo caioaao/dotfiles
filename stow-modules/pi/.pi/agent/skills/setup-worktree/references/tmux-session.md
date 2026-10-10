@@ -12,7 +12,11 @@ or switches the current client.
 - Session names come from the project-relative path with periods replaced by
   double underscores. Different paths can therefore collide. Pane start
   directories help distinguish an intended session from an unrelated one.
-- A new session gets an `nvim` window and a shell window. An existing session is
-  reused without checking or repairing its contents.
+- A new session gets an `nvim` window and a shell window. With `-c CMD`, it
+  instead gets a single window running `CMD`, and the session ends when `CMD`
+  exits. An existing session is reused without checking or repairing its
+  contents; `-c` is then ignored with a warning on stderr.
+- `-n NAME` overrides the derived session name (periods still become double
+  underscores), allowing several sessions on one checkout or avoiding collisions.
 - Tmux's `=` target prefix selects an exact session name, for example in
   `tmux has-session -t "=$session_name"`.

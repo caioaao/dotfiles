@@ -9,6 +9,7 @@
       name = "tms";
       runtimeInputs = [
         pkgs.coreutils
+        pkgs.fd
         pkgs.fzf
         pkgs.tmux
       ];
