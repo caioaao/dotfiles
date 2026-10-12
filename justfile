@@ -64,9 +64,29 @@ stow module adopt="false": xdg-base-dirs
 setup-dev-secrets:
 	op item get dev-secrets --fields notesPlain --account my.1password.com > $XDG_CONFIG_HOME/zsh/zshenv.d/10-secrets.sh
 
+# Register the YubiKey with pam_u2f; needs the key plugged in and one touch.
 [linux]
-enroll-fingerprint:
-	fprintd-enroll
+setup-u2f:
+	#!/usr/bin/env bash
+	set -euo pipefail
+	# Touch factor for sudo, polkit-1 and hyprlock - see
+	# nix-modules/nixos/configuration.nix.
+	#
+	# Pre-create before stowing so stow links files individually instead of
+	# symlinking the directory, which would put the mapping in the repo
+	# (docs/stow-module-patterns.md).
+	mkdir -p "$XDG_CONFIG_HOME/Yubico"
+	just stow yubico true
+	keys="$XDG_CONFIG_HOME/Yubico/u2f_keys"
+	if [ -s "$keys" ]; then
+		printf 'refusing to overwrite %s\n' "$keys" >&2
+		printf 'to add a second key, append it to the same line (pam_u2f only keeps the\n' >&2
+		printf 'last line per user):\n  pamu2fcfg -n >> %s\n' "$keys" >&2
+		exit 1
+	fi
+	pamu2fcfg > "$keys"
+	chmod 600 "$keys"
+	printf 'registered %s - verify with: sudo -k; sudo true\n' "$keys"
 
 xdg-base-dirs:
 	mkdir -p $XDG_DATA_HOME

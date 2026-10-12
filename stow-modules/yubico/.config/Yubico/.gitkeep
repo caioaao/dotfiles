@@ -1,0 +1,6 @@
+# Marker so stow owns ~/.config/Yubico: stow never links `.gitignore` (it is in
+# stow's built-in ignore list) and git cannot track an empty directory, so this
+# file is what makes the directory exist on every machine.
+#
+# The pam_u2f mapping that lives here is per-machine key state, written by
+# `just setup-u2f` (pamu2fcfg), and must never be committed - see .gitignore.

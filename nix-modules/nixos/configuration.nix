@@ -119,6 +119,11 @@
     keyd
     yubioath-flutter
     python3
+    # pamu2fcfg, to register a key. The module itself is wired up through
+    # security.pam.u2f; this is only here because `pamu2fcfg` is installed
+    # alongside pkgs.pam_u2f when security.pam.u2f.enable is on, and we opt
+    # services in per-service instead.
+    pam_u2f
   ];
 
   # Set up keyboard options by device
@@ -146,17 +151,26 @@
 
   # List services that you want to enable:
 
-  ### fingerprint sensor
-  services.fprintd = {
-    enable = true;
-
-    # Don't use TOD for Synaptics 06cb:00fc
-    tod.enable = false;
+  ### YubiKey (U2F) authentication
+  # The Synaptics 06cb:00fc reader is retired. It is match-in-sensor: libfprint
+  # never sees an image and the firmware owns matching, so nothing on this side
+  # could ever make it recognise a finger reliably. The YubiKey is the touch
+  # factor instead, on the same entry points the fingerprint used to cover.
+  #
+  # `control` defaults to "sufficient": a successful touch authenticates, and
+  # every other outcome (no key plugged in, no mapping for the user, wrong
+  # device) falls through to the password module below it in the same stack, so
+  # this cannot lock you out.
+  security.pam.u2f = {
+    # `enable` only sets the default of the per-service `u2fAuth` below, and is
+    # what pulls `pamu2fcfg` into systemPackages. Left off so pam_u2f stays out
+    # of stacks we never asked for (sshd, su, passwd, useradd, chfn, ...).
+    enable = false;
+    settings.cue = true; # "Please touch the device" via the PAM conversation
   };
 
-  # Enable fingerprint in PAM where you want it:
-  security.pam.services.sudo.fprintAuth     = true;  # sudo
-  security.pam.services.polkit-1.fprintAuth = true;  # GUI auth dialogs
+  security.pam.services.sudo.u2fAuth     = true;  # sudo
+  security.pam.services.polkit-1.u2fAuth = true;  # GUI auth dialogs
 
   # (Optional) firmware updates via LVFS
   services.fwupd.enable = true;

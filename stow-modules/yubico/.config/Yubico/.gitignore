@@ -1,0 +1,6 @@
+# pam_u2f's key mapping lives here: it is per-machine key state written by
+# `just setup-u2f` (pamu2fcfg), not config. That recipe creates this directory
+# before stowing so stow links files individually rather than symlinking the
+# whole directory (see docs/stow-module-patterns.md), which keeps the mapping out
+# of the repo. This rule is the backstop if the directory ever gets folded.
+u2f_keys

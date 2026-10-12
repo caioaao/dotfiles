@@ -11,5 +11,5 @@ hl.on("hyprland.start", function()
 	hl.exec_cmd("systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP")
 	hl.exec_cmd("dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP")
 	-- polkit agent for GUI auth dialogs
-	hl.exec_cmd("/run/current-system/sw/libexec/polkit-gnome-authentication-agent-1")
+	hl.exec_cmd("polkit-gnome-auth-agent")
 end)
