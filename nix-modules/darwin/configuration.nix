@@ -5,6 +5,8 @@ let
   notion-cli = pkgs.callPackage ./notion-cli.nix { };
   namespace-devbox = pkgs.callPackage ./namespace-devbox.nix { };
 in {
+  imports = [ ./raycast.nix ];
+
   # Set your user and shell
   users.users.caio = {
     name = "caio";
@@ -24,6 +26,12 @@ in {
   };
 
   environment.systemPackages = [ humanlayer-cli notion-cli namespace-devbox ];
+
+  # Raycast Store extensions; run `raycast-sync` to install missing ones.
+  # Raycast itself is installed outside nix. See ./raycast.nix.
+  programs.raycast.extensions = [
+    "mooxl/coffee"
+  ];
 
   # omp MCP servers for this box; see nix-modules/shared/omp.
   # TablePlus.app is installed outside nix; tableplus-mcp ships inside it.
