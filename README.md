@@ -39,6 +39,16 @@ sudo nixos-rebuild switch --flake .#nixos-cloud
 sudo darwin-rebuild switch --flake .#darwin
 ```
 
+#### Raycast extensions
+
+Raycast itself is installed outside nix. Store extensions are listed in `programs.raycast.extensions` (`nix-modules/darwin/configuration.nix`). After a rebuild, install missing ones with:
+
+```sh
+raycast-sync
+```
+
+It opens each missing extension's Store page; press ⏎ in Raycast to install. Raycast has no non-interactive install, so that ⏎ can't be scripted.
+
 ## Upgrading nix
 
 Run `nix flake update`. Then run the `rebuild` command specific to the platform.
