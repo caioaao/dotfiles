@@ -25,7 +25,7 @@ in {
     ];
   };
 
-  environment.systemPackages = [ humanlayer-cli notion-cli namespace-devbox ];
+  environment.systemPackages = [ notion-cli namespace-devbox pkgs.poppler-utils ];
 
   # Raycast Store extensions; run `raycast-sync` to install missing ones.
   # Raycast itself is installed outside nix. See ./raycast.nix.
