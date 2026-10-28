@@ -19,7 +19,7 @@ rex.bind("ctrl+q>p", "client.tab.previous")
 rex.bind("ctrl+q>shift+h", "client.tab.previous")
 rex.bind("ctrl+q>shift+l", "client.tab.next")
 for index = 1, 9 do
-    rex.bind("ctrl+q>" .. index, "client.tab.goto", { index = index })
+	rex.bind("ctrl+q>" .. index, "client.tab.goto", { index = index })
 end
 
 -- Use Rex's session picker instead of recreating tms or nesting tmux.
@@ -30,5 +30,5 @@ rex.bind("ctrl+q>a", "client.sidebar.activity.toggle")
 rex.bind("ctrl+q>r", "client.config.reload")
 rex.bind("ctrl+q>shift+;", "client.palette.toggle")
 
--- Persistent font and theme settings live in nix-modules/darwin/rex.plist.
+-- Persistent font, theme, and tab layout settings live in nix-modules/darwin/rex.plist.
 -- nix-darwin imports them into the native client's preferences on activation.

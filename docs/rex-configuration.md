@@ -1,4 +1,4 @@
-# Rex appearance configuration
+# Rex client configuration
 
 Researched 2026-10-27 against official documentation and the installed Rex beta (macOS client build 1408; CLI commit `623b2d17d416b146ce9993a7cd2dfce964ea60e5`, API revision 7).
 
