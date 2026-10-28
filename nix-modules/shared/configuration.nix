@@ -18,6 +18,8 @@ let
   # ~/.pi/agent/settings.json via /run/current-system/sw/share/pi/packages/.
   pi-packages = pkgs.callPackage ./pi-packages { };
 
+  skepsis = pkgs.callPackage ./skepsis.nix { };
+
 in {
   imports = [
     ./herdr/default.nix
@@ -64,6 +66,7 @@ in {
     oh-my-posh
     ripgrep
     gcc
+    skepsis
     stow
     unzip
     wget
