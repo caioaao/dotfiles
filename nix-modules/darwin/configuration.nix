@@ -55,6 +55,13 @@ in {
     remapCapsLockToControl = true;
   };
 
+  # Rex's client preferences are separate from its server-side init.lua.
+  # Import only appearance keys; preserve unrelated native preferences.
+  # Quit Rex before rebuilding so its cached preferences cannot overwrite these.
+  system.activationScripts.postActivation.text = ''
+    /usr/bin/sudo -u caio /usr/bin/defaults import com.superlogical.rex ${./rex.plist}
+  '';
+
   homebrew = {
     enable = true;
     taps = [
