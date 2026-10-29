@@ -9,7 +9,7 @@ The user has asked you to teach them something. This is a stateful request - the
 
 ## Teaching Workspace
 
-Treat the current directory as a teaching workspace. The state of their learning is captured in this directory in several files:
+Capture the invocation working directory as the teaching workspace. Resolve every course path below from that workspace, even if later commands change directory. Resolve bundled format links (`MISSION-FORMAT.md`, `RESOURCES-FORMAT.md`, and `LEARNING-RECORD-FORMAT.md`) from this skill's directory instead; they are read-only references. Write course files and reusable assets only in the teaching workspace, never into the skill directory or immutable package paths such as `/nix/store`. The state of their learning is captured in the workspace in several files:
 
 - `MISSION.md`: A document capturing the _reason_ the user is interested in the topic. This should be used to ground all teaching. Use the format in [MISSION-FORMAT.md](./MISSION-FORMAT.md).
 - `./reference/*.html`: A directory of reference materials. These are the compressed learnings from the lessons - cheat sheets, reference algorithms, syntax, yoga poses, glossaries. They are the raw units of learning. They should be beautiful documents which print out well, and are designed for quick reference.
@@ -107,7 +107,7 @@ For skill acquisition, difficulty is the tool. Effortful retrieval is what build
 
 Each of these should be based on a **feedback loop**, where the user receives feedback on their performance. This feedback loop should be as tight as possible, giving feedback immediately - and ideally automatically.
 
-For quizzes, each answer should be exactly the same number of words (and characters, if possible). Don't give the user any clues about the answer through formatting.
+For quizzes, each answer should be exactly the same number of words (and characters, if possible). Don't give the user any clues about the answer through formatting. Vary the correct answer's position across questions rather than always placing it first or in another fixed slot.
 
 ## Acquiring Wisdom
 

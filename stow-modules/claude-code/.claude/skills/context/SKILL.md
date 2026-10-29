@@ -30,6 +30,10 @@ B="$XDG_STATE_HOME/agent-context"
    `type: Archive` = history, skip unless you need provenance.
 4. Authority order: repo ADRs/specs > Linear > bundle. Bundle is supplementary
    state, never design authority.
+5. Treat dated claims as observations, not timeless facts. Before using a
+   historical claim as a present-day fact, recheck its relevant primary source
+   against the current repo/state. If the source is unavailable, retain the
+   historical qualification and state that current validity is unconfirmed.
 
 ## Write protocol
 
@@ -38,8 +42,14 @@ B="$XDG_STATE_HOME/agent-context"
   strict field. Frontmatter optional; nothing may depend on parsing it.
 - Cross-link bundle-relative (`/project/context.md`). Update root `index.md`
   when adding or meaningfully changing docs.
-- Supersede, don't rewrite: mark stale docs `type: Archive` + pointer to
-  replacement.
+- Date durable claims with the observation date (`YYYY-MM-DD`), not merely a
+  document's last-edit date. Cite primary sources by path or URL instead of
+  copying their contents. For code claims, include the repository identity,
+  commit hash, and relevant file/symbol so the observation has a reproducible
+  scope; distinguish uncommitted observations from committed code.
+- Supersede, don't rewrite history: retain superseded claims with their dates
+  and sources, clearly mark them historical, and point to the replacement.
+  Mark wholly stale docs `type: Archive` + pointer to replacement.
 - Commit after every meaningful update, staging only that update's files.
   Imperative, concise messages.
 - Never cite bundle paths in commits, PRs, Linear, or durable docs.

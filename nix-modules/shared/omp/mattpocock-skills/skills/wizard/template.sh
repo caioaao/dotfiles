@@ -8,6 +8,10 @@
 
 set -euo pipefail
 
+# Parse the entire generated script before it can prompt or write anything.
+# Running stages from a function also keeps mid-run edits out of execution.
+bash -n -- "${BASH_SOURCE[0]}"
+
 # ──────────────────────────────────────────────────────────────────────────
 # Wizard library: delightful, consistent UX, identical across every wizard.
 # ──────────────────────────────────────────────────────────────────────────
@@ -70,70 +74,144 @@ open_url() {
     elif command -v explorer.exe >/dev/null 2>&1; then explorer.exe "$url"
     elif command -v xdg-open    >/dev/null 2>&1; then xdg-open "$url"
     elif command -v open        >/dev/null 2>&1; then open "$url"
-    else warn "couldn't open a browser; visit it manually: $url"; fi
+    else false; fi
   } >/dev/null 2>&1 || warn "couldn't open a browser, so visit it manually: $url"
+}
+
+# EOF stops the whole wizard, including prompts used inside conditional gates.
+_end_input() {
+  printf '\n'
+  note "Input ended; re-run the wizard to continue."
+  exit 0
 }
 
 # pause "msg" waits for the human to confirm they've done the manual part.
 pause() {
   printf '  %s%s%s ' "$DIM" "${1:-Press Enter to continue}" "$RESET"
-  read -r _ || true
+  read -r _ || _end_input
 }
 
 # confirm "question" is a y/N gate; returns success on yes.
 confirm() {
   local reply=""
-  printf '  %s? %s [y/N] ' "$YELLOW" "$1"
-  read -r reply || true
+  printf '  %s? %s [y/N] %s' "$YELLOW" "$1" "$RESET"
+  read -e -r reply || _end_input
   [[ "$reply" =~ ^[Yy] ]]
 }
 
-# _existing KEY: current value of KEY in ENV_FILE, if any.
-_existing() {
-  [[ -f "$ENV_FILE" ]] || return 1
-  local line; line=$(grep -E "^${1}=" "$ENV_FILE" | tail -n1) || return 1
-  printf '%s' "${line#*=}"
+# Decode data, never source/eval it. Return 2 for an unfinished single-quoted
+# value so _read_env_record can collect literal newlines written by write_env.
+_decode_env_value() {
+  local rest="$1" part quote="'" escaped_quote="\\''"
+  _ENV_VALUE=""
+  if [[ "$rest" == "$quote"* ]]; then
+    rest="${rest:1}"
+    while true; do
+      [[ "$rest" == *"$quote"* ]] || return 2
+      part="${rest%%"$quote"*}"
+      _ENV_VALUE+="$part"
+      rest="${rest#*"$quote"}"
+      [[ -n "$rest" ]] || return 0
+      # A literal apostrophe is encoded as: close quote, \', open quote.
+      [[ "${rest:0:3}" == "$escaped_quote" ]] || return 1
+      _ENV_VALUE+="'"
+      rest="${rest:3}"
+    done
+  elif [[ "$rest" == \"*\" ]]; then
+    rest="${rest:1:${#rest}-2}"
+    # Ambiguous shell/dotenv escapes or interpolation require fresh input.
+    [[ "$rest" == *[\\\$\`\"]* ]] && return 1
+  fi
+  _ENV_VALUE="$rest"
 }
 
-# ask KEY "Prompt" reads a value into $KEY. Offers the existing .env value as
-# a default on re-runs (Enter keeps it). Visible input (non-secret).
+# Read one complete assignment (including quoted newlines), or an unchanged
+# comment/other line. Globals keep decoded values, including trailing newlines,
+# out of command substitutions, which would trim them.
+_read_env_record() {
+  _ENV_RECORD=""; _ENV_KEY=""; _ENV_VALUE=""; _ENV_DECODED=0
+  IFS= read -r _ENV_RECORD || [[ -n "$_ENV_RECORD" ]] || return 1
+  [[ "$_ENV_RECORD" =~ ^([a-zA-Z_][a-zA-Z0-9_]*)= ]] || return 0
+  _ENV_KEY="${BASH_REMATCH[1]}"
+  local raw="${_ENV_RECORD#*=}" line rc
+  while true; do
+    rc=0
+    _decode_env_value "$raw" || rc=$?
+    if (( rc == 0 )); then _ENV_DECODED=1; return 0; fi
+    (( rc == 2 )) || return 0
+    line=""
+    IFS= read -r line || [[ -n "$line" ]] || return 0
+    raw+=$'\n'"$line"
+    _ENV_RECORD+=$'\n'"$line"
+  done
+}
+
+# _existing KEY returns the last saved value, with quoting undone safely.
+_existing() {
+  [[ -f "$ENV_FILE" ]] || return 1
+  local found=0 value=""
+  while _read_env_record; do
+    if [[ "$_ENV_KEY" == "$1" ]]; then
+      found="$_ENV_DECODED"
+      value="$_ENV_VALUE"
+    fi
+  done < "$ENV_FILE"
+  (( found )) || return 1
+  printf '%s' "$value"
+}
+
+# ask KEY "Prompt" reads visible input with Readline editing. Enter keeps the
+# saved value; EOF stops without accepting a default or writing anything else.
 ask() {
-  local key="$1" prompt="$2" current input
-  current=$(_existing "$key" || true)
-  if [[ -n "$current" ]]; then
-    printf '  %s%s%s %s[Enter keeps current]%s ' "$BOLD" "$prompt" "$RESET" "$DIM" "$RESET"
+  local key="$1" prompt="$2" current input="" s=$'\001' e=$'\002' p
+  current=$(_existing "$key" || true; printf '.')
+  current="${current%.}"
+  # Mark nonprinting colour codes so Readline positions the cursor correctly.
+  p="  $s$BOLD$e$prompt$s$RESET$e "
+  [[ -n "$current" ]] && p+="$s$DIM$e[Enter keeps current]$s$RESET$e "
+  if [[ -t 0 ]]; then
+    read -e -r -p "$p" input || _end_input
   else
-    printf '  %s%s%s ' "$BOLD" "$prompt" "$RESET"
+    printf '  %s ' "$prompt"
+    read -r input || _end_input
   fi
-  read -r input || true
   [[ -z "$input" && -n "$current" ]] && input="$current"
   printf -v "$key" '%s' "$input"
 }
 
 # ask_secret KEY "Prompt" is like ask, but input is hidden.
 ask_secret() {
-  local key="$1" prompt="$2" current input
-  current=$(_existing "$key" || true)
+  local key="$1" prompt="$2" current input=""
+  current=$(_existing "$key" || true; printf '.')
+  current="${current%.}"
   if [[ -n "$current" ]]; then
     printf '  %s%s%s %s[Enter keeps current]%s ' "$BOLD" "$prompt" "$RESET" "$DIM" "$RESET"
   else
     printf '  %s%s%s ' "$BOLD" "$prompt" "$RESET"
   fi
-  read -rs input || true
+  read -rs input || _end_input
   printf '\n'
   [[ -z "$input" && -n "$current" ]] && input="$current"
   printf -v "$key" '%s' "$input"
 }
 
-# write_env KEY VALUE upserts KEY=VALUE into ENV_FILE (creates it; replaces
-# any existing line). Idempotent.
+# write_env KEY VALUE upserts a shell-single-quoted value and sets $KEY.
+# New files are private; writing through the destination preserves its mode
+# and any symlink. Complete records keep multiline values intact on reruns.
 write_env() {
-  local key="$1" value="$2" tmp
-  touch "$ENV_FILE"
-  tmp=$(mktemp)
-  grep -vE "^${key}=" "$ENV_FILE" > "$tmp" || true
-  printf '%s=%s\n' "$key" "$value" >> "$tmp"
-  mv "$tmp" "$ENV_FILE"
+  local key="$1" value="$2" tmp sq="'\\''"
+  [[ -e "$ENV_FILE" ]] || (umask 077 && : > "$ENV_FILE")
+  tmp=$(umask 077 && mktemp)
+  while _read_env_record; do
+    [[ "$_ENV_KEY" == "$key" ]] || printf '%s\n' "$_ENV_RECORD"
+  done < "$ENV_FILE" > "$tmp"
+  printf "%s='%s'\n" "$key" "${value//\'/$sq}" >> "$tmp"
+  if ! cat "$tmp" > "$ENV_FILE"; then
+    rm -f "$tmp"
+    return 1
+  fi
+  rm -f "$tmp"
+  printf -v "$key" '%s' "$value"
   WRITTEN_ENV+=("$key")
   printf '  %s✓ wrote%s %s → %s\n' "$GREEN" "$RESET" "$key" "$ENV_FILE"
 }
@@ -182,7 +260,10 @@ finish() {
 # ──────────────────────────────────────────────────────────────────────────
 # STAGES: author this section. One stage() per step the human takes.
 # Replace the example below. Set TOTAL_STAGES to match the stages you write.
+# Keep all stage code inside run_wizard and the final invocation on one line.
 # ──────────────────────────────────────────────────────────────────────────
+
+run_wizard() {
 
 TOTAL_STAGES=1
 
@@ -202,3 +283,6 @@ set_secret STRIPE_SECRET_KEY "$STRIPE_SECRET_KEY"   # CI needs this one
 # ──────────────────────────────────────────────────────────────────────────
 
 finish
+}
+
+run_wizard "$@"; exit

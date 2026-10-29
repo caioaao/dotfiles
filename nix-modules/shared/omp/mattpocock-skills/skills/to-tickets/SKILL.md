@@ -1,6 +1,6 @@
 ---
 name: to-tickets
-description: Break a plan, spec, or the current conversation into a set of tracer-bullet tickets, each declaring its blocking edges, published to the configured tracker (edges as text in one file per ticket locally, or native blocking links on a real tracker).
+description: Break a plan, spec, or conversation into tracer-bullet tickets on the configured tracker, with explicit blockers and the source issue as their parent when one exists.
 disable-model-invocation: true
 ---
 
@@ -8,7 +8,7 @@ disable-model-invocation: true
 
 Break a plan, spec, or conversation into a set of **tickets**: tracer-bullet vertical slices, each declaring the tickets that **block** it.
 
-The issue tracker and triage label vocabulary should have been provided to you. If not, tell the user to run `/setup-matt-pocock-skills`.
+The issue tracker and triage label vocabulary should have been provided to you. If not, tell the user to run `/setup-matt-pocock-skills`. Resolve the `ready-for-agent` role through that vocabulary, preserving configured label overrides.
 
 ## Process
 
@@ -57,24 +57,26 @@ Iterate until the user approves the breakdown.
 
 ### 5. Publish the tickets to the configured tracker
 
-Publish the approved tickets. **How** depends on the tracker `/setup-matt-pocock-skills` configured; the tickets are the same either way, only the shape of the blocking edges changes:
+Publish the approved tickets using the configured tracker's operations. Treat **parentage** (which effort a ticket belongs to) and **blocking** (what must finish before it can start) as separate relationships: being a sub-issue does not make a ticket blocked by its parent or siblings. If the source was an existing issue, make it the parent of every new ticket, using native parentage where supported and a body reference otherwise.
 
-- **Local files** → write one file per ticket under `.scratch/<feature-slug>/issues/<NN>-<slug>.md`, numbered from `01` in dependency order (blockers first). Each file's "Blocked by" lists the numbers/titles it depends on. Use the per-ticket file template below: one ticket per file, never a single combined file.
-- **A real issue tracker (GitHub, Linear, …)** → publish one issue per ticket in dependency order (blockers first) so each ticket's blocking edges can reference real identifiers. Use the platform's native blocking / sub-issue relationship where it has one; otherwise set each ticket's "Blocked by" to the blocking issues. Apply the `ready-for-agent` triage label unless instructed otherwise; the tickets are agent-grabbable by construction.
+- **Local files** → write one file per ticket under `.scratch/<feature-slug>/issues/<NN>-<slug>.md`, numbered from `01` in dependency order (blockers first). Reference only existing source/blocker files by their repo-relative paths, using the configured tracker's `Part of:` and `Blocked by:` conventions. Maintain its ordered source-child index where required. Use the per-ticket file template below: one ticket per file, never a single combined file.
+- **A hosted issue tracker (GitHub, Linear, …)** → create one issue per ticket in dependency order (blockers first), retaining each returned identifier before referencing it. Attach the tickets to their source parent where one exists. Separately create native blocking edges for the approved dependencies; a sub-issue link is not a blocking edge. Where either relationship is unsupported, use the corresponding body fallback below. Apply the configured `ready-for-agent` role label.
 
 Work the **frontier**: any ticket whose blockers are all done. For a purely linear chain that means top to bottom.
 
-Do NOT close or modify any parent issue.
+Preserve the source parent's existing status, title, and content; only attach the approved children, updating a dedicated child index when the tracker's fallback requires it. Do not close or reopen it as part of ticket publication.
 
 <local-ticket-template>
 
 # <NN>: <Ticket title>
 
+**Part of:** the existing source issue or spec's repo-relative path, if there is one; otherwise omit this line.
+
 **What to build:** the end-to-end behaviour this ticket makes work, from the user's perspective, not a layer-by-layer implementation list.
 
-**Blocked by:** the numbers/titles of the tickets that gate this one, or "None (can start immediately)".
+**Blocked by:** repo-relative paths of existing tickets that gate this one, or `none`.
 
-**Status:** ready-for-agent
+**Status:** <configured label for the ready-for-agent role>
 
 - [ ] Acceptance criterion 1
 - [ ] Acceptance criterion 2
@@ -83,9 +85,9 @@ Do NOT close or modify any parent issue.
 
 <issue-template>
 
-## Parent
+## Parent (only when native parentage is unavailable)
 
-A reference to the parent issue on the tracker (if the source was an existing issue, otherwise omit this section).
+Reference the existing source issue using the configured tracker's parentage body convention. Omit this section when the source was not an issue or the tracker already records it as the native parent.
 
 ## What to build
 
@@ -96,10 +98,10 @@ The end-to-end behaviour this ticket makes work, from the user's perspective, no
 - [ ] Criterion 1
 - [ ] Criterion 2
 
-## Blocked by
+## Blocked by (only when native blocking is unavailable)
 
-- A reference to each blocking ticket, or "None (can start immediately)".
+Reference each blocking ticket, or write "None (can start immediately)". Omit this section when native edges carry the dependencies; keep the relationship in one place.
 
 </issue-template>
 
-In either form, avoid specific file paths or code snippets: they go stale fast. Exception: if a prototype produced a snippet that encodes a decision more precisely than prose can (state machine, reducer, schema, type shape), inline it and note briefly that it came from a prototype. Trim to the decision-rich parts, not a working demo, just the important bits.
+In either form, avoid specific implementation file paths or code snippets: they go stale fast. Tracker record links and local parent/blocker paths are required relationship references, not implementation detail. Exception: if a prototype produced a snippet that encodes a decision more precisely than prose can (state machine, reducer, schema, type shape), inline it and note briefly that it came from a prototype. Trim to the decision-rich parts, not a working demo, just the important bits.

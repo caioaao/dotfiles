@@ -9,7 +9,7 @@ metadata:
     url: "https://github.com/humanlayer/skills/blob/main/plugins/show-me/skills/show-me/SKILL.md"
 ---
 
-Use this template for writing the PR body:
+Use this template for writing the PR body. This is a writing reference, not authorization to open or publish a PR. Use existing evidence; writing prose does not authorize rerunning tests or other gates. State missing evidence or deferred checks honestly.
 
 ```markdown
 ## Summary
@@ -34,7 +34,7 @@ Use this template for writing the PR body:
 
 ## Sections
 
-Skip all preambles and keep prose brief. Use the user's domain language from `CONTEXT.md`.
+Skip all preambles and keep prose brief. Use the user's domain language from `GLOSSARY.md`, following `GLOSSARY-MAP.md` to the relevant bounded context when present.
 
 ### Summary
 
@@ -62,9 +62,11 @@ submitForm
 
 - Show UI structure as a component tree, including state and module boundaries that matter:
 
-```tsx
-<SessionPage>(apps / example / src / routes / session.tsx);
-useSessionEvents() < SessionToolbar > <RunSkillButton>(packages / ui);
+```text
+<SessionPage> (apps/example/src/routes/session.tsx)
+  useSessionEvents()
+  <SessionToolbar>
+    <RunSkillButton> (packages/ui)
 ```
 
 - Show file responsibility or a broad refactor as a shallow file tree:

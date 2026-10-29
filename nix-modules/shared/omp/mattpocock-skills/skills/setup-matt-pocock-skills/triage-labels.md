@@ -10,6 +10,10 @@ The skills speak in terms of five canonical triage roles. This file maps those r
 | `ready-for-human`          | `ready-for-human`    | Requires human implementation            |
 | `wontfix`                  | `wontfix`            | Will not be actioned                     |
 
-When a skill mentions a role (e.g. "apply the AFK-ready triage label"), use the corresponding label string from this table.
+When a skill mentions a role (e.g. "apply the AFK-ready triage label"), use the corresponding string from the **Label in our tracker** column. Existing configured overrides are authoritative; keep them on setup reruns unless the user explicitly changes them. Canonical role names are not extra labels to create when an override is chosen.
 
-Edit the right-hand column to match whatever vocabulary you actually use.
+During confirmed hosted setup, inspect the explicit owning target in `issue-tracker.md`, reuse existing exact matches, and create only missing chosen strings using that tracker's supported label operation. Preserve existing label colors/descriptions. Read the labels back before declaring setup complete. Reading this mapping during normal work is not authorization to change tracker configuration.
+
+For local markdown, record the chosen role string in the configured triage metadata; no hosted label creation is needed. Wayfinding lifecycle (`open` / `claimed` / `resolved`) is separate from triage roles.
+
+The `wayfinder:` labels are a separate fixed vocabulary, not entries in this triage-role mapping: `wayfinder:map`, `wayfinder:research`, `wayfinder:prototype`, `wayfinder:grilling`, and `wayfinder:task`. When that skill is installed, confirmed setup ensures these also exist (or records them in local `Labels:` metadata), even if `triage` is absent.

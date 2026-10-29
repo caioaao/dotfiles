@@ -7,7 +7,9 @@ description: Diagnosis loop for hard bugs and performance regressions. Use when 
 
 A discipline for hard bugs. Skip phases only when explicitly justified.
 
-When exploring the codebase, read `CONTEXT.md` (if it exists) to get a clear mental model of the relevant modules, and check ADRs in the area you're touching.
+Follow the host's execution and verification policy throughout these phases. User-reported failures are ground truth: use their supplied symptom and evidence rather than rerunning checks merely to confirm the failure. Where a phase calls for execution, perform it only when authorized; otherwise hand the command and expected signal to the verification owner and distinguish supplied evidence from observations you made yourself.
+
+When exploring the codebase, check root `GLOSSARY-MAP.md` first if present and follow it to the relevant bounded context's `GLOSSARY.md`; otherwise read root `GLOSSARY.md` if present. Use the glossary for domain terminology, the code for module structure, and ADRs for decisions in the area you're touching. An absent glossary does not block diagnosis.
 
 ## Redact
 
@@ -122,7 +124,7 @@ A correct seam is one where the test exercises the **real bug pattern** as it oc
 If a correct seam exists:
 
 1. Turn the minimised repro into a failing test at that seam.
-2. Watch it fail.
+2. If intentionally mutating code or a fixture to force red, inspect the relevant changed target and confirm the intended mutation landed before running or interpreting the test. A failed-to-land mutation is not evidence about test sensitivity. Then observe the failure, using supplied evidence where available. This mutation check is conditional; it requires neither mutations on every diagnosis nor mutation-testing infrastructure.
 3. Apply the fix.
 4. Watch it pass.
 5. Re-run the Phase 1 feedback loop against the original (un-minimised) scenario.

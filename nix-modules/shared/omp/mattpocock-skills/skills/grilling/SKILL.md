@@ -7,6 +7,8 @@ Interview the user relentlessly until you reach a shared understanding. Map this
 
 Work the tree in **rounds**. The **frontier** is every decision whose prerequisites are already settled: the questions you can ask _now_ without guessing at answers you haven't heard yet. Ask **at most 4 questions per round**, each with your recommended answer, then wait for the user's answers before the next round. When the frontier holds more than 4, ask the ones that unblock the most downstream decisions first; the rest carry over to a later round.
 
+Phrase recommendations so an affirmative answer accepts the recommended action: ask "Should we keep X?" when keeping X is your recommendation, rather than "Should we remove X?". For multi-option decisions, mark the recommended option directly; preserve meaningful alternatives instead of reducing every choice to yes/no.
+
 Ask through your harness's structured question tool when it has one (`ask`, `AskUserQuestion`, or similar), the whole round in a single call:
 
 - The question title goes in the short header/label; the body goes in the question text.

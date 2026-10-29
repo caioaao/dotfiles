@@ -27,7 +27,7 @@ Prompt each sub-agent with a separate technical brief (file paths, coupling deta
 - Agent 3: "Optimise for the most common caller: make the default case trivial."
 - Agent 4 (if applicable): "Design around ports & adapters for cross-seam dependencies."
 
-Include both [SKILL.md](SKILL.md) vocabulary and CONTEXT.md vocabulary in the brief so each sub-agent names things consistently with the architecture language and the project's domain language.
+Include [SKILL.md](SKILL.md) vocabulary for architecture and the relevant `GLOSSARY.md` vocabulary for the domain in each brief. Discover the glossary through root `GLOSSARY-MAP.md` first if present; otherwise use root `GLOSSARY.md` if present. If no glossary exists, proceed with the domain language established in the code and conversation.
 
 Each sub-agent outputs:
 
