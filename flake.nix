@@ -54,6 +54,7 @@
           oh-my-posh = unstable.oh-my-posh;
           neovim = unstable.neovim;
           quickshell = unstable.quickshell;
+          worktrunk = unstable.worktrunk;
           # Hyprland 0.56.2 (nixos-25.11 stable ships 0.52.2). The whole
           # hyprland ecosystem must stay on one channel: the portal is built
           # against hyprland itself, and nwg-displays >= 0.4.3 is required to

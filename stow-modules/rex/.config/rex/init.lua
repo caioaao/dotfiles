@@ -1,3 +1,14 @@
+package.path = "/run/current-system/sw/share/rex/?.lua;"
+	.. "/run/current-system/sw/share/rex/?/init.lua;"
+	.. package.path
+
+require("rex-worktrunk").setup{
+	base = "@",
+	remotes = false,
+	slugify = false,
+	script = "/run/current-system/sw/bin/rex-worktrunk-picker",
+}
+
 -- Familiar tmux keys on Rex's own panes, tabs, and persistent sessions.
 -- Keep the client's default shortcuts; Ctrl+Q is an additional entry point.
 -- Escape cancels a sequence; Ctrl+Q twice sends Ctrl+Q to the terminal.
@@ -25,6 +36,10 @@ end
 -- Use Rex's session picker instead of recreating tms or nesting tmux.
 rex.bind("ctrl+q>w", "session.switch")
 rex.bind("ctrl+q>shift+w", "session.new")
+
+-- Repository-scoped worktrees complement Rex's native session picker.
+rex.bind("ctrl+q>g", "worktree")
+rex.bind("ctrl+q>d", "worktree_remove")
 -- Native program activity replaces the tmux agent-pane popup/status plugin.
 rex.bind("ctrl+q>a", "client.sidebar.activity.toggle")
 rex.bind("ctrl+q>r", "client.config.reload")

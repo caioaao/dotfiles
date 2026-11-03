@@ -25,6 +25,7 @@ in {
     ./herdr/default.nix
     ./tmux/default.nix
     ./omp/default.nix
+    ./rex/default.nix
     ./tsserve-file/default.nix
     ./zsh/default.nix
   ];
@@ -70,5 +71,6 @@ in {
     stow
     unzip
     wget
+    worktrunk
   ];
 }
