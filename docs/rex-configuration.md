@@ -32,3 +32,11 @@ There is no documented, verified way in this beta to express the requested persi
 A plist is not required by Rex's Lua configuration format. It is the current repo's external macOS-preferences provisioning mechanism. `nix-modules/darwin/rex.plist` bundles the font size, dark mode, selected theme ID, and complete imported theme data; nix-darwin imports it on activation. Other external provisioning mechanisms are possible, but would still configure native client preferences rather than add native Lua appearance settings.
 
 Keep the current provisioning until Rex exposes a supported declarative client-settings API. Quit Rex before applying the preferences so cached client values cannot overwrite them. The plist approach is macOS-specific and depends on beta preference keys and theme serialization; it is a workaround, not a documented Rex configuration API.
+
+## Directory picker
+
+Run `j` in zsh to pick a directory with fzf and change into it. Defined in
+`nix-modules/shared/zsh/default.nix`, this shell function uses Nix's fzf
+package directly and avoids depending on Rex's Option/Meta-key handling.
+Apply the Nix configuration and restart zsh to load it.
+

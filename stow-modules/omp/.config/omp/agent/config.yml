@@ -1,5 +1,3 @@
-# modelRoles is set per box (programs.omp.settings -> PI_CONFIG_FILES
-# overlay), which overrides anything omp writes here.
 defaultThinkingLevel: auto
 composer:
   shape: box
@@ -9,10 +7,12 @@ theme:
 setupVersion: 2
 dev:
   autoqaConsent: denied
-# Packages built in nix (nix-modules/shared/omp): MCP servers declared in
-# programs.omp.mcpServers, the /wayfind loop extension, and vendored
-# mattpocock/skills.
 extensions:
   - /run/current-system/sw/share/omp/caioaao-extra
   - /run/current-system/sw/share/omp/wayfinder-loop
   - /run/current-system/sw/share/omp/mattpocock-skills
+codexResets:
+  autoRedeem: "no"
+display:
+  hideToolActivity: true
+hideThinkingBlock: true
