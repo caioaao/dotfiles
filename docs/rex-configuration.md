@@ -38,5 +38,9 @@ Keep the current provisioning until Rex exposes a supported declarative client-s
 Run `j` in zsh to pick a directory with fzf and change into it. Defined in
 `nix-modules/shared/zsh/default.nix`, this shell function uses Nix's fzf
 package directly and avoids depending on Rex's Option/Meta-key handling.
-Apply the Nix configuration and restart zsh to load it.
+The same Nix module sources fzf's zsh keybindings and completion directly
+from the package, after enabling vi mode, and sets the Catppuccin Mocha colors
+through `environment.variables.FZF_DEFAULT_OPTS`. Neither integration nor
+theme needs a Stow shell fragment. Apply the Nix configuration and start a
+new login shell to load the changes.
 
