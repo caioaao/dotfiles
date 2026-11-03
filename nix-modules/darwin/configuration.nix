@@ -4,6 +4,7 @@ let
   humanlayer-cli = pkgs.callPackage ./humanlayer-cli.nix { };
   notion-cli = pkgs.callPackage ./notion-cli.nix { };
   namespace-devbox = pkgs.callPackage ./namespace-devbox.nix { };
+  rex-macos = pkgs.callPackage ./rex.nix { };
 in {
   imports = [ ./raycast.nix ];
 
@@ -25,7 +26,7 @@ in {
     ];
   };
 
-  environment.systemPackages = [ notion-cli namespace-devbox pkgs.poppler-utils ];
+  environment.systemPackages = [ notion-cli namespace-devbox rex-macos pkgs.poppler-utils ];
 
   # Raycast Store extensions; run `raycast-sync` to install missing ones.
   # Raycast itself is installed outside nix. See ./raycast.nix.
@@ -56,7 +57,7 @@ in {
   };
 
   # Rex's client preferences are separate from its server-side init.lua.
-  # Import only appearance/layout keys; preserve unrelated native preferences.
+  # Import appearance/layout and the explicitly opted-in Remote Control permission.
   # Quit Rex before rebuilding so its cached preferences cannot overwrite these.
   system.activationScripts.postActivation.text = ''
     /usr/bin/sudo -u caio /usr/bin/defaults import com.superlogical.rex ${./rex.plist}
