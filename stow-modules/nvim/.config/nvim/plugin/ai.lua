@@ -6,8 +6,10 @@
 --   :AI <question>      skip the input dialog
 --   :'<,'>AI <question>
 --
--- The session is opened in a new tmux window (in nvim's cwd) with the prompt:
+-- The session opens in a new Rex window when REX_SESSION is set, otherwise tmux.
+-- It uses nvim's cwd with the prompt:
 --   On <file>:<line|start-end>: <question>
+-- The omp executable is resolved through nvim's PATH.
 
 local function location(opts)
 	local file = vim.fn.expand("%:.")
@@ -24,8 +26,24 @@ local function location(opts)
 end
 
 local function start_session(prompt)
+	if vim.env.REX_SESSION then
+		vim.system({
+			"rex",
+			"run",
+			"-s",
+			vim.env.REX_SESSION,
+			"--label",
+			"omp",
+			"-c",
+			vim.fn.getcwd(),
+			"--",
+			vim.fn.exepath("omp"),
+			prompt,
+		})
+		return
+	end
 	if not vim.env.TMUX then
-		vim.notify("AI: not running inside tmux", vim.log.levels.ERROR)
+		vim.notify("AI: not running inside Rex or tmux", vim.log.levels.ERROR)
 		return
 	end
 	vim.system({

@@ -1,4 +1,4 @@
 { pkgs, ... }: {
-  environment.systemPackages = [ (pkgs.callPackage ./worktrunk.nix {}) ];
+  environment.systemPackages = [ (pkgs.callPackage ./worktrees {}) ];
   environment.pathsToLink = [ "/share/rex" ];
 }

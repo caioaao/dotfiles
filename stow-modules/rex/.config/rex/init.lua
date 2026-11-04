@@ -2,11 +2,11 @@ package.path = "/run/current-system/sw/share/rex/?.lua;"
 	.. "/run/current-system/sw/share/rex/?/init.lua;"
 	.. package.path
 
-require("rex-worktrunk").setup{
+require("worktrees").setup{
 	base = "@",
 	remotes = false,
 	slugify = false,
-	script = "/run/current-system/sw/bin/rex-worktrunk-picker",
+	script = "/run/current-system/sw/bin/rex-worktree-picker",
 }
 
 -- Familiar tmux keys on Rex's own panes, tabs, and persistent sessions.
