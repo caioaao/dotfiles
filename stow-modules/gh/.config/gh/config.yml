@@ -1,0 +1,24 @@
+# Managed by Stow; keep authentication in the unmanaged hosts.yml/keychain.
+aliases:
+    co: pr checkout
+    ls: stack view --short
+    ss: stack submit
+    sr: stack rebase --no-trunk
+    sync: stack sync --prune
+    up: stack up
+    down: stack down
+    top: stack top
+    bottom: stack bottom
+    m: '!c=; for a; do shift; if [ "$a" = -c ]; then c=1; else set -- "$@" "$a"; fi; done; if [ -n "$c" ]; then git commit "$@"; else git commit --amend --no-edit "$@"; fi && gh stack rebase --upstack'
+version: "1"
+git_protocol: https
+editor:
+prompt: enabled
+prefer_editor_prompt: disabled
+pager:
+http_unix_socket:
+browser:
+color_labels: disabled
+accessible_colors: disabled
+accessible_prompter: disabled
+spinner: enabled
