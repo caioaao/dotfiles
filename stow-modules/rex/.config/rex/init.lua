@@ -39,6 +39,7 @@ rex.bind("ctrl+q>shift+w", "session.new")
 
 -- Repository-scoped worktrees complement Rex's native session picker.
 rex.bind("ctrl+q>g", "worktree")
+rex.bind("ctrl+q>shift+g", "worktree_pr")
 rex.bind("ctrl+q>d", "worktree_remove")
 -- Native program activity replaces the tmux agent-pane popup/status plugin.
 rex.bind("ctrl+q>a", "client.sidebar.activity.toggle")

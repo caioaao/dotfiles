@@ -1,4 +1,4 @@
-{ lib, stdenvNoCC, makeWrapper, bash, worktrunk, git, fzf, jq, coreutils, gawk, gnused, python3 }:
+{ lib, stdenvNoCC, makeWrapper, bash, worktrunk, git, github-cli, fzf, jq, coreutils, gawk, gnused, python3 }:
 stdenvNoCC.mkDerivation {
   pname = "rex-worktrees";
   version = "1";
@@ -23,7 +23,8 @@ stdenvNoCC.mkDerivation {
       --replace-fail '#!/usr/bin/env bash' '#!${bash}/bin/bash'
     chmod +x "$out/share/rex/worktrees/picker.sh"
     makeWrapper "$out/share/rex/worktrees/picker.sh" "$out/bin/rex-worktree-picker" \
-      --prefix PATH : ${lib.makeBinPath [ bash worktrunk git fzf jq coreutils gawk gnused ]}
+      --prefix PATH : ${lib.makeBinPath [ bash worktrunk git fzf jq coreutils gawk gnused ]} \
+      --suffix PATH : ${lib.makeBinPath [ github-cli ]}
     runHook postInstall
   '';
   doInstallCheck = true;

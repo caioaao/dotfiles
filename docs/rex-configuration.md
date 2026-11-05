@@ -58,7 +58,7 @@ The repository owns its Rex worktree integration: Lua actions and persistent ses
 
 - [`nix-modules/shared/rex/default.nix`](../nix-modules/shared/rex/default.nix) registers the local `rex-worktrees` package. Its package definition, Lua actions, session registry, picker helper, license and tests live together under [`rex/worktrees`](../nix-modules/shared/rex/worktrees). Worktrunk comes from the existing unstable overlay (locked version 0.80.0); shared system packages also expose `wt` for direct use.
 - [`stow-modules/rex/.config/rex/init.lua`](../stow-modules/rex/.config/rex/init.lua) owns personal bindings and setup options. Its Lua search path includes `/run/current-system/sw/share/rex/?.lua` and `/run/current-system/sw/share/rex/?/init.lua`, loading `/run/current-system/sw/share/rex/worktrees/init.lua`. The picker entry point is `/run/current-system/sw/bin/rex-worktree-picker`. Do not substitute a client-specific `/nix/store` path. Deploy this config and the renamed package together; the old module and executable names are not retained.
-- The wrapper supplies Nix Bash, Worktrunk, Git, fzf, jq, coreutils, gawk and GNU sed, while preserving inherited PATH and `REX_*` variables. Rex itself is not bundled: callbacks must resolve the active server's matching `rex` CLI. [`zshenv.d/99-rex.sh`](../stow-modules/rex/.config/zsh/zshenv.d/99-rex.sh) restores `REX_BIN_DIR` after Nix's system environment setup for both interactive shells and non-interactive Zsh commands used by floats. Keeping it in `zshrc.d` misses floats and causes `rex: command not found` after checkout creation. Re-stow `rex` after moving this hook; no Nix rebuild is required for the hook change.
+- The wrapper supplies Nix Bash, Worktrunk, Git, fzf, jq, coreutils, gawk and GNU sed, while preserving inherited PATH and `REX_*` variables. It also supplies GitHub CLI as a PATH fallback, preserving an inherited `gh` when present. Rex itself is not bundled: callbacks must resolve the active server's matching `rex` CLI. [`zshenv.d/99-rex.sh`](../stow-modules/rex/.config/zsh/zshenv.d/99-rex.sh) restores `REX_BIN_DIR` after Nix's system environment setup for both interactive shells and non-interactive Zsh commands used by floats. Keeping it in `zshrc.d` misses floats and causes `rex: command not found` after checkout creation. Re-stow `rex` after moving this hook; no Nix rebuild is required for the hook change.
 - The Worktrunk package does not install Rex.app or provision a Rex server; the macOS app is a separate Darwin-only package described above. Every intended remote host needs its own package deployment and Stow config so these same stable paths resolve on that host.
 
 The key-bound Lua action opens a floating terminal and returns immediately: waiting for an interactive picker inside the action would block app input. The helper runs fzf and `wt`, then invokes the local Lua callback with `rex do`. This separate callback still requires Remote Control for app switching; moving ownership into this repository does not remove that permission requirement. The registry deliberately keeps its existing `rex/worktrunk` state path so the cutover preserves checkout-to-session ownership.
@@ -70,6 +70,7 @@ Keys below are sequences: press Ctrl+Q, then the second key.
 | Sequence | Action |
 | --- | --- |
 | Ctrl+Q then `g` | Open the repository-scoped branch/worktree picker (`worktree`). |
+| Ctrl+Q then Shift+G | Enter a GitHub PR number or URL and open its worktree (`worktree_pr`). |
 | Ctrl+Q then `d` | Pick a non-main, branch-associated worktree for removal (`worktree_remove`). |
 | Ctrl+Q then `w` | Keep Rex's native session picker (`session.switch`). |
 | Ctrl+Q then Shift+W | Keep native session creation (`session.new`). |
@@ -79,6 +80,18 @@ Keys below are sequences: press Ctrl+Q, then the second key.
 The existing pane, tab and palette bindings remain. The picker opens a float in the focused terminal's working directory and delegates Git operations to Worktrunk; it does not `cd` the original shell. Selecting a checkout creates or reuses a Rex session with the default one-shell layout, not `tms`'s separate Neovim and shell windows. Esc cancels; Alt+Enter forces typed branch input rather than a fuzzy-matched existing candidate.
 
 Setup uses `base = "@"`, `remotes = false` and `slugify = false`: new branches start at current HEAD, remote-tracking candidates are disabled, and typed names are not automatically slugified. Worktrunk's default new checkout path is `../repo.branch`, unlike `gwt-add`'s `../BRANCH`; existing worktrees are not relocated. Detached-HEAD checkouts are not offered by these branch-based pickers.
+
+### PR checkout
+
+In a repository's terminal, press **Ctrl+Q then Shift+G**, or select **Worktree: check out PR…** in the palette. Enter a PR number such as `123` or a full URL such as `https://github.com/owner/repo/pull/123`. Blank input or Ctrl+C cancels. Numbers use Worktrunk's GitHub repository resolution, including `gh repo set-default`; authenticate `gh` on the server host first.
+
+Worktrunk resolves and fetches the PR branch, creates its checkout when absent, and reuses an existing checkout otherwise. The shared Rex callback then creates or reuses its managed session. The caller's branch and shell directory stay unchanged. Worktrunk retains ownership of fork handling, branch conflicts, checkout paths and hook approval; no `--create`, forced checkout or automatic hook approval is added. Failures remain visible in the float. If app presentation fails after checkout/session creation, those resources remain available.
+
+This entry point belongs to the Nix-packaged Rex module, not the portable GitHub Stow aliases: `gh co` remains `gh pr checkout`, with no Rex dependency. The existing branch picker also accepts `pr:123` or a PR URL via Alt+Enter.
+
+Verification: the Darwin package passed both source and installed-wrapper checks, including PR-number/URL resolution with local forge metadata, checkout reuse, unchanged caller branch, cancellation and failed lookup. The Linux package derivation evaluated; no Linux runtime was exercised. The complete Stow config loaded the new module with five actions and 31 bindings. On an isolated Rex server, the actual `worktree_pr` action displayed its prompt, fetched `cli/cli#14927` through real GitHub CLI and Git, and created a checkout at the reported PR head `d43c4e3ad3c34332c803a568f85f116e3ee58f19`. A URL revisit reused both checkout and native session ID; the caller remained on `main`. No app was connected, so presentation failed explicitly after successful creation/reuse. This does not verify GUI switching or Remote Control permissions.
+
+Deploy the updated Nix package and Rex Stow config together, then reload Rex locally. No system activation or reload of the user's running server was performed for this addition.
 
 ### Session identity and removal safety
 

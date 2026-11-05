@@ -90,13 +90,13 @@ function M.close(ctx, path, main)
   return { closed = true, session_id = id }
 end
 
-local function open(ctx, remove)
+local function open(ctx, mode)
   if not ctx.block_id then fail("no focused terminal") end
   local process = rex.block.call("com.superlogical.terminal", "process", { block_id = ctx.block_id })
   local cwd = process and ((process.foreground or {}).cwd or (process.child or {}).cwd)
   if not cwd or cwd == "" then fail("can't tell the working directory of the focused terminal") end
-  local command = { options.script, remove and "remove" or "pick" }
-  if not remove then
+  local command = { options.script, mode }
+  if mode == "pick" then
     if options.base then command[#command + 1] = "--base"; command[#command + 1] = options.base end
     if options.remotes then command[#command + 1] = "--remotes" end
     if options.slugify then command[#command + 1] = "--slugify" end
@@ -105,7 +105,7 @@ local function open(ctx, remove)
   local layer, err = rex.session.new_layer{
     bounds = { 0.15, 0.1, 0.7, 0.8 }, focus = true,
     layout = { block = {
-      flavor = "com.superlogical.terminal.shell", label = remove and "worktree remove" or "worktree",
+      flavor = "com.superlogical.terminal.shell", label = "worktree " .. mode,
       options = { command = command, cwd = cwd },
     } },
   }
@@ -123,12 +123,17 @@ function M.setup(config)
   rex.action{
     name = "worktree", title = "Worktree: switch / create…", category = "Worktree",
     description = "Pick a checkout or branch, or type a new branch name.",
-    run = function(ctx) return open(ctx, false) end,
+    run = function(ctx) return open(ctx, "pick") end,
+  }
+  rex.action{
+    name = "worktree_pr", title = "Worktree: check out PR…", category = "Worktree",
+    description = "Enter a GitHub PR number or URL, then open its worktree session.",
+    run = function(ctx) return open(ctx, "pr") end,
   }
   rex.action{
     name = "worktree_remove", title = "Worktree: remove…", category = "Worktree",
     description = "Remove a non-main checkout and close its entire Rex session.",
-    run = function(ctx) return open(ctx, true) end,
+    run = function(ctx) return open(ctx, "remove") end,
   }
   rex.action{
     name = "worktree_go", title = "Open Worktree Session", category = "Worktree",

@@ -8,6 +8,7 @@
 #
 # rex-worktree-picker pick [--base BRANCH] [--remotes] [--slugify] [--list]
 # rex-worktree-picker remove [--list]
+# rex-worktree-picker pr [NUMBER|URL]  (prompt when omitted)
 
 set -uo pipefail
 
@@ -100,6 +101,55 @@ wt_items() {
     command wt list --format=json 2>/dev/null | list_items
 }
 
+switch_worktree() {
+    local name=$1
+    shift
+    # Keep hooks and approval prompts in the calling terminal. Rex, not this
+    # short-lived shell, changes the viewed session.
+    local result wtpath
+    if ! result=$(command wt switch "$name" "$@" --no-cd --format=json); then
+        printf 'wt switch failed (see above).\n' >&2; return 1
+    fi
+    wtpath=$(jq -r '.path // empty' <<<"$result" 2>/dev/null)
+    if [[ -z $wtpath ]]; then
+        wtpath=$(wt_items | jq -rs --arg b "$name" '[.[] | select(.branch == $b and .kind == "worktree") | .path][0] // empty')
+    fi
+    if [[ -z $wtpath ]]; then
+        printf 'worktrunk returned no worktree path for: %s\n' "$name" >&2; return 1
+    fi
+    if ! rex do worktree_go path="$wtpath" >/dev/null; then
+        printf 'Could not open a session for %s.\n' "$wtpath" >&2; return 1
+    fi
+}
+
+pr() {
+    local target
+    if [[ $# -eq 0 ]]; then
+        read -r -p 'PR number or GitHub URL (blank cancels): ' target || return 0
+        [[ -n $target ]] || return 0
+        pr "$target" || { hold 'Could not open PR worktree (see above).'; return 1; }
+        return 0
+    fi
+    if [[ $# -ne 1 ]]; then
+        printf 'usage: rex-worktree-picker pr [NUMBER|URL]\n' >&2; return 2
+    fi
+    if [[ $1 =~ ^[1-9][0-9]*$ ]]; then
+        target=pr:$1
+    elif [[ $1 =~ ^https://[^/]+/[^/]+/[^/]+/pull/[1-9][0-9]*/?$ ]]; then
+        target=$1
+    else
+        printf 'expected a PR number or GitHub PR URL: %s\n' "$1" >&2; return 2
+    fi
+    git rev-parse --is-inside-work-tree >/dev/null 2>&1 \
+        || { printf 'not a git repository: %s\n' "$PWD" >&2; return 1; }
+    local tool
+    for tool in jq wt gh rex; do
+        command -v "$tool" >/dev/null 2>&1 \
+            || { printf '%s not found on PATH\n' "$tool" >&2; return 1; }
+    done
+    switch_worktree "$target"
+}
+
 pick() {
     local base="" remotes=false slugify=false list_only=false
     while [[ $# -gt 0 ]]; do
@@ -161,33 +211,13 @@ pick() {
         name=$slug
     fi
 
-    local wtargs
-    if is_shortcut "$name" || ref_exists "$name"; then
-        wtargs=(switch "$name")
-    else
-        wtargs=(switch --create "$name")
+    local wtargs=()
+    if ! is_shortcut "$name" && ! ref_exists "$name"; then
+        wtargs=(--create)
         [[ -n $base ]] && wtargs+=(--base "$base")
     fi
-
-    # Do not suppress hooks or their approval prompts. This terminal is where
-    # wt interacts with the user; Rex, not this short-lived shell, changes cwd.
-    local result
-    if ! result=$(command wt "${wtargs[@]}" --no-cd --format=json); then
-        hold 'wt switch failed (see above).'; return 1
-    fi
-
-    local wtpath
-    wtpath=$(jq -r '.path // empty' <<<"$result" 2>/dev/null)
-    if [[ -z $wtpath ]]; then
-        wtpath=$(wt_items | jq -rs --arg b "$name" '[.[] | select(.branch == $b and .kind == "worktree") | .path][0] // empty')
-    fi
-    if [[ -z $wtpath ]]; then
-        hold "worktrunk returned no worktree path for: $name"; return 1
-    fi
-
-    if ! rex do worktree_go path="$wtpath" >/dev/null; then
-        hold "Could not open a session for $wtpath."; return 1
-    fi
+    switch_worktree "$name" "${wtargs[@]}" \
+        || { hold 'Could not open worktree (see above).'; return 1; }
 }
 
 remove() {
@@ -244,6 +274,7 @@ case ${1:-} in
     registry-unlock) registry_unlock "${2:?missing server scope}" ;;
     registry-exists) directory=$(registry_directory "${2:?missing server scope}") && [[ -e "$directory/sessions.json" ]] ;;
     pick) shift; pick "$@" ;;
+    pr) shift; pr "$@" ;;
     remove) shift; remove "$@" ;;
-    *) red 'usage: rex-worktree-picker pick [--base BRANCH] [--remotes] [--slugify] [--list] | remove [--list]' >&2; exit 2 ;;
+    *) red 'usage: rex-worktree-picker pick [--base BRANCH] [--remotes] [--slugify] [--list] | remove [--list] | pr [NUMBER|URL]' >&2; exit 2 ;;
 esac

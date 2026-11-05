@@ -268,6 +268,54 @@ callback_failure_path=$(worktree_path callback-failure)
 last_callback worktree_go "$callback_failure_path"
 printf 'ok   Rex callback failure leaves the successfully created checkout intact\n'
 
+# Forge metadata is the network boundary; checkout creation and repeat lookup
+# still use real Worktrunk and Git. A PR branch must not inherit caller HEAD.
+cat >"$tmp/bin/gh" <<'GH'
+#!/usr/bin/env bash
+if [[ ${PR_LOOKUP_FAIL:-} == 1 ]]; then
+    echo 'PR lookup failed' >&2
+    exit 1
+fi
+case ${1:-} in
+    repo) printf 'test/fixture\n' ;;
+    api)
+        printf '{"title":"Review fixture","user":{"login":"test"},"state":"open","head":{"ref":"pr-review","repo":{"name":"fixture","owner":{"login":"test"}}},"base":{"ref":"main","repo":{"name":"fixture","owner":{"login":"test"}}},"html_url":"https://github.com/test/fixture/pull/42"}\n' ;;
+    *) exit 1 ;;
+esac
+GH
+chmod +x "$tmp/bin/gh"
+git -C "$repo" remote add origin https://github.com/test/fixture.git
+git -C "$repo" config "url.file://$repo/.insteadOf" https://github.com/test/fixture
+git -C "$repo" branch pr-review "$feature_commit"
+git -C "$repo" update-ref refs/remotes/origin/pr-review "$feature_commit"
+(cd "$repo" && bash "$script" pr 42)
+pr_path=$(worktree_path pr-review)
+same 'PR number checks out the PR head, not the caller HEAD' \
+    "$(git -C "$pr_path" rev-parse HEAD)" "$feature_commit"
+same 'PR checkout leaves caller branch unchanged' "$(git -C "$repo" branch --show-current)" main
+last_callback worktree_go "$pr_path"
+before_worktrees=$(git -C "$repo" worktree list --porcelain)
+(cd "$repo" && bash "$script" pr https://github.com/test/fixture/pull/42)
+same 'PR URL reuses the existing checkout' "$(git -C "$repo" worktree list --porcelain)" "$before_worktrees"
+last_callback worktree_go "$pr_path"
+before_callbacks=$(callback_count)
+for invalid in '' 0 --help not-a-pr https://github.com/test/fixture/issues/42; do
+    if (cd "$repo" && bash "$script" pr "$invalid" </dev/null >/dev/null 2>&1); then
+        fail "invalid PR accepted: $invalid"
+    fi
+done
+(cd "$repo" && bash "$script" pr </dev/null)
+(cd "$repo" && printf '\n' | bash "$script" pr)
+if (cd "$repo" && bash "$script" pr 42 extra </dev/null >/dev/null 2>&1); then
+    fail 'wrong PR argument count accepted'
+fi
+if (cd "$repo" && PR_LOOKUP_FAIL=1 bash "$script" pr 43 </dev/null >/dev/null 2>&1); then
+    fail 'failed PR lookup accepted'
+fi
+same 'invalid or failed PR lookup sends no callback' "$(callback_count)" "$before_callbacks"
+same 'invalid or failed PR lookup changes no checkouts' \
+    "$(git -C "$repo" worktree list --porcelain)" "$before_worktrees"
+
 # Registry commands are a public filesystem seam used by sessions.lua.
 ln -s "$repo" "$tmp/main-alias"
 same 'normalize resolves directory aliases' "$(bash "$script" normalize "$tmp/main-alias")" "$repo"
