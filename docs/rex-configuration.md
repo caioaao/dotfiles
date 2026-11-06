@@ -35,9 +35,11 @@ Keep the current provisioning until Rex exposes a supported declarative client-s
 
 ## macOS app package
 
-[`nix-modules/darwin/rex.nix`](../nix-modules/darwin/rex.nix) packages **Rex Preview 0.1.0 build 1408** from its pinned official DMG. It requires macOS 15 or newer and preserves the vendor-signed universal app, including the matching server/CLI. The Darwin configuration includes it in `environment.systemPackages`; nix-darwin exposes `/Applications/Nix Apps/Rex Beta.app` and the system profile exposes `rex`.
+[`nix-modules/darwin/rex.nix`](../nix-modules/darwin/rex.nix) packages **Rex Preview 0.1.0 build 1829** from its pinned official DMG. It requires macOS 15 or newer and preserves the vendor-signed universal app, including the matching server/CLI. The Darwin configuration includes it in `environment.systemPackages`; nix-darwin exposes `/Applications/Nix Apps/Rex Beta.app` and the system profile exposes `rex`.
 
-The package was built and smoke-tested on Apple Silicon: deep/strict signature verification, CLI version, an isolated server/terminal, and actual GUI launch with an isolated local server and visible terminal window. The full Darwin configuration also evaluated successfully. No system activation or replacement of the manually installed app was performed. See [packaging evidence and constraints](rex-nix-packaging.md#implementation-verification).
+The original build 1408 package was built and smoke-tested on Apple Silicon: deep/strict signature verification, CLI version, an isolated server/terminal, and actual GUI launch with an isolated local server and visible terminal window. The full Darwin configuration also evaluated successfully. No system activation or replacement of the manually installed app was performed. See [packaging evidence and constraints](rex-nix-packaging.md#implementation-verification).
+
+Build 1829 was built on Apple Silicon and passed `rex version` and deep/strict signature verification. Its CLI reports commit `af0c204859ccf584d9392e154d8d9b4e2124635f`, API revision 11 (supports 0–11). The updated Darwin system derivation evaluated successfully; this upgrade was not activated or GUI-tested. The same dependency refresh selects omp 18.17.0 and GitHub CLI 2.103.3; Neovim remains at the latest stable release, 0.12.6. All four packages built, with headless Neovim startup and CLI version smoke checks passing.
 
 To activate, quit Rex first so its cached preferences cannot overwrite the existing plist import. Run from another terminal:
 
