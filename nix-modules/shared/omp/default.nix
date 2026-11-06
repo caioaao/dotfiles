@@ -13,6 +13,10 @@
 # preserve the curated adaptations recorded in docs/skill-adoption-report.md.
 # In particular, grilling keeps max 4 questions per structured-tool round.
 #
+# egm: upstream Elephant-Goldfish Model skills, reviewer personas, and standards.
+# Keep the upstream layout intact: skills resolve ../../agents and resources.
+# Update the pinned revision and fetchzip hash together.
+#
 # caioaao-extra: MCP servers, declared per box. Box modules add entries to
 # programs.omp.mcpServers (attrsets merge across modules, so a downstream
 # private flake can append its own). The result is an omp extension package
@@ -43,6 +47,10 @@
 { config, lib, pkgs, ... }:
 let
   json = pkgs.formats.json { };
+  egm = pkgs.fetchzip {
+    url = "https://github.com/google/elephant-goldfish-model/archive/6a8001ea31ccf72430ba0603a467ec6df9f69dd7.tar.gz";
+    hash = "sha256-rmpr2rNXCxUouzc2/r9e7F/KVnm2Kbda8JSvfYKxgfM=";
+  };
 in
 {
   options.programs.omp = {
@@ -73,6 +81,10 @@ in
       (pkgs.runCommand "omp-mattpocock-skills" { } ''
         mkdir -p $out/share/omp
         cp -r ${./mattpocock-skills} $out/share/omp/mattpocock-skills
+      '')
+      (pkgs.runCommand "omp-egm" { } ''
+        mkdir -p $out/share/omp/egm
+        cp -r ${egm}/{skills,agents,resources,docs,LICENSE} $out/share/omp/egm/
       '')
     ];
 

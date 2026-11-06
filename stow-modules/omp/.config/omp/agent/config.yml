@@ -11,6 +11,7 @@ extensions:
   - /run/current-system/sw/share/omp/caioaao-extra
   - /run/current-system/sw/share/omp/wayfinder-loop
   - /run/current-system/sw/share/omp/mattpocock-skills
+  - /run/current-system/sw/share/omp/egm
 codexResets:
   autoRedeem: "no"
 display:
