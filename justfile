@@ -14,7 +14,6 @@ bootstrap:
 	just stow ssh true
 	just stow nvim true
 	just stow ghostty true
-	just stow herdr true
 	just stow direnv true
 	just stow mise true
 	just stow claude-code true

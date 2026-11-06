@@ -21,12 +21,6 @@
     pi.url = "path:./nix-modules/shared/pi";
     pi.inputs.nixpkgs.follows = "nixpkgs";
 
-    # herdr - terminal workspace manager. Not in nixpkgs; upstream flake only.
-    # Follows nixpkgs-unstable because that is the channel upstream builds
-    # against; pinning it to our stable nixpkgs risks build-dep drift.
-    herdr.url = "github:herdrdev/herdr/v0.8.2";
-    herdr.inputs.nixpkgs.follows = "nixpkgs-unstable";
-
     # oh-my-pi (omp) - coding agent. Not in nixpkgs; upstream flake only.
     # Deliberately keep upstream's own locked inputs (bun2nix, rust-overlay,
     # nixpkgs): the omp build is sensitive to their exact versions, so
@@ -35,7 +29,7 @@
     oh-my-pi.url = "github:can1357/oh-my-pi/v18.17.0";
   };
 
-  outputs = { nixpkgs, nixpkgs-unstable, nix-darwin, nix-homebrew, determinate, pi, herdr, oh-my-pi, ... }:
+  outputs = { nixpkgs, nixpkgs-unstable, nix-darwin, nix-homebrew, determinate, pi, oh-my-pi, ... }:
     let
       # Pick the CPU/OS for each machine
       linuxSystem = "x86_64-linux";
@@ -66,9 +60,6 @@
           hyprpaper = unstable.hyprpaper;
           nwg-displays = unstable.nwg-displays;
           pi = pi.packages.${final.system}.default;
-          # Upstream also ships overlays.default, but it composes rust-overlay
-          # into the package set. Take just the package instead.
-          herdr = herdr.packages.${final.system}.default;
 
           # Upstream also ships nixosModules/homeManagerModules, which we don't
           # need for a plain CLI install. Take just the package.

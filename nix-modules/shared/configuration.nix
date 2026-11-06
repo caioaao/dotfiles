@@ -22,7 +22,6 @@ let
 
 in {
   imports = [
-    ./herdr/default.nix
     ./tmux/default.nix
     ./omp/default.nix
     ./rex/default.nix
@@ -55,7 +54,6 @@ in {
     pi-packages
     github-cli
     gum
-    herdr
     just
     jq
     mise
