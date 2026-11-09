@@ -44,6 +44,14 @@ in {
       type = "http";
       url = "https://mcp.datadoghq.com/v1/mcp";
     };
+    # Native self-hosted MCP: https://langfuse.com/docs/api-and-data-platform/features/mcp-server
+    # Export LANGFUSE_BASE_URL, LANGFUSE_PUBLIC_KEY, and LANGFUSE_SECRET_KEY before
+    # starting omp. Resolve Basic auth at connection time, never in the Nix store.
+    langfuse = {
+      type = "http";
+      url = "\${LANGFUSE_BASE_URL}/api/public/mcp";
+      headers.Authorization = ''!printf 'Basic '; printf '%s:%s' "$LANGFUSE_PUBLIC_KEY" "$LANGFUSE_SECRET_KEY" | ${pkgs.coreutils}/bin/base64 --wrap=0'';
+    };
   };
 
   # omp settings overlay for this box; see nix-modules/shared/omp.
