@@ -4,7 +4,7 @@ composer:
 theme:
   dark: titanium
   light: light
-setupVersion: 2
+setupVersion: 3
 dev:
   autoqaConsent: denied
 extensions:
