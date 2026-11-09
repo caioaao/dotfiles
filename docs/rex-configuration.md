@@ -52,6 +52,48 @@ The `path:` source includes newly added package files even before they are track
 Use Nix for upgrades: update the complete version/build and DMG hash in `rex.nix`, then rebuild. Leave automatic download/installation disabled and do not accept in-app updates for the managed copy. Rex's update checks cannot be disabled, so prompts may remain. Keep `REX_BIN_DIR` precedence in Rex shells, especially on remote servers; the globally installed CLI is not a substitute for the active server's matching CLI.
 
 
+## URL picker
+
+**Ctrl+Q then `u`** runs `open_url`: a top-aligned, half-height floating fzf
+picker for URLs in the focused terminal. Tab selects multiple entries, Enter opens them,
+and Esc cancels. It recognizes explicit HTTP/HTTPS/FTP/file URLs, bare `www`
+domains, IPv4 addresses, Git SSH URLs and quoted GitHub `owner/repo` shorthand,
+matching the URL forms provided by tmux's `fzf-tmux-url` plugin.
+
+Implementation lives in [`nix-modules/shared/rex/urls`](../nix-modules/shared/rex/urls):
+Lua creates the float without blocking client input; the packaged Python helper
+captures the original block with the active server's matching `rex`, unwraps
+terminal lines, extracts and deduplicates URLs, and runs fzf. Unlike the tmux
+plugin's default screen-only capture, Rex's capture includes scrollback.
+Opening uses `open` on macOS or `xdg-open` on Linux **on the server host**;
+remote servers therefore need their own desktop opener, just as with the tmux
+plugin. No client Remote Control permission is needed.
+
+The shared Rex Nix module installs `rex-urls` alongside `rex-worktrees`; the
+existing Rex Stow config loads it and owns the binding. Deploy both before
+running `rex config check` and `rex config reload`. No live-server reload or
+system activation was performed for this addition.
+
+Verification on macOS: the Nix package built with four extraction regression
+tests; the complete config validated with six actions and 32 bindings. An
+isolated Rex server ran the actual action, displayed its extracted URL in fzf,
+and removed the float on Esc. A separate real-capture/fzf selection smoke
+preserved a query string containing `&` through the opener argument, using a
+recording opener instead of launching a browser. No Linux desktop or connected
+GUI key-sequence check was performed.
+
+2026-11-09: Rex macOS build 1408 showed a blank centered float even though
+terminal capture contained eight URLs and the fzf prompt. A forced redraw did
+not help; moving the same running float from `y = 0.25` to `y = 0` revealed
+the menu. The action now anchors the float at the top to avoid this client
+clipping bug. The updated source action was visually verified in the connected
+app, including filtering (five of eight URLs), Tab selection and Esc closing
+the layer. The updated Darwin package built and all four extraction tests
+passed. No extraction or opener changes, system activation or persistent config
+reload were performed. After deploying the package, run `rex config reload`.
+This client-rendering regression requires a GUI smoke check; the extraction
+tests cannot detect it.
+
 ## Worktrunk integration
 
 The repository owns its Rex worktree integration: Lua actions and persistent session identity live beside a local terminal picker helper in [`nix-modules/shared/rex/worktrees`](../nix-modules/shared/rex/worktrees). There is no fetched `rex-worktrunk` package or patch stack. The helper retains MIT-licensed picker code adapted from that project; its attribution ships with the package. Worktrunk still owns Git operations and project hooks, and fzf still owns interactive selection. Complete the [rollout gates below](#rollout-and-remote-control-gates) before relying on a deployment.
