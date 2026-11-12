@@ -63,8 +63,10 @@ matching the URL forms provided by tmux's `fzf-tmux-url` plugin.
 Implementation lives in [`nix-modules/shared/rex/urls`](../nix-modules/shared/rex/urls):
 Lua creates the float without blocking client input; the packaged Python helper
 captures the original block with the active server's matching `rex`, unwraps
-terminal lines, extracts and deduplicates URLs, and runs fzf. Unlike the tmux
-plugin's default screen-only capture, Rex's capture includes scrollback.
+terminal lines, extracts and deduplicates URLs, and runs fzf. Entries follow
+terminal order from top to bottom, including while filtering; repeated URLs
+appear once at their last occurrence. The prompt stays at the bottom.
+Unlike the tmux plugin's default screen-only capture, Rex's capture includes scrollback.
 Opening uses `open` on macOS or `xdg-open` on Linux **on the server host**;
 remote servers therefore need their own desktop opener, just as with the tmux
 plugin. No client Remote Control permission is needed.

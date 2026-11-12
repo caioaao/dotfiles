@@ -4,22 +4,33 @@ import sys
 
 
 def extract(text):
-    """Recognize the five URL forms offered by the tmux picker."""
-    urls = set(re.findall(
-        r"(?:https?|ftp|file):/?//[-A-Za-z0-9+&@#/%?=~_|!:,.;]*[-A-Za-z0-9+&@#/%=~_|]",
-        text,
-    ))
+    """Recognize tmux's URL forms, ordered by their last terminal occurrence."""
+    matches = [
+        (match.start(), match.group())
+        for match in re.finditer(
+            r"(?:https?|ftp|file):/?//[-A-Za-z0-9+&@#/%?=~_|!:,.;]*[-A-Za-z0-9+&@#/%=~_|]",
+            text,
+        )
+    ]
     for pattern, prefix in (
         (r"\bwww\.[a-zA-Z](?:-?[a-zA-Z0-9])+\.[a-zA-Z]{2,}(?:/[^\s'\"`<>]*)?", "http://"),
         (r"\b\d{1,3}(?:\.\d{1,3}){3}(?::\d{1,5})?(?:/[^\s'\"`<>]*)?", "http://"),
     ):
-        urls.update(prefix + match for match in re.findall(pattern, text))
-    for host, path in re.findall(r"(?:ssh://)?git@([^\s:'\"`<>/]+)[:/]([^\s'\"`<>]+)", text):
-        urls.add("https://" + host + "/" + path)
-    urls.update("https://github.com/" + path for path in re.findall(
-        r"['\"]([_A-Za-z0-9-]+/[_.A-Za-z0-9-]+)['\"]", text,
-    ))
-    return sorted(urls)
+        matches.extend((match.start(), prefix + match.group())
+                       for match in re.finditer(pattern, text))
+    matches.extend(
+        (match.start(), "https://" + match[1] + "/" + match[2])
+        for match in re.finditer(r"(?:ssh://)?git@([^\s:'\"`<>/]+)[:/]([^\s'\"`<>]+)", text)
+    )
+    matches.extend(
+        (match.start(), "https://github.com/" + match[1])
+        for match in re.finditer(r"['\"]([_A-Za-z0-9-]+/[_.A-Za-z0-9-]+)['\"]", text)
+    )
+    urls = {}
+    for _, url in sorted(matches):
+        urls.pop(url, None)
+        urls[url] = None
+    return list(urls)
 
 
 def main():
@@ -34,7 +45,8 @@ def main():
         input()
         return
     selected = subprocess.run(
-        ["fzf", "--multi", "--exit-0", "--no-preview", "--prompt=Open URL> "],
+        ["fzf", "--multi", "--exit-0", "--no-preview", "--no-sort",
+         "--layout=reverse-list", "--prompt=Open URL> "],
         input="\n".join(urls), text=True, stdout=subprocess.PIPE,
     )
     if selected.returncode in (1, 130):

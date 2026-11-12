@@ -11,8 +11,8 @@ class ExtractionTests(unittest.TestCase):
     def test_terminal_url_forms(self):
         self.assertEqual(extract("www.example.com 10.0.0.1:8080/api "
                                  "git@github.com:owner/repo.git 'owner/repo'"), [
-            "http://10.0.0.1:8080/api", "http://www.example.com",
-            "https://github.com/owner/repo", "https://github.com/owner/repo.git",
+            "http://www.example.com", "http://10.0.0.1:8080/api",
+            "https://github.com/owner/repo.git", "https://github.com/owner/repo",
         ])
 
     def test_duplicates_and_empty_content(self):
