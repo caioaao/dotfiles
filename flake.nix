@@ -21,6 +21,12 @@
     pi.url = "path:./nix-modules/shared/pi";
     pi.inputs.nixpkgs.follows = "nixpkgs";
 
+    # rex - terminal multiplexer. Linux runs only its server; the macOS app is
+    # the client. Native ssh:// hosts need the server-side `rex __internal
+    # dial-stdio`, which is on the snapshot channel and not in preview.
+    rex.url = "https://pkgs.superlogical.com/rex/nix/snapshot.tar.gz";
+    rex.inputs.nixpkgs.follows = "nixpkgs-unstable";
+
     # oh-my-pi (omp) - coding agent. Not in nixpkgs; upstream flake only.
     # Deliberately keep upstream's own locked inputs (bun2nix, rust-overlay,
     # nixpkgs): the omp build is sensitive to their exact versions, so
@@ -29,7 +35,7 @@
     oh-my-pi.url = "github:can1357/oh-my-pi/v18.17.0";
   };
 
-  outputs = { nixpkgs, nixpkgs-unstable, nix-darwin, nix-homebrew, determinate, pi, oh-my-pi, ... }:
+  outputs = { nixpkgs, nixpkgs-unstable, nix-darwin, nix-homebrew, determinate, pi, rex, oh-my-pi, ... }:
     let
       # Pick the CPU/OS for each machine
       linuxSystem = "x86_64-linux";
@@ -77,6 +83,7 @@
           inherit system specialArgs;
           modules = [
             { nixpkgs.overlays = [ unstableOverlay ]; }
+            rex.nixosModules.default
             ./nix-modules/nixos/configuration.nix
             ./nix-modules/shared/configuration.nix
           ] ++ modules;

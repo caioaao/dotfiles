@@ -35,11 +35,13 @@ Keep the current provisioning until Rex exposes a supported declarative client-s
 
 ## macOS app package
 
-[`nix-modules/darwin/rex.nix`](../nix-modules/darwin/rex.nix) packages **Rex Preview 0.1.0 build 1829** from its pinned official DMG. It requires macOS 15 or newer and preserves the vendor-signed universal app, including the matching server/CLI. The Darwin configuration includes it in `environment.systemPackages`; nix-darwin exposes `/Applications/Nix Apps/Rex Beta.app` and the system profile exposes `rex`.
+[`nix-modules/darwin/rex.nix`](../nix-modules/darwin/rex.nix) packages **Rex Preview 0.1.0 build 1956** from its pinned official DMG. It requires macOS 15 or newer and preserves the vendor-signed universal app, including the matching server/CLI. The Darwin configuration includes it in `environment.systemPackages`; nix-darwin exposes `/Applications/Nix Apps/Rex Beta.app` and the system profile exposes `rex`.
 
 The original build 1408 package was built and smoke-tested on Apple Silicon: deep/strict signature verification, CLI version, an isolated server/terminal, and actual GUI launch with an isolated local server and visible terminal window. The full Darwin configuration also evaluated successfully. No system activation or replacement of the manually installed app was performed. See [packaging evidence and constraints](rex-nix-packaging.md#implementation-verification).
 
 Build 1829 was built on Apple Silicon and passed `rex version` and deep/strict signature verification. Its CLI reports commit `af0c204859ccf584d9392e154d8d9b4e2124635f`, API revision 11 (supports 0–11). The updated Darwin system derivation evaluated successfully; this upgrade was not activated or GUI-tested. The same dependency refresh selects omp 18.17.0 and GitHub CLI 2.103.3; Neovim remains at the latest stable release, 0.12.6. All four packages built, with headless Neovim startup and CLI version smoke checks passing.
+
+Build 1956 is pinned by its prefetched DMG hash. Its bundled CLI was inspected on this machine and contains the `ssh://` endpoint and `__internal dial-stdio` support needed for native SSH hosts. It has not yet been built or launched on Darwin.
 
 To activate, quit Rex first so its cached preferences cannot overwrite the existing plist import. Run from another terminal:
 
@@ -95,6 +97,61 @@ passed. No extraction or opener changes, system activation or persistent config
 reload were performed. After deploying the package, run `rex config reload`.
 This client-rendering regression requires a GUI smoke check; the extraction
 tests cannot detect it.
+
+## Linux server
+
+Linux runs only the Rex server; the client is the macOS app. This laptop runs
+a personal server as `caio`, and the Mac reaches it with Rex's native `ssh://`
+host support. There is no TCP listener, Tailscale Serve, or login server.
+Configuration lives in
+[`nix-modules/nixos/rex.nix`](../nix-modules/nixos/rex.nix); the flake imports
+`rex.nixosModules.default` in the NixOS builder only, and uses its `package`
+option.
+
+- **Personal server.** The unit is the one Rex's home-manager module installs:
+  `rex server run`, with no `--listen` or `--state-dir`. It uses
+  `$XDG_RUNTIME_DIR/rex/server.sock`, so local `rex` commands and the Mac reach
+  the same server, and sessions run as `caio` with this home directory,
+  dotfiles and worktrees.
+- **Lingering.** `users.users.caio.linger = true` keeps the user manager and
+  the server running while caio is logged out, so the socket survives and the
+  Mac can reconnect.
+- **Native SSH.** Add `ssh://caio@nixos` on the Mac. Rex runs the Mac's system
+  `ssh`, so the existing `Host nixos` alias, keys, agent and configuration
+  apply. The remote side runs `rex __internal dial-stdio` from the SSH user's
+  PATH; `/run/current-system/sw/bin` is on that PATH for non-interactive zsh,
+  and it contains `rex` from `environment.systemPackages`. No manual `-L`
+  tunnel or extra listener is involved.
+- **Snapshot channel.** Native SSH needs `dial-stdio`, which the preview
+  channel lacks; `flake.lock` pins the exact snapshot build. The snapshot CLI
+  also has `rex server install`, but this repo keeps the declarative unit
+  instead of letting Rex write user units.
+
+Deploy on the laptop, then restart the unit onto the new binary:
+
+```sh
+sudo nixos-rebuild switch --flake .#nixos
+systemctl --user daemon-reload
+systemctl --user restart rex
+rex server status
+```
+
+`rex server status` must show `unix:///run/user/1000/rex/server.sock`.
+
+On the Mac, confirm the existing SSH path works once:
+
+```sh
+ssh nixos true
+```
+
+Then add the remote host in Rex for Mac as `ssh://caio@nixos`; on the CLI that
+is `rex hosts add nixos ssh://caio@nixos`. Build 1956 of the Mac app contains
+the required `ssh://` and `dial-stdio` support. The first connection uses the
+running personal server; if it is absent, Rex starts one over SSH.
+
+The Stow module deploys `~/.config/rex/init.lua` for that personal server.
+`bootstrap` does not stow Rex; run `just stow rex` (without `--adopt`) so a
+generated `init.lua` is never copied over the tracked file.
 
 ## Worktrunk integration
 

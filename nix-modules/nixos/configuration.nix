@@ -12,6 +12,7 @@
       ./helium.nix
       ./anytype.nix
       ./paper.nix
+      ./rex.nix
       ../nixos-shared/tailscale.nix
       ../nixos-shared/resolved.nix
     ];
