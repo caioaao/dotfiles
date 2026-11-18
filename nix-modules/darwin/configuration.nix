@@ -55,7 +55,7 @@ in {
   };
 
   # omp settings overlay for this box; see nix-modules/shared/omp.
-  programs.omp.settings.modelRoles.default = "openai-codex/gpt-6.1-sol";
+  programs.omp.settings.modelRoles.default = "openai-codex/gpt-6.2-sol";
 
   system.primaryUser = "caio";
   system.keyboard = {
