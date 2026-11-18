@@ -7,11 +7,11 @@
 
 stdenvNoCC.mkDerivation rec {
   pname = "rex-macos";
-  version = "0.1.0-1956";
+  version = "0.1.0-1996";
 
   src = fetchurl {
     url = "https://blob.superlogical.com/public/rex-app/preview/Rex-${version}.dmg";
-    hash = "sha256-HyRgH0lj41d+34NngLIdBQXiJ66YHVE4ZZ/H9ouPum4=";
+    hash = "sha256-l2eyyExYX4UeU4+x1gV2hAugmC0KBDWef6Bx66E+Jso=";
   };
 
   nativeBuildInputs = [ undmg ];

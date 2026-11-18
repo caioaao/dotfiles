@@ -35,13 +35,17 @@ Keep the current provisioning until Rex exposes a supported declarative client-s
 
 ## macOS app package
 
-[`nix-modules/darwin/rex.nix`](../nix-modules/darwin/rex.nix) packages **Rex Preview 0.1.0 build 1956** from its pinned official DMG. It requires macOS 15 or newer and preserves the vendor-signed universal app, including the matching server/CLI. The Darwin configuration includes it in `environment.systemPackages`; nix-darwin exposes `/Applications/Nix Apps/Rex Beta.app` and the system profile exposes `rex`.
+[`nix-modules/darwin/rex.nix`](../nix-modules/darwin/rex.nix) packages **Rex Preview 0.1.0 build 1996** from its pinned official DMG. It requires macOS 15 or newer and preserves the vendor-signed universal app, including the matching server/CLI. The Darwin configuration includes it in `environment.systemPackages`; nix-darwin exposes `/Applications/Nix Apps/Rex Beta.app` and the system profile exposes `rex`.
 
 The original build 1408 package was built and smoke-tested on Apple Silicon: deep/strict signature verification, CLI version, an isolated server/terminal, and actual GUI launch with an isolated local server and visible terminal window. The full Darwin configuration also evaluated successfully. No system activation or replacement of the manually installed app was performed. See [packaging evidence and constraints](rex-nix-packaging.md#implementation-verification).
 
 Build 1829 was built on Apple Silicon and passed `rex version` and deep/strict signature verification. Its CLI reports commit `af0c204859ccf584d9392e154d8d9b4e2124635f`, API revision 11 (supports 0–11). The updated Darwin system derivation evaluated successfully; this upgrade was not activated or GUI-tested. The same dependency refresh selects omp 18.17.0 and GitHub CLI 2.103.3; Neovim remains at the latest stable release, 0.12.6. All four packages built, with headless Neovim startup and CLI version smoke checks passing.
 
 Build 1956 is pinned by its prefetched DMG hash. Its bundled CLI was inspected on this machine and contains the `ssh://` endpoint and `__internal dial-stdio` support needed for native SSH hosts. It has not yet been built or launched on Darwin.
+
+Build 1996 ([official appcast](https://blob.superlogical.com/public/rex-app/preview/appcast.xml)) was built on Apple Silicon and passed `rex version`, deep/strict signature verification, and local `rex config check` (32 bindings, no diagnostics). Its CLI reports `0.1.0-preview.20`, commit `e33d2481b81b202b2600a0f40bd440a5282653a9`, API revision 16 (supports 0–16). The Linux snapshot pin was refreshed to `0.0.1795014090-g6c29c5`; both Darwin and NixOS system derivations evaluated successfully. Neither system was activated; the Linux package and Mac GUI were not run.
+
+The same refresh updates omp from 18.17.0 to [18.22.2](https://github.com/can1357/oh-my-pi/releases/tag/v18.22.2), retaining upstream's locked build dependencies. Its Nix package built on Apple Silicon; `omp --version` reported `omp/18.22.2`, and `omp config get modelRoles` loaded the local configuration successfully.
 
 To activate, quit Rex first so its cached preferences cannot overwrite the existing plist import. Run from another terminal:
 
