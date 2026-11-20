@@ -58,9 +58,28 @@ in {
   programs.omp.settings.modelRoles.default = "openai-codex/gpt-6.2-sol";
 
   system.primaryUser = "caio";
-  system.keyboard = {
-    enableKeyMapping = true;
-    remapCapsLockToControl = true;
+
+  # HID mappings are cleared on reboot; apply the swap at GUI login.
+  launchd.user.agents.swap-caps-control.serviceConfig = {
+    RunAtLoad = true;
+    LimitLoadToSessionType = "Aqua";
+    ProgramArguments = [
+      "/usr/bin/hidutil"
+      "property"
+      "--set"
+      (builtins.toJSON {
+        UserKeyMapping = [
+          {
+            HIDKeyboardModifierMappingSrc = 30064771129; # Caps Lock (0x700000039)
+            HIDKeyboardModifierMappingDst = 30064771296; # Left Control (0x7000000e0)
+          }
+          {
+            HIDKeyboardModifierMappingSrc = 30064771296;
+            HIDKeyboardModifierMappingDst = 30064771129;
+          }
+        ];
+      })
+    ];
   };
 
   # Rex's client preferences are separate from its server-side init.lua.

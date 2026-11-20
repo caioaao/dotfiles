@@ -39,6 +39,14 @@ sudo nixos-rebuild switch --flake .#nixos-cloud
 sudo darwin-rebuild switch --flake .#darwin
 ```
 
+#### Keyboard modifiers
+
+The `org.nixos.swap-caps-control` LaunchAgent swaps Caps Lock and Left Control at GUI login. If macOS clears the mapping when a keyboard disconnects, reapply it without rebuilding:
+
+```sh
+launchctl kickstart "gui/$(id -u)/org.nixos.swap-caps-control"
+```
+
 #### Raycast extensions
 
 Raycast itself is installed outside nix. Store extensions are listed in `programs.raycast.extensions` (`nix-modules/darwin/configuration.nix`). After a rebuild, install missing ones with:
