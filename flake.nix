@@ -32,7 +32,9 @@
     # nixpkgs): the omp build is sensitive to their exact versions, so
     # following our nixpkgs risks build-dep drift. Costs a second nixpkgs in
     # the lockfile, which is the safer trade.
-    oh-my-pi.url = "github:can1357/oh-my-pi/v18.22.2";
+    # Omp 19 uses one daemon per user; it does not adopt older processes.
+    # Existing artifact:// links are not migrated to local:// log paths.
+    oh-my-pi.url = "github:can1357/oh-my-pi/v19.0.1";
   };
 
   outputs = { nixpkgs, nixpkgs-unstable, nix-darwin, nix-homebrew, determinate, pi, rex, oh-my-pi, ... }:

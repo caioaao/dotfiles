@@ -10,7 +10,7 @@
 # (omp-plugins provider). pi reads the same directory as a package
 # (conventional `skills/`), listed in the stowed ~/.pi/agent/settings.json.
 # Update selectively from upstream skills/<category>/<name>/ into skills/<name>/;
-# preserve the curated adaptations recorded in docs/skill-adoption-report.md.
+# preserve local adaptations rather than replacing the vendored tree wholesale.
 # In particular, grilling keeps max 4 questions per structured-tool round.
 #
 # egm: upstream Elephant-Goldfish Model skills, reviewer personas, and standards.
