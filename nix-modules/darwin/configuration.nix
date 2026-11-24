@@ -60,14 +60,13 @@ in {
   system.primaryUser = "caio";
 
   # HID mappings are cleared on reboot; apply the swap at GUI login.
-  launchd.user.agents.swap-caps-control.serviceConfig = {
-    RunAtLoad = true;
-    LimitLoadToSessionType = "Aqua";
-    ProgramArguments = [
-      "/usr/bin/hidutil"
-      "property"
-      "--set"
-      (builtins.toJSON {
+  launchd.user.agents.swap-caps-control = {
+    serviceConfig = {
+      RunAtLoad = true;
+      LimitLoadToSessionType = "Aqua";
+    };
+    script = let
+      mapping = builtins.toJSON {
         UserKeyMapping = [
           {
             HIDKeyboardModifierMappingSrc = 30064771129; # Caps Lock (0x700000039)
@@ -78,8 +77,17 @@ in {
             HIDKeyboardModifierMappingDst = 30064771129;
           }
         ];
-      })
-    ];
+      };
+    in ''
+      set -euo pipefail
+      # Leave the Moonlander's firmware layout alone, as on NixOS (3297:1969).
+      keyboards=$(/usr/bin/hidutil list --ndjson --matching '{"PrimaryUsagePage":1,"PrimaryUsage":6}' |
+        ${pkgs.jq}/bin/jq -sc '[.[] | select(.type == "service" and (.VendorID != 12951 or .ProductID != 6505)) |
+          {VendorID, ProductID, PrimaryUsagePage, PrimaryUsage}] | unique')
+      if [ "$keyboards" != '[]' ]; then
+        exec /usr/bin/hidutil property --matching "$keyboards" --set '${mapping}'
+      fi
+    '';
   };
 
   # Rex's client preferences are separate from its server-side init.lua.
