@@ -5,3 +5,5 @@ disable-model-invocation: true
 ---
 
 Call the Skill tool twice, for "grilling" and "domain-modeling".
+
+When the design frontier reaches who owns a rule or what another module needs to know, load the `responsibility-driven-design` skill and use **Design** to prepare and resolve those questions in the existing grilling rounds.

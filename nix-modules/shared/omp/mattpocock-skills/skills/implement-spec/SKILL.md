@@ -24,6 +24,8 @@ Run independent **implementer subagents** concurrently where the host's delegati
 
 4. Dispatch ready tickets to **implementer subagents**, each in its own worktree and branch. Before coding, confirm each worktree's actual branch and starting commit against the intended integration base; resolve a mismatch without destroying existing work. Give each implementer the spec/ticket pointers, agreed testing approach, and host gate policy.
 
+   For a ticket with module scope or linked design constraints, have the implementer load the `responsibility-driven-design` skill and apply **Handoff** before editing. Route proposed scope changes back through the integration owner.
+
 5. Before an implementer reports complete, have it integrate the latest integration-branch tip into its ticket branch, preserve unrelated work, and resolve conflicts by intent. It reports the integration commit incorporated, changes, and checks performed or deferred. If the integration branch advances again, the integration owner reconciles that newer tip before merging.
 
 6. The **integration owner** merges each completed ticket into the integration branch. Only after the first successful integrated merge, create a draft PR if the user requests it or the configured tracker requires PR-based closure. Use the configured closure references. Publication still requires the applicable push and external-write authorization; if absent, keep the integrated branch local and report the blocked publication step.

@@ -11,6 +11,13 @@ directory before stowing. For example, `bootstrap-agents` creates
 `~/.agents/skills` so Stow links the managed skill without taking over the
 directory. Ignore any unmanaged runtime files that could land in the repo.
 
+Put repo-authored skills shared by Omp and Pi in
+`stow-modules/agents/.agents/skills/`. Install with `just stow agents`; both
+harnesses discover them there. Keep the Nix-packaged `mattpocock-skills` tree
+for upstream skills and their local adaptations. When moving a skill out of
+that package, rebuild the active Nix generation before restarting the
+harnesses so they do not also discover the old copy.
+
 Zsh fragments live under `.config/zsh/zshenv.d/` for all shells and
 `.config/zsh/zshrc.d/` for interactive shells. Prefix filenames with a two-digit
 load order: `00`–`19` for early setup, `20`–`49` for tool integrations,

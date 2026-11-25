@@ -12,6 +12,7 @@
 # Update selectively from upstream skills/<category>/<name>/ into skills/<name>/;
 # preserve local adaptations rather than replacing the vendored tree wholesale.
 # In particular, grilling keeps max 4 questions per structured-tool round.
+# Repo-authored cross-harness skills belong in stow-modules/agents, not here.
 #
 # egm: upstream Elephant-Goldfish Model skills, reviewer personas, and standards.
 # Keep the upstream layout intact: skills resolve ../../agents and resources.

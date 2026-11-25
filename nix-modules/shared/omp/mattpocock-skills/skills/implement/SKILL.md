@@ -8,6 +8,8 @@ Implement the work described by the user in the spec or tickets.
 
 Before coding, resolve every provided ticket reference through the configured tracker instructions and fetch its actual title and body. State the fetched title alongside its reference, then use its requirements and acceptance criteria to scope the work. If a reference cannot be resolved, report that blocker rather than coding against a guessed identity. Read a provided spec directly when no ticket is involved.
 
+If the work carries module scope or agreed design constraints, load the `responsibility-driven-design` skill and apply **Handoff** before editing.
+
 Load TDD explicitly with `read` at `skill://tdd`; use it where possible, at pre-agreed seams.
 
 Follow the host's delegation and verification ownership rules. Run typechecking and focused tests during implementation, and the full suite at the end, only when those checks are authorized and assigned to you; otherwise hand the concrete checks to their owner without running them.
