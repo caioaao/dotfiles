@@ -12,6 +12,9 @@ preferences cannot overwrite the activation import. Launch
 move the old copy out of `/Applications` and update Dock and login-item
 references to avoid two apps with the same bundle ID.
 
+After an upgrade, run `rex whoami --json` to check `api_revision` on the
+running server. `rex version` reports the CLI's revision, not the server's.
+
 [`rex.plist`](../nix-modules/darwin/rex.plist) sets native client preferences
 (font, theme, and tab layout); `init.lua` configures the server and has no
 client context at load time. The plist also enables **Remote Control**
@@ -52,9 +55,8 @@ reload is refused.
 [`init.lua`](../stow-modules/rex/.config/rex/init.lua) owns the bindings.
 The [Rex packages](../nix-modules/shared/rex) supply the picker modules.
 Keep [`99-rex.sh`](../stow-modules/rex/.config/zsh/zshenv.d/99-rex.sh) in
-`zshenv.d`: non-interactive picker commands need `REX_BIN_DIR` first on `PATH`
-to use the active server's matching CLI. The globally installed CLI is not a
-substitute.
+`zshenv.d`: the worktree pickers need `REX_BIN_DIR` first on `PATH` to use the
+active server's matching CLI. The globally installed CLI is not a substitute.
 
 ## Pickers
 
@@ -62,18 +64,20 @@ Press Ctrl+Q, then the second key:
 
 | Key | Action |
 | --- | --- |
-| `u` | Pick URLs from the focused terminal and its scrollback. Tab selects multiple entries. |
-| `f` | Pick a file path from the focused terminal and its scrollback. Enter opens it in `$EDITOR`. |
+| `u` | Pick URLs from the focused terminal and its scrollback. Tick links, then press Cmd+Return to open them. |
+| `f` | Pick a file from the focused terminal and its scrollback. Enter opens it in `$EDITOR` in a new pane to the right. |
 | `g` | Open or create a branch worktree. Alt+Enter uses the typed branch name instead of the fuzzy match. |
 | Shift+G | Check out a GitHub PR by number or URL. Authenticate `gh` on the server host. |
 | `d` | Remove a non-main, branch-associated worktree. |
 | `w` / Shift+W | Switch to or create a native Rex session. |
 
-Esc cancels the fzf pickers. The URL picker opens links **on the server host**
-with `open` or `xdg-open`; it doesn't require client Remote Control.
-The file picker resolves relative paths from the focused terminal's current
-working directory and runs `$EDITOR` in a Rex float on the server host. Export
-`EDITOR` in the server's shell startup environment.
+Esc cancels the pickers. The URL and file pickers use the native Rex palette
+and require a server and connected app with prompt support (API revision 17
+or newer). Each shows up to 2,000 distinct matches, most recent first.
+URLs open **on the server host** with `open` or `xdg-open` and do not require
+client Remote Control. Relative file paths resolve against the focused
+terminal's working directory. Export `EDITOR` in the server's shell startup
+environment.
 
 Worktrunk handles checkout creation, reuse, and project hooks. The branch
 picker starts new branches at the caller's HEAD. Opening a branch or PR
