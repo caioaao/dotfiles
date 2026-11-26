@@ -6,7 +6,8 @@
 --   :AI <question>      skip the input dialog
 --   :'<,'>AI <question>
 --
--- The session opens in a new Rex window when REX_SESSION is set, otherwise tmux.
+-- Inside Rex, opens a window on $REX_SERVER in the session containing $REX_BLOCK.
+-- Outside Rex, uses tmux.
 -- It uses nvim's cwd with the prompt:
 --   On <file>:<line|start-end>: <question>
 -- The omp executable is resolved through nvim's PATH.
@@ -26,12 +27,21 @@ local function location(opts)
 end
 
 local function start_session(prompt)
-	if vim.env.REX_SESSION then
+	local server = vim.env.REX_SERVER
+	if server and server ~= "" then
+		local block = vim.env.REX_BLOCK
+		if not block or block == "" then
+			vim.notify("AI: REX_BLOCK is missing; cannot target the Rex session", vim.log.levels.ERROR)
+			return
+		end
 		vim.system({
 			"rex",
+			"--server",
+			server,
+			"--autostart=false",
 			"run",
-			"-s",
-			vim.env.REX_SESSION,
+			"--session",
+			block,
 			"--label",
 			"omp",
 			"-c",
@@ -39,7 +49,11 @@ local function start_session(prompt)
 			"--",
 			vim.fn.exepath("omp"),
 			prompt,
-		})
+		}, {}, vim.schedule_wrap(function(result)
+			if result.code ~= 0 then
+				vim.notify("AI: rex run failed: " .. vim.trim(result.stderr or ""), vim.log.levels.ERROR)
+			end
+		end))
 		return
 	end
 	if not vim.env.TMUX then
