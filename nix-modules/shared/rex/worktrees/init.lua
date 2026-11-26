@@ -90,29 +90,94 @@ function M.close(ctx, path, main)
   return { closed = true, session_id = id }
 end
 
-local function open(ctx, mode)
+local function focused_cwd(ctx)
   if not ctx.block_id then fail("no focused terminal") end
-  local process = rex.block.call("com.superlogical.terminal", "process", { block_id = ctx.block_id })
-  local cwd = process and ((process.foreground or {}).cwd or (process.child or {}).cwd)
+  local process, err = rex.block.call("com.superlogical.terminal", "process", { block_id = ctx.block_id })
+  if not process then fail(err) end
+  local cwd = (process.foreground or {}).cwd
+  if not cwd or cwd == "" then cwd = (process.child or {}).cwd end
   if not cwd or cwd == "" then fail("can't tell the working directory of the focused terminal") end
-  local command = { options.script, mode }
-  if mode == "pick" then
-    if options.base then command[#command + 1] = "--base"; command[#command + 1] = options.base end
-    if options.remotes then command[#command + 1] = "--remotes" end
-    if options.slugify then command[#command + 1] = "--slugify" end
+  return cwd
+end
+
+local function list(cwd, command)
+  local result, err = rex.exec(command, { cwd = cwd })
+  if not result or not result.ok then fail(err or result.stderr) end
+  local items = {}
+  for item in result.stdout:gmatch("[^\n]+") do
+    items[#items + 1] = item
+    if #items == 2000 then break end -- Rex prompt item limit
   end
+  return items
+end
+
+local function prompt(kind, spec)
+  if not (rex.ui and rex.ui[kind]) then fail("native prompts require Rex API revision 17 or later") end
+  local value, reason, detail = rex.ui[kind](spec)
+  if value == nil and reason ~= "cancelled" and reason ~= "timeout" then
+    fail(spec.title .. ": " .. (detail or reason))
+  end
+  return value
+end
+
+local function run_in_terminal(cwd, label, command)
   if layer_id then rex.session.close_layer{ layer_id = layer_id }; layer_id = nil end
   local layer, err = rex.session.new_layer{
-    bounds = { 0.15, 0.1, 0.7, 0.8 }, focus = true,
+    bounds = { 0.15, 0, 0.7, 0.8 }, focus = true,
     layout = { block = {
-      flavor = "com.superlogical.terminal.shell", label = "worktree " .. mode,
+      flavor = "com.superlogical.terminal.shell", label = label,
       options = { command = command, cwd = cwd },
     } },
   }
   if layer == nil then fail(err) end
   layer_id = layer.layer_id
-  -- Return immediately: waiting for fzf inside a key action blocks app input.
+  -- Return immediately; hooks and approval prompts run in the terminal.
   return layer
+end
+
+local function switch(ctx)
+  local cwd = focused_cwd(ctx)
+  local command = { options.script, "branches" }
+  if options.remotes then command[#command + 1] = "--remotes" end
+  local selection = prompt("pick", {
+    title = "Switch or create worktree",
+    placeholder = "Filter branches or type a branch name",
+    items = list(cwd, command),
+    allow_other = true,
+  })
+  local name = type(selection) == "table" and selection.text or selection
+  if not name or name == "" then return end
+  command = { options.script, "switch", name }
+  if options.base then
+    command[#command + 1] = "--base"
+    command[#command + 1] = options.base
+  end
+  if options.slugify then command[#command + 1] = "--slugify" end
+  return run_in_terminal(cwd, "worktree switch", command)
+end
+
+local function checkout_pr(ctx)
+  local cwd = focused_cwd(ctx)
+  local target = prompt("input", {
+    title = "Check out pull request",
+    placeholder = "GitHub PR number or URL",
+    confirm = "Check out",
+  })
+  if not target or target == "" then return end
+  return run_in_terminal(cwd, "worktree PR", { options.script, "pr", target })
+end
+
+local function remove(ctx)
+  local cwd = focused_cwd(ctx)
+  local items = list(cwd, { options.script, "removable" })
+  if #items == 0 then fail("no removable branch worktrees") end
+  local name = prompt("pick", {
+    title = "Remove worktree and close its Rex session",
+    placeholder = "Filter non-main checkouts",
+    items = items,
+  })
+  if not name then return end
+  return run_in_terminal(cwd, "worktree remove", { options.script, "remove", name })
 end
 
 function M.setup(config)
@@ -123,17 +188,17 @@ function M.setup(config)
   rex.action{
     name = "worktree", title = "Worktree: switch / create…", category = "Worktree",
     description = "Pick a checkout or branch, or type a new branch name.",
-    run = function(ctx) return open(ctx, "pick") end,
+    run = switch,
   }
   rex.action{
     name = "worktree_pr", title = "Worktree: check out PR…", category = "Worktree",
     description = "Enter a GitHub PR number or URL, then open its worktree session.",
-    run = function(ctx) return open(ctx, "pr") end,
+    run = checkout_pr,
   }
   rex.action{
     name = "worktree_remove", title = "Worktree: remove…", category = "Worktree",
     description = "Remove a non-main checkout and close its entire Rex session.",
-    run = function(ctx) return open(ctx, "remove") end,
+    run = remove,
   }
   rex.action{
     name = "worktree_go", title = "Open Worktree Session", category = "Worktree",

@@ -1,10 +1,10 @@
-{ lib, stdenvNoCC, makeWrapper, bash, worktrunk, git, github-cli, fzf, jq, coreutils, gawk, gnused, python3 }:
+{ lib, stdenvNoCC, makeWrapper, bash, worktrunk, git, github-cli, jq, coreutils, gawk, gnused }:
 stdenvNoCC.mkDerivation {
   pname = "rex-worktrees";
   version = "1";
   src = ./.;
   nativeBuildInputs = [ makeWrapper ];
-  nativeCheckInputs = [ git jq worktrunk fzf coreutils gawk gnused python3 ];
+  nativeCheckInputs = [ git jq worktrunk coreutils gawk gnused ];
   dontBuild = true;
   doCheck = true;
   checkPhase = ''
@@ -23,7 +23,7 @@ stdenvNoCC.mkDerivation {
       --replace-fail '#!/usr/bin/env bash' '#!${bash}/bin/bash'
     chmod +x "$out/share/rex/worktrees/picker.sh"
     makeWrapper "$out/share/rex/worktrees/picker.sh" "$out/bin/rex-worktree-picker" \
-      --prefix PATH : ${lib.makeBinPath [ bash worktrunk git fzf jq coreutils gawk gnused ]} \
+      --prefix PATH : ${lib.makeBinPath [ bash worktrunk git jq coreutils gawk gnused ]} \
       --suffix PATH : ${lib.makeBinPath [ github-cli ]}
     runHook postInstall
   '';
@@ -32,7 +32,7 @@ stdenvNoCC.mkDerivation {
     PICKER="$out/bin/rex-worktree-picker" bash test/picker.sh
   '';
   meta = {
-    description = "Local Rex worktree actions and Worktrunk/fzf picker";
+    description = "Native Rex worktree prompts and interactive Worktrunk operations";
     license = lib.licenses.mit;
     platforms = lib.platforms.darwin ++ lib.platforms.linux;
   };

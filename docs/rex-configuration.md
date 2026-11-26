@@ -66,23 +66,27 @@ Press Ctrl+Q, then the second key:
 | --- | --- |
 | `u` | Pick URLs from the focused terminal and its scrollback. Tick links, then press Cmd+Return to open them. |
 | `f` | Pick a file from the focused terminal and its scrollback. Enter opens it in `$EDITOR` in a new pane to the right. |
-| `g` | Open or create a branch worktree. Alt+Enter uses the typed branch name instead of the fuzzy match. |
+| `g` | Open or create a branch worktree. For an exact typed name, select the `Use "…"` row. |
 | Shift+G | Check out a GitHub PR by number or URL. Authenticate `gh` on the server host. |
 | `d` | Remove a non-main, branch-associated worktree. |
 | `w` / Shift+W | Switch to or create a native Rex session. |
 
-Esc cancels the pickers. The URL and file pickers use the native Rex palette
-and require a server and connected app with prompt support (API revision 17
-or newer). Each shows up to 2,000 distinct matches, most recent first.
+Esc cancels the pickers. The scrollback and worktree prompts use the native
+Rex palette and require a server and connected app with prompt support
+(API revision 17 or newer). Pickers show at most 2,000 candidates; scrollback
+matches are ordered most recent first.
+Scrollback actions exit quietly when there are no matches or the prompt is
+cancelled; operational failures use Rex's warning logger instead of an alert.
 URLs open **on the server host** with `open` or `xdg-open` and do not require
 client Remote Control. Relative file paths resolve against the focused
 terminal's working directory. Export `EDITOR` in the server's shell startup
 environment.
 
-Worktrunk handles checkout creation, reuse, and project hooks. The branch
-picker starts new branches at the caller's HEAD. Opening a branch or PR
-worktree creates or reuses a Rex session without changing the caller's shell.
-Review hook commands before approving them.
+The branch picker creates new branches from the calling checkout's HEAD.
+After selection, Worktrunk runs in a terminal so project hooks and approvals
+remain interactive. Opening a branch or PR worktree creates or reuses a Rex
+session without changing the caller's shell. Review hook commands before
+approving them.
 
 **Save work before removing a checkout.** Successful removal can destroy its
 managed session, killing processes and losing unsaved buffers. Main is excluded

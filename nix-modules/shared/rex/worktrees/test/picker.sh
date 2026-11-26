@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
-# Public-CLI integration tests: real Git repositories, wt operations and fzf.
-# Only the Rex boundary is recorded; a live Rex server is tested separately.
+# Public helper integration tests: real Git repositories and wt operations.
+# Rex callbacks are recorded separately from the app's native prompts.
 # Run: PICKER=/path/to/rex-worktree-picker bash test/picker.sh
-# Requires GNU realpath, plus Python's standard-library PTY support.
 
 set -euo pipefail
 
@@ -12,7 +11,7 @@ if [[ $script != /* ]]; then
     script=$(command -v -- "$script") || { echo "picker not found: $script" >&2; exit 1; }
 fi
 [[ -f $script ]] || { echo "picker not found: $script" >&2; exit 1; }
-for tool in git jq wt fzf realpath python3 sort; do
+for tool in git jq wt realpath sort; do
     command -v "$tool" >/dev/null 2>&1 || { echo "missing required tool: $tool" >&2; exit 1; }
 done
 script=$(realpath -e -- "$script")
@@ -25,7 +24,6 @@ export XDG_CACHE_HOME=$tmp/cache XDG_DATA_HOME=$tmp/data
 export GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_TERMINAL_PROMPT=0
 export LC_ALL=C TERM=xterm-256color
 unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE GIT_COMMON_DIR
-unset FZF_DEFAULT_OPTS FZF_DEFAULT_OPTS_FILE FZF_DEFAULT_COMMAND
 mkdir -p "$HOME" "$XDG_CONFIG_HOME" "$tmp/bin"
 export REX_TEST_CALLBACKS=$tmp/callbacks.jsonl
 : >"$REX_TEST_CALLBACKS"
@@ -75,78 +73,6 @@ worktree_path() {
         | select(.branch == $branch) | .path // .worktree.path
     '
 }
-filtered() {
-    local query=$1
-    shift
-    # Test queries are literals without single quotes. Real fzf --filter still
-    # returns its query on no match, exercising the picker's creation path.
-    FZF_DEFAULT_OPTS="--filter='$query'" bash "$script" "$@" </dev/null
-}
-
-# Drive real fzf in a controlling terminal for abort and alt-enter. There is no
-# sleep-based key timing: wait for its prompt before sending the user's keys.
-terminal_pick() {
-    local directory=$1 mode=$2 query=${3:-}
-    python3 - "$script" "$directory" "$mode" "$query" <<'PY'
-import errno
-import fcntl
-import os
-import pty
-import select
-import signal
-import struct
-import subprocess
-import sys
-import termios
-import time
-
-picker, directory, mode, query = sys.argv[1:]
-master, slave = pty.openpty()
-fcntl.ioctl(slave, termios.TIOCSWINSZ, struct.pack("HHHH", 30, 160, 0, 0))
-
-def terminal_session():
-    os.setsid()
-    fcntl.ioctl(0, termios.TIOCSCTTY, 0)
-
-environment = dict(os.environ, FZF_DEFAULT_OPTS="")
-process = subprocess.Popen(
-    ["bash", picker, "pick", "--base", "@"], cwd=directory, env=environment,
-    stdin=slave, stdout=slave, stderr=slave, preexec_fn=terminal_session,
-)
-os.close(slave)
-output = bytearray()
-sent = False
-deadline = time.monotonic() + 20
-try:
-    while True:
-        if time.monotonic() >= deadline:
-            raise RuntimeError("picker timed out: " + output.decode(errors="replace"))
-        readable, _, _ = select.select([master], [], [], 0.1)
-        if readable:
-            try:
-                data = os.read(master, 65536)
-            except OSError as error:
-                if error.errno != errno.EIO:
-                    raise
-                data = b""
-            output.extend(data)
-            if not sent and b"worktree " in output:
-                keys = b"\x03" if mode == "cancel" else query.encode() + b"\x1b\r"
-                os.write(master, keys)
-                sent = True
-            if not data:
-                break
-        if process.poll() is not None:
-            break
-    if not sent or process.wait(timeout=2) != 0:
-        raise RuntimeError("picker failed: " + output.decode(errors="replace"))
-finally:
-    if process.poll() is None:
-        os.killpg(process.pid, signal.SIGKILL)
-        process.wait()
-    os.close(master)
-PY
-}
 
 repo=$tmp/'repo with spaces'
 mkdir -p "$repo"
@@ -172,24 +98,24 @@ git -C "$repo" update-ref refs/remotes/origin/remote-tip "$main_commit"
 git -C "$repo" symbolic-ref refs/remotes/origin/HEAD refs/remotes/origin/main
 
 expected=$(printf '%s\n' feat/demo main stale-branch)
-same 'pick includes existing worktrees and unmaterialized local branches once' \
-    "$(cd "$repo" && bash "$script" pick --list | sort)" "$expected"
-same 'pick candidates are repository-wide from a linked checkout' \
-    "$(cd "$worktree" && bash "$script" pick --list | sort)" "$expected"
-same 'remove excludes main and branches without checkouts' \
-    "$(cd "$repo" && bash "$script" remove --list)" feat/demo
-same 'remove includes the current linked checkout' \
-    "$(cd "$worktree" && bash "$script" remove --list)" feat/demo
+same 'branch list includes existing worktrees and unmaterialized local branches once' \
+    "$(cd "$repo" && bash "$script" branches | sort)" "$expected"
+same 'branch list is repository-wide from a linked checkout' \
+    "$(cd "$worktree" && bash "$script" branches | sort)" "$expected"
+same 'removable excludes main and branches without checkouts' \
+    "$(cd "$repo" && bash "$script" removable)" feat/demo
+same 'removable includes the current linked checkout' \
+    "$(cd "$worktree" && bash "$script" removable)" feat/demo
 expected=$(printf '%s\n' feat/demo main origin/main origin/remote-tip stale-branch)
 same 'remote candidates are opt-in and symbolic remote HEAD is excluded' \
-    "$(cd "$repo" && bash "$script" pick --remotes --list | sort)" "$expected"
-if (cd "$tmp" && bash "$script" remove --list </dev/null >/dev/null 2>&1); then
+    "$(cd "$repo" && bash "$script" branches --remotes | sort)" "$expected"
+if (cd "$tmp" && bash "$script" removable </dev/null >/dev/null 2>&1); then
     fail 'outside-repository removal was accepted'
 fi
 printf 'ok   outside-repository removal fails\n'
 
 # Switching an existing branch materializes it without changing its tip.
-(cd "$repo" && filtered stale-branch pick --base @)
+(cd "$repo" && bash "$script" switch stale-branch --base @)
 stale_path=$(worktree_path stale-branch)
 same 'existing branch keeps its commit' "$(git -C "$stale_path" rev-parse HEAD)" "$main_commit"
 last_callback worktree_go "$stale_path"
@@ -198,51 +124,55 @@ last_callback worktree_go "$stale_path"
 printf 'feature\n' >>"$worktree/tracked"
 git -C "$worktree" commit -qam 'feature-only commit'
 feature_commit=$(git -C "$worktree" rev-parse HEAD)
-(cd "$worktree" && filtered current-head-child pick --base @)
+(cd "$worktree" && bash "$script" switch current-head-child --base @)
 current_path=$(worktree_path current-head-child)
 same 'new branch uses caller current HEAD' "$(git -C "$current_path" rev-parse HEAD)" "$feature_commit"
 last_callback worktree_go "$current_path"
-(cd "$worktree" && filtered explicit-base-child pick --base main)
+(cd "$repo" && bash "$script" switch explicit-base-child --base main)
 explicit_path=$(worktree_path explicit-base-child)
 same 'explicit base overrides caller HEAD' "$(git -C "$explicit_path" rev-parse HEAD)" "$main_commit"
 last_callback worktree_go "$explicit_path"
 
-(cd "$repo" && filtered 'Fix Login Bug' pick --base @ --slugify)
+(cd "$repo" && bash "$script" switch 'Fix Login Bug' --base @ --slugify)
 slug_path=$(worktree_path fix-login-bug)
 same 'slugified branch is a real checkout' "$(git -C "$slug_path" branch --show-current)" fix-login-bug
 last_callback worktree_go "$slug_path"
 
-# Alt-enter must force the query even though it fuzzy-matches current-head-child.
-terminal_pick "$repo" create current-head
-forced_path=$(worktree_path current-head)
-same 'alt-enter creates the typed name instead of its fuzzy match' \
-    "$(git -C "$forced_path" branch --show-current)" current-head
-last_callback worktree_go "$forced_path"
+# A typed target can be a prefix of an existing branch, but remains exact.
+(cd "$repo" && bash "$script" switch current-head --base @)
+typed_path=$(worktree_path current-head)
+same 'typed name creates an exact branch instead of switching to a prefix match' \
+    "$(git -C "$typed_path" branch --show-current)" current-head
+last_callback worktree_go "$typed_path"
 # ^ must be handed to wt, not treated as a branch to create. The fixture's
 # symbolic origin/HEAD identifies main as the default branch.
-terminal_pick "$repo" create '^'
+(cd "$repo" && bash "$script" switch '^')
 last_callback worktree_go "$repo"
 printf 'ok   worktrunk default-branch shortcut switches to main\n'
 
 before_callbacks=$(callback_count)
 before_refs=$(git -C "$repo" for-each-ref --format='%(refname) %(objectname)')
-terminal_pick "$repo" cancel
-same 'cancel creates no branch' "$(git -C "$repo" for-each-ref --format='%(refname) %(objectname)')" "$before_refs"
-same 'cancel sends no Rex callback' "$(callback_count)" "$before_callbacks"
-(cd "$repo" && filtered no-such-removal remove)
-same 'remove no-match cancellation sends no callback' "$(callback_count)" "$before_callbacks"
-[[ -d $worktree ]] || fail 'remove cancellation deleted a checkout'
+before_worktrees=$(git -C "$repo" worktree list --porcelain)
+for invalid in main no-such-removal --force; do
+    if (cd "$repo" && bash "$script" remove "$invalid" </dev/null >/dev/null 2>&1); then
+        fail "ineligible removal was accepted: $invalid"
+    fi
+done
+same 'ineligible removal sends no callback' "$(callback_count)" "$before_callbacks"
+same 'ineligible removal leaves all checkouts intact' \
+    "$(git -C "$repo" worktree list --porcelain)" "$before_worktrees"
 
-if (cd "$repo" && filtered bad..branch pick --base @ >"$tmp/switch-failure.log" 2>&1); then
+if (cd "$repo" && bash "$script" switch bad..branch --base @ </dev/null >"$tmp/switch-failure.log" 2>&1); then
     fail 'invalid branch creation unexpectedly succeeded'
 fi
 same 'failed switch sends no callback' "$(callback_count)" "$before_callbacks"
 same 'failed switch changes no refs' "$(git -C "$repo" for-each-ref --format='%(refname) %(objectname)')" "$before_refs"
 
-# Dirty refusal is wt's real safety behavior, not a mocked exit code. The
-# picker historically treats a failed removal as a dismissed dialog (status 0).
+# Dirty refusal is wt's real safety behavior, not a mocked exit code.
 printf 'dirty\n' >>"$worktree/tracked"
-(cd "$repo" && filtered feat/demo remove >"$tmp/dirty-removal.log" 2>&1)
+if (cd "$repo" && bash "$script" remove feat/demo </dev/null >"$tmp/dirty-removal.log" 2>&1); then
+    fail 'dirty removal unexpectedly succeeded'
+fi
 [[ -d $worktree ]] || fail 'dirty checkout was removed'
 same 'dirty checkout keeps its uncommitted contents' "$(tail -n1 "$worktree/tracked")" dirty
 same 'failed removal sends no close callback' "$(callback_count)" "$before_callbacks"
@@ -251,7 +181,7 @@ git -C "$worktree" restore tracked
 # Remove from the linked checkout itself through an alias. Its branch has a
 # feature-only commit, so successful removal may keep that unmerged branch.
 ln -s "$worktree" "$tmp/checkout-alias"
-(cd "$tmp/checkout-alias" && filtered feat/demo remove)
+(cd "$tmp/checkout-alias" && bash "$script" remove feat/demo)
 [[ ! -e $worktree ]] || fail 'successful removal left the checkout behind'
 same 'successful removal sends one callback' "$(callback_count)" "$((before_callbacks + 1))"
 last_callback worktree_close "$worktree" "$repo"
@@ -260,7 +190,7 @@ same 'captured removed identity remains normalizable' "$(bash "$script" normaliz
 printf 'ok   successful removal closes canonical checkout only after deletion\n'
 
 # A failed Rex open is reported, but does not roll back a successful wt switch.
-if (cd "$repo" && REX_TEST_FAIL=worktree_go filtered callback-failure pick --base @ >"$tmp/callback-failure.log" 2>&1); then
+if (cd "$repo" && REX_TEST_FAIL=worktree_go bash "$script" switch callback-failure --base @ </dev/null >"$tmp/callback-failure.log" 2>&1); then
     fail 'Rex open failure was not reported'
 fi
 callback_failure_path=$(worktree_path callback-failure)
@@ -304,8 +234,9 @@ for invalid in '' 0 --help not-a-pr https://github.com/test/fixture/issues/42; d
         fail "invalid PR accepted: $invalid"
     fi
 done
-(cd "$repo" && bash "$script" pr </dev/null)
-(cd "$repo" && printf '\n' | bash "$script" pr)
+if (cd "$repo" && bash "$script" pr </dev/null >/dev/null 2>&1); then
+    fail 'PR operation accepted a missing target'
+fi
 if (cd "$repo" && bash "$script" pr 42 extra </dev/null >/dev/null 2>&1); then
     fail 'wrong PR argument count accepted'
 fi

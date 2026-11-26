@@ -4,11 +4,11 @@
 # https://github.com/haxybaxy/rex-worktrunk
 # Its pickers were ported from https://github.com/devashish2203/herdr-worktrunk.
 # Copyright (c) 2026 Zaid Alsaheb and Devashish Chandra; see LICENSE (MIT).
-# Rex session actions live in Lua; this process only picks and invokes wt.
+# Native Rex actions collect choices; this helper lists targets and runs wt.
 #
-# rex-worktree-picker pick [--base BRANCH] [--remotes] [--slugify] [--list]
-# rex-worktree-picker remove [--list]
-# rex-worktree-picker pr [NUMBER|URL]  (prompt when omitted)
+# rex-worktree-picker branches [--remotes] | removable
+# rex-worktree-picker switch NAME [--base BRANCH] [--slugify]
+# rex-worktree-picker pr NUMBER|URL | remove NAME
 
 set -uo pipefail
 
@@ -37,24 +37,17 @@ registry_unlock() {
     rmdir -- "$directory.lock"
 }
 
-red()    { printf '\033[31m%s\033[0m\n' "$*"; }
-yellow() { printf '\033[33m%s\033[0m\n' "$*"; }
 hold()   { printf '\n\033[31m%s\033[0m press any key to close' "$*"; read -r -n1; echo; }
 
-need() {
-    command -v "$1" >/dev/null 2>&1 || { hold "$1 not found on PATH"; exit 1; }
-}
-
 in_repo() {
-    git rev-parse --is-inside-work-tree >/dev/null 2>&1 \
-        || { hold "not a git repository: $PWD"; return 1; }
+    [[ $(git rev-parse --is-inside-work-tree 2>/dev/null) == true ]] \
+        || { printf 'not a git repository: %s\n' "$PWD" >&2; return 1; }
 }
 
-# Worktrunk resolves shortcuts itself, without --create: default (^), previous
-# (-), pr:N, mr:N, and PR/MR URLs (all containing a colon).
+# Worktrunk resolves shortcuts and PR/MR URLs itself, without --create.
 is_shortcut() {
     case $1 in
-        '^'|'-'|*:*) return 0 ;;
+        '^'|'-'|'@'|*:*) return 0 ;;
         *) return 1 ;;
     esac
 }
@@ -98,7 +91,7 @@ list_items() {
 }
 
 wt_items() {
-    command wt list --format=json 2>/dev/null | list_items
+    command wt list --format=json | list_items
 }
 
 switch_worktree() {
@@ -124,14 +117,8 @@ switch_worktree() {
 
 pr() {
     local target
-    if [[ $# -eq 0 ]]; then
-        read -r -p 'PR number or GitHub URL (blank cancels): ' target || return 0
-        [[ -n $target ]] || return 0
-        pr "$target" || { hold 'Could not open PR worktree (see above).'; return 1; }
-        return 0
-    fi
     if [[ $# -ne 1 ]]; then
-        printf 'usage: rex-worktree-picker pr [NUMBER|URL]\n' >&2; return 2
+        printf 'usage: rex-worktree-picker pr NUMBER|URL\n' >&2; return 2
     fi
     if [[ $1 =~ ^[1-9][0-9]*$ ]]; then
         target=pr:$1
@@ -140,8 +127,7 @@ pr() {
     else
         printf 'expected a PR number or GitHub PR URL: %s\n' "$1" >&2; return 2
     fi
-    git rev-parse --is-inside-work-tree >/dev/null 2>&1 \
-        || { printf 'not a git repository: %s\n' "$PWD" >&2; return 1; }
+    in_repo || return 1
     local tool
     for tool in jq wt gh rex; do
         command -v "$tool" >/dev/null 2>&1 \
@@ -150,63 +136,43 @@ pr() {
     switch_worktree "$target"
 }
 
-pick() {
-    local base="" remotes=false slugify=false list_only=false
+branches() {
+    local refs=(refs/heads)
+    case ${1:-} in
+        --remotes) [[ $# -eq 1 ]] || return 2; refs+=(refs/remotes) ;;
+        '') [[ $# -eq 0 ]] || return 2 ;;
+        *) return 2 ;;
+    esac
+    in_repo || return 1
+    # Exclude symbolic refs (in particular remote HEAD), then deduplicate.
+    {
+        git for-each-ref --format='%(refname:short) %(symref)' "${refs[@]}" \
+            | awk 'NF == 1 {print $1}' || return
+        wt_items | jq -r 'select(.branch != null) | .branch'
+    } | awk '!seen[$0]++'
+}
+
+switch_target() {
+    if [[ $# -eq 0 || -z $1 || ( $1 == -* && $1 != - ) ]]; then
+        printf 'expected a branch name or Worktrunk shortcut\n' >&2; return 2
+    fi
+    local name=$1 base="" slugify=false
+    shift
     while [[ $# -gt 0 ]]; do
         case $1 in
             --base)
-                [[ $# -ge 2 ]] || { red 'missing value for --base' >&2; return 2; }
+                [[ $# -ge 2 ]] || { printf 'missing value for --base\n' >&2; return 2; }
                 base=$2; shift 2 ;;
-            --remotes) remotes=true; shift ;;
             --slugify) slugify=true; shift ;;
-            --list) list_only=true; shift ;;
-            *) red "unknown pick option: $1" >&2; return 2 ;;
+            *) printf 'unknown switch option: %s\n' "$1" >&2; return 2 ;;
         esac
     done
     in_repo || return 1
-    need jq; need wt
-
-    local refs=(refs/heads)
-    $remotes && refs+=(refs/remotes)
-
-    # Refs arrive first; wt then adds checked-out branches. Exclude symbolic
-    # remote HEADs (whose short form can be just "origin") and deduplicate.
-    candidates() {
-        {
-            git for-each-ref --format='%(refname) %(refname:short)' "${refs[@]}" 2>/dev/null \
-                | awk '$1 !~ /\/HEAD$/ {print $2}'
-            wt_items | jq -r 'select(.branch != null) | .branch'
-        } | awk '!seen[$0]++ { print; fflush() }'
-    }
-
-    if $list_only; then candidates; return $?; fi
-    need fzf
-
-    local base_label="default branch"
-    if [[ $base == "@" ]]; then
-        local current
-        current=$(git branch --show-current 2>/dev/null || true)
-        [[ -n $current ]] && base_label="current branch ($current)" || base_label="current HEAD"
-    elif [[ -n $base ]]; then
-        base_label="$base"
-    fi
-
-    # Enter selects a match, or creates an unmatched query. Alt-enter returns
-    # only the query, so a typed name can override an existing fuzzy match.
-    local choice ret name
-    choice=$(candidates | fzf --print-query --reverse --info=inline \
-        --bind=alt-enter:print-query \
-        --prompt='worktree ❯ ' \
-        --header="↵ on a match → switch · type a new name + ↵ → create from ${base_label} · alt-↵ → force typed name · esc → cancel")
-    ret=$?
-    [[ $ret -gt 1 ]] && return 0
-    name=${choice##*$'\n'}
-    [[ -z $name ]] && return 0
 
     if $slugify && ! is_shortcut "$name" && ! ref_exists "$name"; then
         local slug
         if ! slug=$(branch_slug "$name"); then
-            hold "no valid branch name in: $name"; return 1
+            printf 'no valid branch name in: %s\n' "$name" >&2; return 1
         fi
         name=$slug
     fi
@@ -216,56 +182,42 @@ pick() {
         wtargs=(--create)
         [[ -n $base ]] && wtargs+=(--base "$base")
     fi
-    switch_worktree "$name" "${wtargs[@]}" \
-        || { hold 'Could not open worktree (see above).'; return 1; }
+    switch_worktree "$name" "${wtargs[@]}"
+}
+
+# Use the same eligibility rule when listing and when rechecking just before
+# removal: real, named, non-main worktrees, including the current checkout.
+removable_items() {
+    jq -c 'select(.kind == "worktree" and .branch != null and .is_main != true and .path != null)'
+}
+
+removable() {
+    [[ $# -eq 0 ]] || return 2
+    in_repo || return 1
+    wt_items | removable_items | jq -r '.branch'
 }
 
 remove() {
-    local list_only=false
-    while [[ $# -gt 0 ]]; do
-        case $1 in
-            --list) list_only=true; shift ;;
-            *) red "unknown remove option: $1" >&2; return 2 ;;
-        esac
-    done
+    [[ $# -eq 1 && -n $1 ]] || { printf 'expected a worktree branch name\n' >&2; return 2; }
     in_repo || return 1
-    need jq; need wt
-
-    local items cands
-    items=$(wt_items) || { hold 'failed to list worktrees'; return 1; }
-    # Real, named worktrees only; the current checkout is allowed, never main.
-    cands=$(jq -r 'select(.kind == "worktree" and .branch != null and .is_main != true) | .branch' <<<"$items")
-
-    if $list_only; then
-        [[ -z $cands ]] || printf '%s\n' "$cands"
-        return 0
-    fi
-    if [[ -z $cands ]]; then
-        yellow 'No removable worktrees (only the main worktree exists).'; sleep 2; return 0
-    fi
-    need fzf
-
-    local name
-    name=$(fzf --reverse --info=inline \
-        --prompt='remove worktree ❯ ' \
-        --header='↵ to remove · dirty checkouts refused; unmerged branches may remain; closes entire Rex session/processes · esc to cancel' <<<"$cands")
-    [[ -z $name ]] && return 0
-
-    local wtpath mainpath
-    wtpath=$(jq -rs --arg b "$name" '[.[] | select(.kind == "worktree" and .branch == $b) | .path][0] // empty' <<<"$items")
-    mainpath=$(jq -rs '[.[] | select(.kind == "worktree" and .is_main == true) | .path][0] // empty' <<<"$items")
+    local name=$1 items wtpath mainpath
+    items=$(wt_items) || return 1
+    wtpath=$(removable_items <<<"$items" | jq -ers --arg b "$name" '[.[] | select(.branch == $b) | .path][0] // empty') \
+        || { printf 'not a removable worktree: %s\n' "$name" >&2; return 1; }
+    mainpath=$(jq -ers '[.[] | select(.kind == "worktree" and .is_main == true) | .path][0] // empty' <<<"$items") \
+        || { printf 'could not identify the main worktree\n' >&2; return 1; }
 
     # Capture canonical identities before deletion. No force flags: wt refuses
     # dirty checkouts; a clean unmerged checkout may go while its branch stays.
     # Success closes the entire Rex session, including its running processes.
     wtpath=$(realpath -e -- "$wtpath") || return 1
     mainpath=$(realpath -e -- "$mainpath") || return 1
-    if ! command wt remove --foreground -C "$mainpath" "$name"; then
-        hold 'wt remove failed (see above).'; return 0
+    if ! command wt remove --foreground -C "$mainpath" -- "$wtpath"; then
+        printf 'wt remove failed (see above).\n' >&2; return 1
     fi
 
     rex do worktree_close path="$wtpath" main="$mainpath" >/dev/null \
-        || hold "Removed $name, but could not close its Rex session."
+        || { printf 'Removed %s, but could not close its Rex session.\n' "$name" >&2; return 1; }
 }
 
 case ${1:-} in
@@ -273,8 +225,10 @@ case ${1:-} in
     registry-lock) registry_lock "${2:?missing server scope}" ;;
     registry-unlock) registry_unlock "${2:?missing server scope}" ;;
     registry-exists) directory=$(registry_directory "${2:?missing server scope}") && [[ -e "$directory/sessions.json" ]] ;;
-    pick) shift; pick "$@" ;;
-    pr) shift; pr "$@" ;;
-    remove) shift; remove "$@" ;;
-    *) red 'usage: rex-worktree-picker pick [--base BRANCH] [--remotes] [--slugify] [--list] | remove [--list] | pr [NUMBER|URL]' >&2; exit 2 ;;
+    branches) shift; branches "$@" ;;
+    removable) shift; removable "$@" ;;
+    switch) shift; switch_target "$@" || { hold 'Could not open worktree (see above).'; exit 1; } ;;
+    pr) shift; pr "$@" || { hold 'Could not open PR worktree (see above).'; exit 1; } ;;
+    remove) shift; remove "$@" || { hold 'Could not complete worktree removal (see above).'; exit 1; } ;;
+    *) printf 'usage: rex-worktree-picker branches [--remotes] | removable | switch NAME [--base BRANCH] [--slugify] | pr NUMBER_OR_URL | remove NAME\n' >&2; exit 2 ;;
 esac
