@@ -1,7 +1,7 @@
 { pkgs, ... }: {
   environment.systemPackages = [
     (pkgs.callPackage ./worktrees {})
-    (pkgs.callPackage ./urls {})
+    (pkgs.callPackage ./scrollback {})
   ];
   environment.pathsToLink = [ "/share/rex" ];
 }

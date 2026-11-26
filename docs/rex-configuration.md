@@ -63,6 +63,7 @@ Press Ctrl+Q, then the second key:
 | Key | Action |
 | --- | --- |
 | `u` | Pick URLs from the focused terminal and its scrollback. Tab selects multiple entries. |
+| `f` | Pick a file path from the focused terminal and its scrollback. Enter opens it in `$EDITOR`. |
 | `g` | Open or create a branch worktree. Alt+Enter uses the typed branch name instead of the fuzzy match. |
 | Shift+G | Check out a GitHub PR by number or URL. Authenticate `gh` on the server host. |
 | `d` | Remove a non-main, branch-associated worktree. |
@@ -70,6 +71,9 @@ Press Ctrl+Q, then the second key:
 
 Esc cancels the fzf pickers. The URL picker opens links **on the server host**
 with `open` or `xdg-open`; it doesn't require client Remote Control.
+The file picker resolves relative paths from the focused terminal's current
+working directory and runs `$EDITOR` in a Rex float on the server host. Export
+`EDITOR` in the server's shell startup environment.
 
 Worktrunk handles checkout creation, reuse, and project hooks. The branch
 picker starts new branches at the caller's HEAD. Opening a branch or PR

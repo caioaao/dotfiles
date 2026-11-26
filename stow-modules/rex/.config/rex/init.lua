@@ -9,7 +9,7 @@ require("worktrees").setup{
 	script = "/run/current-system/sw/bin/rex-worktree-picker",
 }
 
-require("urls").setup()
+require("scrollback").setup()
 
 -- Familiar tmux keys on Rex's own panes, tabs, and persistent sessions.
 -- Keep the client's default shortcuts; Ctrl+Q is an additional entry point.
@@ -44,6 +44,7 @@ rex.bind("ctrl+q>g", "worktree")
 rex.bind("ctrl+q>shift+g", "worktree_pr")
 rex.bind("ctrl+q>d", "worktree_remove")
 rex.bind("ctrl+q>u", "open_url")
+rex.bind("ctrl+q>f", "open_file")
 -- Native program activity replaces the tmux agent-pane popup/status plugin.
 rex.bind("ctrl+q>a", "client.sidebar.activity.toggle")
 rex.bind("ctrl+q>r", "client.config.reload")
